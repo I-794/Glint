@@ -30,11 +30,15 @@
     <style>
         /* Landing-specific pieces only; the design system lives in /site.css. */
         .hero { position: relative; overflow: hidden; }
-        .hero-inner { display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(32px, 5vw, 72px); align-items: center; min-height: calc(100dvh - 66px); padding: clamp(36px, 6vw, 72px) 0 clamp(48px, 7vw, 88px); }
+        /* padding-block, not padding: .wrap on the same element owns the side gutters. */
+        .hero-inner { display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(32px, 5vw, 72px); align-items: center; min-height: calc(100dvh - 66px); padding-block: clamp(36px, 6vw, 72px) clamp(48px, 7vw, 88px); }
         .hero-eyebrow { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 26px; padding: 7px 15px 7px 8px; border-radius: var(--r-pill); background: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
         .hero-eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), 0 0 12px var(--accent); }
         .hero-eyebrow span { font-size: 13px; font-weight: 500; color: var(--ink-2); }
-        .hero h1 { font-size: clamp(44px, 6.6vw, 84px); font-weight: 700; line-height: 0.98; letter-spacing: -0.035em; margin-bottom: 24px; color: var(--ink); }
+        a.hero-eyebrow { transition: border-color .2s; } a.hero-eyebrow:hover { border-color: var(--glass-hi); }
+        .hero-eyebrow b { color: var(--ink); font-weight: 600; }
+        /* Sized so "Screenshots that" stays on one line in the hero column. */
+        .hero h1 { font-size: clamp(42px, 4.7vw, 60px); font-weight: 700; line-height: 0.98; letter-spacing: -0.035em; margin-bottom: 24px; color: var(--ink); }
         .hero-sub { font-size: clamp(16.5px, 1.5vw, 19px); color: var(--ink-2); max-width: 32ch; line-height: 1.55; margin-bottom: 34px; }
         .hero-actions { display: flex; gap: 13px; flex-wrap: wrap; align-items: center; }
 
@@ -43,11 +47,12 @@
         .browser-bar { height: 38px; background: #151a2b; display: flex; align-items: center; gap: 7px; padding: 0 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
         .browser-bar .tl { width: 11px; height: 11px; border-radius: 50%; }
         .browser-bar .tl:nth-child(1){ background:#ff5f57; } .browser-bar .tl:nth-child(2){ background:#febc2e; } .browser-bar .tl:nth-child(3){ background:#28c840; }
-        .browser-bar .url { margin-left: 10px; height: 22px; flex: 1; border-radius: 6px; background: #0b0e1a; display: flex; align-items: center; padding: 0 11px; font-family: var(--font-mono); font-size: 10.5px; color: #6f7794; }
+        .browser-bar .url { margin-left: 10px; height: 22px; flex: 1; border-radius: 6px; background: #0b0e1a; display: flex; align-items: center; padding: 0 11px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); }
         .browser-shot { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; background: #0b0e1a; }
         .float-chip { position: absolute; z-index: 2; background: rgba(14,18,32,0.66); backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%); border-radius: 13px; padding: 10px 14px; box-shadow: var(--shadow-lift); border: 1px solid var(--glass-line); display: flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 600; color: var(--ink); }
         .float-chip svg { width: 16px; height: 16px; color: var(--accent); }
-        .float-chip.one { bottom: 11%; left: -4%; } .float-chip.two { top: 14%; right: -3%; }
+        /* Inside the card: .showpiece clips overflow, so negative offsets cut the chips off. */
+        .float-chip.one { bottom: 6%; left: 5%; } .float-chip.two { top: 6%; right: 5%; }
 
         .fc-copy .eyebrow { margin-bottom: 12px; }
         .fc-copy h2 { font-size: clamp(26px, 3.2vw, 38px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.06; margin-bottom: 16px; color: var(--ink); }
@@ -86,6 +91,7 @@
 
         @media (max-width: 900px) {
             .hero-inner { grid-template-columns: 1fr; min-height: 0; gap: 44px; padding-top: 44px; padding-bottom: 64px; }
+            .hero h1 { font-size: clamp(42px, 8vw, 64px); }
             .hero-sub { max-width: 44ch; }
             .showpiece { aspect-ratio: 4 / 3; max-width: 540px; }
             .tri-grid { grid-template-columns: 1fr; }
@@ -94,10 +100,10 @@
             .steps { grid-template-columns: 1fr; }
         }
         @media (max-width: 560px) {
-            .hero h1 { font-size: clamp(40px, 12vw, 56px); }
+            .hero h1 { font-size: clamp(36px, 10.2vw, 56px); }
             .gallery { grid-template-columns: 1fr; }
             .use-grid { grid-template-columns: 1fr; }
-            .float-chip.one { left: 2%; } .float-chip.two { right: 2%; }
+            .float-chip { display: none; }   /* they covered the screenshot on phones */
         }
     </style>
 </head>
@@ -109,7 +115,7 @@
 <header class="hero">
     <div class="wrap hero-inner">
         <div class="hero-copy">
-            <div class="hero-eyebrow"><span class="dot"></span><span>Free screenshot studio, runs in your browser</span></div>
+            <a class="hero-eyebrow" href="/changelog/"><span class="dot"></span><span><b>New in v35:</b> Before / After compare →</span></a>
             <h1>Screenshots that<br>carry <span class="grad-text">weight</span>.</h1>
             <p class="hero-sub">Backgrounds, device frames, App Store sets, generative AI edits, even video. All in your browser, no account.</p>
             <div class="hero-actions">
@@ -124,7 +130,7 @@
                         <span class="tl"></span><span class="tl"></span><span class="tl"></span>
                         <span class="url">snapshotpro.xyz/editor</span>
                     </div>
-                    <img class="browser-shot" src="https://picsum.photos/seed/snapshot-hero-dash/1280/800" alt="A polished product screenshot composed in SnapShotPro" loading="eager" width="1280" height="800">
+                    <img class="browser-shot" src="/shots/hero-editor.webp" alt="The SnapShotPro editor framing a dashboard screenshot in a browser window on a cobalt mesh background" loading="eager" fetchpriority="high" width="1280" height="800">
                 </div>
                 <div class="float-chip one">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
@@ -171,7 +177,7 @@
                 </ul>
                 <a href="/features/" class="fc-more">See all capture tools <span class="ar">→</span></a>
             </div>
-            <div class="fc-visual"><img src="https://picsum.photos/seed/snapshot-capture/900/680" alt="Capturing and arranging screenshots" loading="lazy"></div>
+            <div class="fc-visual"><img src="/shots/capture-arrange.webp" alt="Four app screenshots arranged in a grid with auto-layout" loading="lazy" width="1200" height="900"></div>
         </div>
 
         <div class="feature-cat flip reveal">
@@ -185,7 +191,7 @@
                 </ul>
                 <a href="/features/" class="fc-more">See all styling tools <span class="ar">→</span></a>
             </div>
-            <div class="fc-visual"><img src="https://picsum.photos/seed/snapshot-style/900/680" alt="Framing and styling a screenshot" loading="lazy"></div>
+            <div class="fc-visual"><img src="/shots/frame-style.webp" alt="A running app screen in an iPhone frame, tilted in 3D on a dark mesh background" loading="lazy" width="1200" height="900"></div>
         </div>
 
         <!-- Pattern break: a 3-up glass grid instead of a third zigzag -->
@@ -218,15 +224,15 @@
         </div>
         <div class="gallery">
             <div class="gcard reveal">
-                <div class="gcard-shot"><img src="https://picsum.photos/seed/snapshot-warm-ui/800/500" alt="Screenshot on a warm gradient" loading="lazy"></div>
+                <div class="gcard-shot"><img src="/shots/warm-gradient.webp" alt="A task board screenshot with rounded corners and a soft shadow on a warm gradient" loading="lazy" width="1000" height="600"></div>
                 <div class="gcard-cap"><strong>Warm gradient</strong><span>Soft shadow, rounded corners</span></div>
             </div>
             <div class="gcard reveal">
-                <div class="gcard-shot"><img src="https://picsum.photos/seed/snapshot-cobalt-ui/800/500" alt="Screenshot on a cobalt mesh background" loading="lazy"></div>
+                <div class="gcard-shot"><img src="/shots/cobalt-mesh.webp" alt="A dashboard in a browser frame, tilted in 3D on a cobalt mesh background" loading="lazy" width="1000" height="600"></div>
                 <div class="gcard-cap"><strong>Cobalt mesh</strong><span>Browser frame, 3D tilt</span></div>
             </div>
             <div class="gcard reveal">
-                <div class="gcard-shot"><img src="https://picsum.photos/seed/snapshot-ink-ui/800/500" alt="Screenshot with liquid glass and spotlight" loading="lazy"></div>
+                <div class="gcard-shot"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a liquid glass panel" loading="lazy" width="1000" height="600"></div>
                 <div class="gcard-cap"><strong>Glass &amp; spotlight</strong><span>Liquid glass, annotations</span></div>
             </div>
         </div>
@@ -260,7 +266,7 @@
         <div class="steps">
             <div class="step reveal"><div class="num">01</div><h3>Drop in a screenshot</h3><p>Paste, drag, or upload. Add several images and arrange them with auto-layout.</p></div>
             <div class="step reveal"><div class="num">02</div><h3>Style it your way</h3><p>Pick a background, frame, and finish. Annotate, tilt, and enhance until it reads clearly.</p></div>
-            <div class="step reveal"><div class="num">03</div><h3>Export anywhere</h3><p>Copy, download at any store size, export an MP4, or share a link in a click.</p></div>
+            <div class="step reveal"><div class="num">03</div><h3>Download or share</h3><p>Copy, download at any store size, export an MP4, or share a link in a click.</p></div>
         </div>
     </div>
 </section>

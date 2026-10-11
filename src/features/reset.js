@@ -1,8 +1,11 @@
-import { state, imageRegistry } from '../state/state.js';
+import { state } from '../state/state.js';
 import { el } from '../ui/elements.js';
 import { saveStateToHistory } from '../state/history.js';
-import { showNotification } from '../ui/notification.js';
+import { showUndoToast } from '../ui/notification.js';
 import { render } from '../render/render.js';
+import { spotlightDefaults } from '../render/spotlight-geom.js';
+import { bokehDefaults } from '../render/bokeh-core.js';
+import { compareDefaults } from '../render/compare-core.js';
 
 export function resetToDefaults() {
   saveStateToHistory();
@@ -25,7 +28,9 @@ export function resetToDefaults() {
   state.deviceFrame = { type: null, color: 'dark', url: 'https://example.com', title: 'Screenshot' };
   state.annotations = [];
   state.redactions = [];
-  state.spotlight = { enabled: false, x: 0.2, y: 0.2, w: 0.6, h: 0.6, opacity: 0.65 };
+  state.spotlight = spotlightDefaults();
+  state.bokeh = bokehDefaults();
+  state.compare = compareDefaults();
   state.annotationColor = '#ff3b30';
   state.annotationStrokeWidth = 4;
   state.tool = 'select';
@@ -41,11 +46,13 @@ export function resetToDefaults() {
   state.tilt3d = { rx: 0, ry: 0, rz: 0, perspective: 1200 };
   state.scene = { id: '' };
 
-  Object.keys(imageRegistry).forEach(k => delete imageRegistry[k]);
+  // v33.2 — imageRegistry is deliberately left alone: undo restores the
+  // extraImages records, which need their decoded images (keyed by id) to still
+  // be there. Set panels and batch images live in the same registry too.
 
   render();
   if (typeof window.__updateUIFromState === 'function') window.__updateUIFromState();
-  showNotification('Reset to defaults.', 'success');
+  showUndoToast('Reset to defaults', render);
 }
 
 export function bindResetButton() {

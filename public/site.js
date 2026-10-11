@@ -15,6 +15,21 @@
       { rootMargin: '-8px 0px 0px 0px' }).observe(sentinel);
   }
 
+  // 1b) Mark the current section in the nav, and the phone menu toggle.
+  if (nav) {
+    const here = location.pathname.replace(/index\.html$/, '');
+    nav.querySelectorAll('.nav-link').forEach((a) => {
+      if (a.getAttribute('href') === here) a.setAttribute('aria-current', 'page');
+    });
+    const toggle = nav.querySelector('.nav-toggle');
+    if (toggle) {
+      const setOpen = (open) => { nav.classList.toggle('open', open); toggle.setAttribute('aria-expanded', String(open)); };
+      toggle.addEventListener('click', () => setOpen(!nav.classList.contains('open')));
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && nav.classList.contains('open')) { setOpen(false); toggle.focus(); } });
+      document.addEventListener('click', (e) => { if (nav.classList.contains('open') && !nav.contains(e.target)) setOpen(false); });
+    }
+  }
+
   // 2) Scroll reveal with sibling stagger.
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => {

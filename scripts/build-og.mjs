@@ -1,7 +1,7 @@
 // Builds public/og.png — the 1200x630 social/Discord preview card.
 // Run: node scripts/build-og.mjs
 import { Resvg } from '@resvg/resvg-js';
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { writeFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 

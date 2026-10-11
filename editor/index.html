@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <meta name="theme-color" content="#0b0c0f">
-    <title>SnapShotPro v33 · Pro Editor</title>
+    <title>SnapShotPro v35 · Pro Editor</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -29,11 +29,15 @@
                         <circle cx="46" cy="26" r="1.6" fill="#ff3b30"/>
                     </svg>
                 </div>
-                <span>SnapShotPro <span style="font-size:13px;font-weight:400;color:var(--text-secondary);">v33 · Aperture</span></span>
+                <span>SnapShotPro <span style="font-size:13px;font-weight:400;color:var(--text-secondary);">v35 · Contrast</span></span>
             </div>
             <div class="header-actions">
-                <button class="btn btn-secondary" id="sidebar-toggle-btn" aria-label="Menu" title="Menu">☰</button>
                 <span id="auth-pill" style="display:inline-flex;gap:6px;align-items:center;margin-right:4px;"></span>
+                <div class="ui-mode-toggle" id="ui-mode-toggle" role="group" aria-label="Interface mode">
+                    <button type="button" data-mode="simple" title="Simple mode: just the essential tools">Simple</button>
+                    <button type="button" data-mode="pro" title="Pro mode: every tool">Pro</button>
+                </div>
+                <button class="btn btn-secondary" id="install-app-btn" title="Install SnapShotPro as an app" style="display:none;">⬇ <span class="btn-text">Install app</span></button>
                 <button class="btn btn-secondary" id="theme-toggle-btn" title="Toggle Theme">🌙</button>
                 <button class="btn btn-secondary" id="shortcuts-btn" title="Keyboard Shortcuts">⌨️</button>
                 <button class="btn btn-secondary" id="undo-btn" disabled>↶ <span class="btn-text">Undo</span></button>
@@ -56,7 +60,7 @@
     </nav>
 
     <div class="sidebar">
-        <div class="sidebar-section" data-group="import">
+        <div class="sidebar-section" data-group="import" data-simple>
             <h3 class="section-title">Image Upload</h3>
             <div style="display:flex;gap:8px;margin-bottom:8px;">
                 <button class="btn btn-primary" style="flex:1;" id="upload-btn"><span>📁</span> Choose Image</button>
@@ -124,6 +128,42 @@
         <!-- v28 — Asset Library: a persistent gallery of recently loaded images
              to re-use. Click a thumb to add it as a layer, double-click to set it
              as the main image. -->
+        <div class="sidebar-section" data-group="import" data-simple id="compare-section">
+            <h3 class="section-title">Before / After</h3>
+            <p class="info-text" style="margin-bottom:12px;">Show what changed. Your screenshot is After; add the old one as Before.</p>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+                <button class="btn btn-primary" style="flex:1;" id="compare-upload-btn">Add Before</button>
+                <button class="btn btn-secondary" style="flex:1;" id="compare-use-current-btn" title="Keep the current screenshot as Before, then load the new one as After">Use current as Before</button>
+            </div>
+            <input type="file" id="compare-file-input" accept="image/*" style="display:none;" aria-label="Before image file">
+            <div class="compare-thumb-row" id="compare-thumb-row" style="display:none;">
+                <img id="compare-thumb" alt="Before image">
+                <span class="compare-thumb-label">Before</span>
+                <button class="btn btn-secondary" id="compare-swap-btn" title="Swap Before and After">⇄ <span>Swap</span></button>
+                <button class="btn btn-secondary" id="compare-remove-btn" title="Remove the Before image">✕</button>
+            </div>
+            <p class="info-text" id="compare-status" style="min-height:14px;margin-bottom:8px;"></p>
+            <div class="toggle-switch"><span class="toggle-label">Show comparison</span><label class="switch"><input type="checkbox" id="compare-enabled"><span class="slider"></span></label></div>
+            <div id="compare-controls" style="display:none;margin-top:16px;">
+                <div class="control-group"><label class="control-label">Divider Position</label><div class="range-group"><input type="range" class="range-input" id="compare-split" min="0" max="100" value="50"><span class="range-value" id="compare-split-value">50%</span></div></div>
+                <div class="control-group"><label class="control-label">Direction</label><select class="control-input" id="compare-orientation"><option value="vertical">Left / right</option><option value="horizontal">Top / bottom</option></select></div>
+                <div class="control-group"><label class="control-label">Before Image Fit</label><select class="control-input" id="compare-fit"><option value="cover">Fill the frame</option><option value="contain">Show the whole image</option></select></div>
+                <div class="toggle-switch"><span class="toggle-label">Labels</span><label class="switch"><input type="checkbox" id="compare-labels-enabled" checked><span class="slider"></span></label></div>
+                <div id="compare-label-fields" style="margin-top:10px;">
+                    <div style="display:flex;gap:8px;" class="control-group">
+                        <input type="text" class="control-input" id="compare-label-before" value="Before" maxlength="40" aria-label="Before label" style="flex:1;min-width:0;">
+                        <input type="text" class="control-input" id="compare-label-after" value="After" maxlength="40" aria-label="After label" style="flex:1;min-width:0;">
+                    </div>
+                    <div class="control-group"><label class="control-label">Label Position</label><select class="control-input" id="compare-label-position"><option value="top">Top</option><option value="bottom">Bottom</option></select></div>
+                </div>
+                <div class="control-group"><label class="control-label">Divider Color</label><div class="color-picker-wrapper"><div class="color-preview"><input type="color" id="compare-divider-color" value="#ffffff"></div><input type="text" class="control-input" id="compare-divider-color-text" value="#ffffff" style="flex:1;"></div></div>
+                <div class="control-group"><label class="control-label">Divider Width</label><div class="range-group"><input type="range" class="range-input" id="compare-divider-width" min="0" max="8" value="3"><span class="range-value" id="compare-divider-width-value">3px</span></div></div>
+                <div class="toggle-switch"><span class="toggle-label">Drag handle</span><label class="switch"><input type="checkbox" id="compare-handle" checked><span class="slider"></span></label></div>
+                <div class="toggle-switch"><span class="toggle-label">Animate a wipe (Motion Studio)</span><label class="switch"><input type="checkbox" id="compare-wipe"><span class="slider"></span></label></div>
+                <button class="btn btn-secondary" style="width:100%;margin-top:12px;" id="compare-export-html-btn">Export interactive slider (HTML)</button>
+            </div>
+        </div>
+
         <div class="sidebar-section" data-group="import">
             <h3 class="section-title">Asset Library</h3>
             <p class="info-text" id="asset-library-empty" style="margin-bottom:8px;">Images you load show up here to drop back in later. Click to add as a layer · double-click for main image.</p>
@@ -153,7 +193,7 @@
             </div>
         </div>
 
-        <div class="sidebar-section" data-group="adjust">
+        <div class="sidebar-section" data-group="adjust" data-simple>
             <h3 class="section-title">Image Editing</h3>
             <label class="control-label">Transform</label>
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px;">
@@ -186,6 +226,23 @@
             <div class="control-group"><label class="control-label" style="font-size:12px;margin-bottom:4px;">Tint</label><div class="range-group"><input type="range" class="range-input" id="tint" min="-100" max="100" value="0"><span class="range-value" id="tint-value">0</span></div></div>
         </div>
 
+        <div class="sidebar-section" data-group="adjust">
+            <h3 class="section-title">Bokeh</h3>
+            <p class="info-text" style="margin-bottom:12px;">Keep the subject sharp and blur the background like a camera lens. Detection runs in your browser.</p>
+            <button class="btn btn-primary" style="width:100%;margin-bottom:6px;" id="bokeh-detect-btn">Detect subject</button>
+            <div id="bokeh-progress" class="ai-progress" style="display:none;">
+                <div class="ai-progress-bar"><div class="ai-progress-fill" style="width:0%"></div></div>
+                <span class="ai-progress-label" style="min-width:90px;text-align:right;">0%</span>
+            </div>
+            <p class="info-text" id="bokeh-status" style="min-height:14px;margin-bottom:8px;"></p>
+            <div class="toggle-switch"><span class="toggle-label">Enable Bokeh</span><label class="switch"><input type="checkbox" id="bokeh-enabled"><span class="slider"></span></label></div>
+            <div id="bokeh-controls" style="display:none;margin-top:16px;">
+                <div class="control-group"><label class="control-label">Blur Amount</label><div class="range-group"><input type="range" class="range-input" id="bokeh-amount" min="2" max="40" value="12"><span class="range-value" id="bokeh-amount-value">12</span></div></div>
+                <div class="control-group"><label class="control-label">Highlights</label><div class="range-group"><input type="range" class="range-input" id="bokeh-highlights" min="0" max="100" value="40"><span class="range-value" id="bokeh-highlights-value">40%</span></div></div>
+                <div class="control-group"><label class="control-label">Highlight Shape</label><select class="control-input" id="bokeh-shape"><option value="circle">Circle</option><option value="hexagon">Hexagon</option></select></div>
+            </div>
+        </div>
+
         <!-- v18 — Design Variations: one-click styled looks for the screenshot.
              Foundation of the AI arc (v19 adds prompts, v20 the agent). -->
         <div class="sidebar-section" data-group="adjust">
@@ -196,7 +253,7 @@
             <button class="btn btn-secondary" id="vary-shuffle" style="width:100%;margin-top:10px;display:none;">🔀 Shuffle again</button>
         </div>
 
-        <div class="sidebar-section" data-group="markup">
+        <div class="sidebar-section" data-group="markup" data-simple>
             <h3 class="section-title">Text &amp; Annotations</h3>
             <button class="btn btn-primary" style="width:100%;margin-bottom:12px;" id="add-text-btn">+ Add Text</button>
             <div id="text-controls" style="display:none;">
@@ -377,7 +434,7 @@
             </div>
         </div>
 
-        <div class="sidebar-section" data-group="background">
+        <div class="sidebar-section" data-group="background" data-simple>
             <h3 class="section-title">Background</h3>
             <div class="tab-row">
                 <button class="tab-btn active" data-bg="gradient">Gradient</button>
@@ -459,7 +516,7 @@
         </div>
 
         <!-- v20 — AI Design Agent copilot -->
-        <div class="sidebar-section" data-group="ai">
+        <div class="sidebar-section" data-group="ai" data-simple>
             <h3 class="section-title">Design Agent</h3>
             <p class="info-text" style="margin-bottom:8px;">Describe what you want, then refine by chatting. The agent designs, generates, and remembers your style.</p>
             <div id="agent-log" class="agent-log"></div>
@@ -596,7 +653,7 @@
             <label class="control-label">Recolor an element</label>
             <div style="display:flex;gap:6px;margin-bottom:10px;">
                 <input type="text" class="control-input" id="medit-recolor-desc" placeholder="e.g. the primary button" style="flex:1;">
-                <input type="color" id="medit-recolor-hex" value="#4f46e5" style="width:38px;height:32px;border-radius:6px;border:1px solid var(--border-color);cursor:pointer;padding:2px;">
+                <input type="color" id="medit-recolor-hex" aria-label="New color" value="#4f46e5" style="width:38px;height:32px;border-radius:6px;border:1px solid var(--border-color);cursor:pointer;padding:2px;">
                 <button class="btn btn-secondary" id="medit-recolor">Recolor</button>
             </div>
 
@@ -730,7 +787,7 @@
             <p class="info-text" id="brand-info" style="margin-top:8px;">No brand kits saved</p>
         </div>
 
-        <div class="sidebar-section" data-group="adjust">
+        <div class="sidebar-section" data-group="adjust" data-simple>
             <h3 class="section-title">Image Settings</h3>
             <div class="control-group"><label class="control-label">Padding</label><div class="range-group"><input type="range" class="range-input" id="padding" min="0" max="200" value="60"><span class="range-value" id="padding-value">60px</span></div></div>
             <div class="control-group"><label class="control-label">Scale</label><div class="range-group"><input type="range" class="range-input" id="scale" min="50" max="150" value="100"><span class="range-value" id="scale-value">100%</span></div></div>
@@ -758,7 +815,7 @@
             </div>
         </div>
 
-        <div class="sidebar-section" data-group="background">
+        <div class="sidebar-section" data-group="background" data-simple>
             <h3 class="section-title">Mockup Scenes</h3>
             <div class="scenes-grid" id="scenes-grid">
                 <div class="scene-tile active" data-scene=""><div class="scene-thumb">⊘</div>None</div>
@@ -802,7 +859,7 @@
             </div>
         </div>
 
-        <div class="sidebar-section" data-group="frame">
+        <div class="sidebar-section" data-group="frame" data-simple>
             <h3 class="section-title">Device &amp; Window Frame</h3>
             <div class="control-group"><label class="control-label">Frame Type</label><select class="control-input" id="device-frame-type"><option value="">None</option><optgroup label="Devices"><option value="iphone16pro">iPhone 16 Pro</option><option value="ipadpro">iPad Pro</option><option value="macbookpro">MacBook Pro</option><option value="watch">Apple Watch</option><option value="studiodisplay">Studio Display</option><option value="pixel">Pixel (Android)</option></optgroup><optgroup label="Windows"><option value="macos">macOS Window</option><option value="windows">Windows Window</option><option value="winlaptop">Windows Laptop</option></optgroup><optgroup label="Browsers"><option value="chrome">Chrome Browser</option><option value="safari">Safari Browser</option><option value="firefox">Firefox Browser</option></optgroup></select></div>
             <div id="device-frame-controls" style="display:none;">
@@ -836,7 +893,7 @@
             </div>
         </div>
 
-        <div class="sidebar-section" data-group="frame">
+        <div class="sidebar-section" data-group="frame" data-simple>
             <h3 class="section-title">✨ Mockup Presets</h3>
             <div class="scenes-grid">
                 <div class="scene-tile" data-mockup-preset="appstore"><div class="scene-thumb">📱</div>App Store</div>
@@ -962,7 +1019,7 @@
             <p class="info-text" id="merge-progress" style="margin-top:8px;"></p>
         </div>
 
-        <div class="sidebar-section" data-group="frame">
+        <div class="sidebar-section" data-group="frame" data-simple>
             <h3 class="section-title">Shadow Settings</h3>
             <div class="shadow-preset-grid">
                 <div class="shadow-preset-btn active" data-shadow="soft">Soft</div>
@@ -990,7 +1047,7 @@
             </div>
         </div>
 
-        <div class="sidebar-section" data-group="markup">
+        <div class="sidebar-section" data-group="markup" data-simple>
             <h3 class="section-title">Privacy Tools</h3>
             <p class="info-text" style="margin-bottom:12px;">Use the ▓ Redact tool in the toolbar above the canvas to draw boxes.</p>
             <div class="control-group"><label class="control-label">Redaction Style</label><select class="control-input" id="redact-type"><option value="pixelate">Pixelate</option><option value="blur">Blur</option></select></div>
@@ -1002,8 +1059,13 @@
             <h3 class="section-title">Spotlight Effect</h3>
             <div class="toggle-switch"><span class="toggle-label">Enable Spotlight</span><label class="switch"><input type="checkbox" id="spotlight-enabled"><span class="slider"></span></label></div>
             <div id="spotlight-controls" style="display:none;margin-top:16px;">
-                <p class="info-text" style="margin-bottom:12px;">Use the ◎ Spotlight tool above the canvas to drag a region.</p>
-                <div class="control-group"><label class="control-label">Dim Opacity</label><div class="range-group"><input type="range" class="range-input" id="spotlight-opacity" min="10" max="95" value="65"><span class="range-value" id="spotlight-opacity-value">65%</span></div></div>
+                <p class="info-text" style="margin-bottom:12px;">Drag with the ◎ Spotlight tool to add a focus area. Hold Shift for a circle. <span id="spotlight-count"></span></p>
+                <div class="control-group"><label class="control-label">Shape</label><select class="control-input" id="spotlight-shape"><option value="rect">Box</option><option value="ellipse">Circle</option><option value="rounded">Rounded</option></select></div>
+                <div class="control-group"><label class="control-label">Dim Opacity</label><div class="range-group"><input type="range" class="range-input" id="spotlight-opacity" min="0" max="95" value="65"><span class="range-value" id="spotlight-opacity-value">65%</span></div></div>
+                <div class="control-group"><label class="control-label">Blur</label><div class="range-group"><input type="range" class="range-input" id="spotlight-blur" min="0" max="40" value="0"><span class="range-value" id="spotlight-blur-value">0px</span></div></div>
+                <div class="control-group"><label class="control-label">Soft Edge</label><div class="range-group"><input type="range" class="range-input" id="spotlight-feather" min="0" max="60" value="0"><span class="range-value" id="spotlight-feather-value">0px</span></div></div>
+                <div class="control-group"><label class="control-label">Dim Color</label><div class="color-picker-wrapper"><div class="color-preview"><input type="color" id="spotlight-tint" value="#000000"></div><input type="text" class="control-input" id="spotlight-tint-text" value="#000000" style="flex:1;"></div></div>
+                <button class="btn btn-secondary" style="width:100%;" id="spotlight-clear-btn">Clear Focus Areas</button>
             </div>
         </div>
 
@@ -1030,7 +1092,7 @@
             </div>
         </div>
 
-        <div class="sidebar-section" data-group="frame">
+        <div class="sidebar-section" data-group="frame" data-simple>
             <h3 class="section-title">Canvas Settings</h3>
             <div class="control-group"><label class="control-label">Canvas Width</label><input type="number" class="control-input" id="canvas-width" value="1200" min="400" max="4000" step="100"></div>
             <div class="control-group"><label class="control-label">Canvas Height</label><input type="number" class="control-input" id="canvas-height" value="675" min="400" max="4000" step="100"></div>
@@ -1047,7 +1109,7 @@
             <p class="info-text">Export quality: PNG (Lossless)</p>
         </div>
 
-        <div class="sidebar-section" data-group="markup">
+        <div class="sidebar-section" data-group="markup" data-simple>
             <h3 class="section-title">Watermark</h3>
             <div class="toggle-switch"><span class="toggle-label">Enable Watermark</span><label class="switch"><input type="checkbox" id="watermark-enabled"><span class="slider"></span></label></div>
             <div id="watermark-controls" style="display:none;margin-top:16px;">
@@ -1098,7 +1160,7 @@
             </div>
         </div>
 
-        <div class="sidebar-section" data-group="export">
+        <div class="sidebar-section" data-group="export" data-simple>
             <h3 class="section-title">Export Settings</h3>
             <div class="control-group"><label class="control-label">Export Format</label><select class="control-input" id="export-format"><option value="png">PNG (Lossless)</option><option value="jpeg">JPEG</option><option value="webp">WebP</option><option value="gif">GIF (Animated)</option></select></div>
             <div id="quality-controls" style="display:none;">
@@ -1124,7 +1186,7 @@
             <button class="btn btn-secondary" style="width:100%;margin-top:8px;" id="export-html-btn">🌐 Export as HTML Card</button>
         </div>
 
-        <div class="sidebar-section" data-group="export">
+        <div class="sidebar-section" data-group="export" data-simple>
             <h3 class="section-title">Share</h3>
             <button class="btn btn-primary" style="width:100%;margin-bottom:8px;" id="share-btn">&#128279; Share Image</button>
             <p class="info-text" style="margin-bottom:8px;">Upload to Supabase Storage and get a shareable link. Requires cloud setup.</p>
@@ -1153,7 +1215,7 @@
             <p class="info-text" id="collab-status" style="min-height:14px;margin-top:6px;"></p>
         </div>
 
-        <div class="sidebar-section" data-group="project">
+        <div class="sidebar-section" data-group="project" data-simple>
             <h3 class="section-title">📁 Projects</h3>
             <p class="info-text" style="margin-bottom:8px;">Your work autosaves to a project and is versioned automatically. Sign in to sync across devices.</p>
             <div class="project-current">
@@ -1208,7 +1270,7 @@
             <div id="gallery-list"></div>
         </div>
 
-        <div class="sidebar-section" data-group="project">
+        <div class="sidebar-section" data-group="project" data-simple>
             <h3 class="section-title">Templates</h3>
             <div class="control-group"><label class="control-label">Template Name</label><input type="text" class="control-input" id="template-name" placeholder="My Template"></div>
             <div style="display:flex;gap:8px;margin-bottom:12px;">
@@ -1248,7 +1310,7 @@
             <input type="number" id="ann-sides" min="3" max="12" value="6" title="Polygon sides" style="width:46px;padding:4px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:6px;">
             <input type="number" id="ann-points" min="3" max="12" value="5" title="Star points" style="width:46px;padding:4px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:6px;">
             <button id="ann-delete-btn" class="ann-tool-btn" style="margin-left:4px;">🗑 Delete</button>
-            <button id="ann-clear-btn" class="ann-tool-btn">Clear All</button>
+            <button id="ann-clear-btn" class="ann-tool-btn" title="Remove every annotation (Undo brings them back)">Clear All</button>
         </div>
 
         <div class="canvas-container" id="drop-zone">
@@ -1422,7 +1484,7 @@
     <div class="present-counter" id="present-counter">1 / 1</div>
 </div>
 
-<div class="notification" id="notification">
+<div class="notification" id="notification" role="status" aria-live="polite" aria-atomic="true">
     <span class="notification-icon">✓</span>
     <span class="notification-text" id="notification-text">Image exported successfully!</span>
 </div>

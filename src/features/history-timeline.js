@@ -3,10 +3,14 @@ import { el } from '../ui/elements.js';
 import { render } from '../render/render.js';
 
 export function renderHistoryTimeline() {
-  const track = el.historyTrack;
-  if (!track) return;
   const past = history.past || [];
   const future = history.future || [];
+  // Header Undo/Redo state first: the editor has no #history-track today, and
+  // returning before this left both buttons permanently disabled.
+  if (el.undoBtn) el.undoBtn.disabled = past.length === 0;
+  if (el.redoBtn) el.redoBtn.disabled = future.length === 0;
+  const track = el.historyTrack;
+  if (!track) return;
   const total = past.length + 1 + future.length;
   const currentIdx = past.length;
   let html = '';
@@ -18,8 +22,6 @@ export function renderHistoryTimeline() {
   if (el.historyPosition) el.historyPosition.textContent = (currentIdx + 1) + ' / ' + total;
   if (el.historyUndoBtn) el.historyUndoBtn.disabled = past.length === 0;
   if (el.historyRedoBtn) el.historyRedoBtn.disabled = future.length === 0;
-  if (el.undoBtn) el.undoBtn.disabled = past.length === 0;
-  if (el.redoBtn) el.redoBtn.disabled = future.length === 0;
 
   track.querySelectorAll('.history-dot').forEach(d => {
     d.addEventListener('click', () => jumpHistory(parseInt(d.dataset.idx, 10)));

@@ -21,6 +21,7 @@ import { getClient, getUser } from './auth.js';
 import { snapshotProject } from '../state/serialize.js';
 import { applyKitObject, captureKitObject } from './brand-kit.js';
 import { escapeHTML } from '../utils/dom.js';
+import { revealSection } from './studio-nav.js';
 
 const GALLERY_BUCKET = 'gallery';
 
@@ -144,7 +145,10 @@ function setGalleryStatus(msg) {
 
 export function openGalleryBrowse() {
   const panel = document.getElementById('gallery-panel');
-  if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (panel) {
+    revealSection(panel);     // v35 — switches to the Project tab, even in Simple mode
+    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
   browse();
 }
 

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/main.js",
+    "api/*.js",
+    "scripts/*.mjs",
+    "public/*.js",
+    "**/index.html"
+  ],
+  "project": [
+    "src/**/*.js",
+    "api/**/*.js",
+    "scripts/**/*.mjs",
+    "public/**/*.js"
+  ],
+  "rules": {
+    "exports": "off",
+    "duplicates": "off"
+  }
+}

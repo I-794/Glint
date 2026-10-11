@@ -9,6 +9,7 @@ import { render } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
 import { generateBackgroundImage } from './ai-cloud.js';
 import { cutSubject } from './bg-remove.js';
+import { revealSection } from './studio-nav.js';
 
 const STYLE_PHRASES = {
   photographic: 'a high-quality photographic background',
@@ -79,7 +80,7 @@ async function generate() {
       setStatus('');
       showNotification('Add an OpenAI key in AI settings (or deploy with OPENAI_API_KEY) to generate backgrounds.', 'error');
       const d = document.getElementById('api-keys-details');
-      if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      if (d) { revealSection(d); d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     } else {
       console.error(e);
       setStatus('Failed.');

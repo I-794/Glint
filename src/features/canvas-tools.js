@@ -1,7 +1,7 @@
 import { state, imageRegistry } from '../state/state.js';
 import { el } from '../ui/elements.js';
-import { saveStateToHistory, undo, history } from '../state/history.js';
-import { showNotification } from '../ui/notification.js';
+import { saveStateToHistory } from '../state/history.js';
+import { showUndoToast } from '../ui/notification.js';
 import { render } from '../render/render.js';
 import { drawArrow, drawStroke, annotationBBox, drawShape, SHAPE_TYPES } from '../render/annotations.js';
 import { hitTestExtraImageAtPoint } from './extra-images.js';
@@ -12,6 +12,7 @@ import {
   resolveRef, objectRefs, isRefSelected, selectOnly, toggleRef,
   clearSelection, setSelection,
 } from './selection.js';
+import { hitRegionEdge, hitRegionCorner, regionFromDrag, traceRegion, upgradeSpotlight } from '../render/spotlight-geom.js';
 
 let drawing = { active: false, startX: 0, startY: 0, points: [] };
 let dragOffset = { dx: 0, dy: 0 };
@@ -23,6 +24,8 @@ let capturedPointerId = null;
 // v28 — multi-select drag of 2+ objects, and rubber-band marquee selection.
 let groupDrag = { active: false, lastX: 0, lastY: 0, saved: false };
 let marquee = null;
+// v34 — corner-drag resize of a selected spotlight region.
+let regionResize = null;
 
 // Abandon any in-progress one-finger interaction (used when a 2nd finger lands,
 // so the viewport can take over for pinch/two-finger pan).
@@ -34,6 +37,7 @@ function cancelInteraction() {
   isDraggingExtraImage = false;
   groupDrag.active = false;
   marquee = null;
+  regionResize = null;
   gesture.canvasBusy = false;
   clearGuides();
   if (capturedPointerId !== null) {
@@ -84,6 +88,27 @@ export function hitTestRedactions(x, y) {
   return -1;
 }
 
+// v34 — spotlight regions are hit on their outline band (or resize corner) only.
+export function hitTestSpotlight(x, y) {
+  const sp = state.spotlight;
+  if (!sp || !sp.enabled || !Array.isArray(sp.regions)) return null;
+  const cw = el.previewCanvas.width, ch = el.previewCanvas.height;
+  for (let i = sp.regions.length - 1; i >= 0; i--) {
+    const r = sp.regions[i];
+    if (hitRegionEdge(r, cw, ch, x, y) || hitRegionCorner(r, cw, ch, x, y)) return r.id;
+  }
+  return null;
+}
+
+// v34 — the selected spotlight region whose resize corner is under (x, y).
+function spotlightCornerHit(x, y) {
+  const sp = state.spotlight;
+  if (!sp || !sp.enabled || !Array.isArray(sp.regions)) return null;
+  const cw = el.previewCanvas.width, ch = el.previewCanvas.height;
+  return sp.regions.find((r) => isRefSelected({ kind: 'spotlight', id: r.id }) &&
+    hitRegionCorner(r, cw, ch, x, y)) || null;
+}
+
 // v28 — resolve the top-most object under a point into a selection ref, using
 // the same priority the old single-select path used: text → annotation →
 // redaction → extra image.
@@ -96,6 +121,8 @@ export function hitTopRef(x, y) {
   if (r !== -1) return { kind: 'redaction', id: state.redactions[r].id };
   const eIdx = hitTestExtraImageAtPoint(x, y, canvas);
   if (eIdx !== -1) return { kind: 'extraImage', id: state.extraImages[eIdx].id };
+  const s = hitTestSpotlight(x, y);
+  if (s != null) return { kind: 'spotlight', id: s };
   return null;
 }
 
@@ -107,20 +134,36 @@ export function deleteSelected() {
     const handles = state.canvasSelection.filter((r) => r.kind !== 'text').map(resolveRef).filter(Boolean);
     if (!handles.length) return;
     saveStateToHistory();
-    const entry = history.past[history.past.length - 1];
     // Resolve handles up front; each remove() recomputes its live index so the
     // batch stays correct as the underlying arrays shrink.
     handles.forEach((h) => h.remove());
     clearSelection();
     render();
     // v33 — one-click Undo (same as Cmd+Z; the deletion is one history entry).
-    showNotification(handles.length === 1 ? 'Deleted' : `Deleted ${handles.length} items`, 'success',
-      { action: { label: 'Undo', run: () => {
-        // Only if nothing else was done since; otherwise Undo would revert that instead.
-        if (history.past[history.past.length - 1] === entry) undo(render);
-        else showNotification('Use Cmd/Ctrl+Z to step back through later edits', 'error');
-      } } });
+    showUndoToast(handles.length === 1 ? 'Deleted' : `Deleted ${handles.length} items`, render);
   }
+}
+
+// v33.2 — Clear All (annotation toolbar, Cmd-K) and Clear All Redactions get
+// the same one-click Undo toast as canvas deletes. No-op when already empty.
+export function clearAllAnnotations() {
+  const n = state.annotations.length;
+  if (!n) return;
+  saveStateToHistory();
+  state.annotations = [];
+  clearSelection();
+  render();
+  showUndoToast(n === 1 ? 'Cleared 1 annotation' : `Cleared ${n} annotations`, render);
+}
+
+export function clearAllRedactions() {
+  const n = state.redactions.length;
+  if (!n) return;
+  saveStateToHistory();
+  state.redactions = [];
+  clearSelection();
+  render();
+  showUndoToast(n === 1 ? 'Cleared 1 redaction' : `Cleared ${n} redactions`, render);
 }
 
 // v14 — resolve the currently "selected" element into a uniform handle: its
@@ -175,9 +218,13 @@ function selectedTarget() {
 // anything moved (so the caller can decide to preventDefault).
 export function nudgeSelected(dx, dy, save) {
   // v28 — nudge the whole multi-selection together.
-  if (state.canvasSelection.length > 1) {
+  if (state.canvasSelection.length > 1 || state.canvasSelection[0]?.kind === 'spotlight') {
+    // Resolve first: refs left dangling (e.g. regions just cleared) move nothing,
+    // so they must not push an empty history entry.
+    const handles = state.canvasSelection.map(resolveRef).filter(Boolean);
+    if (!handles.length) return false;
     if (save) saveStateToHistory();
-    state.canvasSelection.forEach((ref) => { const h = resolveRef(ref); if (h) h.moveBy(dx, dy); });
+    handles.forEach((h) => h.moveBy(dx, dy));
     render();
     return true;
   }
@@ -251,14 +298,15 @@ function drawPreviewAnnotation(startX, startY, curX, curY) {
     ctx.fillStyle = 'rgba(255,102,0,0.2)';
     ctx.fillRect(rx, ry, rw, rh);
   } else if (tool === 'spotlight') {
+    // v34 — preview the region being dragged (Shift = ellipse) as a hole in the dim.
     const cw = el.previewCanvas.width, ch = el.previewCanvas.height;
-    const rx = Math.min(startX, curX), ry = Math.min(startY, curY);
-    const rw = Math.abs(curX - startX), rh = Math.abs(curY - startY);
-    ctx.fillStyle = `rgba(0,0,0,${state.spotlight.opacity})`;
-    ctx.fillRect(0, 0, cw, ch);
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = 'rgba(0,0,0,1)';
-    ctx.fillRect(rx, ry, rw, rh);
+    const sp = state.spotlight;
+    const r = regionFromDrag(startX, startY, curX, curY, cw, ch, drawing.shift ? 'ellipse' : (sp.shape || 'rect'), 0);
+    ctx.fillStyle = `rgba(0,0,0,${sp.opacity ?? 0.65})`;
+    ctx.beginPath();
+    ctx.rect(0, 0, cw, ch);
+    traceRegion(ctx, r, cw, ch);
+    ctx.fill('evenodd');
   } else if (tool === 'glass') {
     // v16.1 — preview the glass panel footprint (the real frosted draw happens
     // on the next render once the region is committed).
@@ -290,7 +338,7 @@ function canvasMouseDown(e) {
   // Claim the pointer only when we actually started drawing or dragging, so an
   // empty-canvas tap with the Select tool falls through to the viewport (pan).
   gesture.canvasBusy = drawing.active || isDraggingText || isDraggingAnnotation ||
-    isDraggingExtraImage || groupDrag.active || !!marquee;
+    isDraggingExtraImage || groupDrag.active || !!marquee || !!regionResize;
   if (gesture.canvasBusy && e.pointerId != null) {
     try { el.previewCanvas.setPointerCapture(e.pointerId); capturedPointerId = e.pointerId; } catch (_) {}
   }
@@ -305,6 +353,8 @@ function canvasDownLogic(e) {
     // empty click starts a rubber-band marquee. A click on an already-multi
     // selection starts a group drag; otherwise the single-object drag path
     // (with snapping) runs as before.
+    const corner = spotlightCornerHit(x, y);
+    if (corner) { regionResize = { region: corner, saved: false }; return; }
     const ref = hitTopRef(x, y);
     if (e.shiftKey) {
       if (ref) { toggleRef(ref); render(); }
@@ -312,7 +362,7 @@ function canvasDownLogic(e) {
     }
     if (ref) {
       if (!isRefSelected(ref)) selectOnly(ref);
-      if (state.canvasSelection.length > 1) {
+      if (state.canvasSelection.length > 1 || ref.kind === 'spotlight') {
         groupDrag = { active: true, lastX: x, lastY: y, saved: false };
       } else {
         startSingleDrag(ref, x, y);
@@ -370,6 +420,8 @@ function drawMarquee() {
 
 // v28 — commit the marquee: select every object whose box intersects it. A
 // near-zero drag is treated as a click (selection was already cleared on down).
+// v34 — a spotlight focus area is selected only when the marquee fully contains
+// it, so a marquee drawn inside a large area picks the objects, not the area.
 function finalizeMarquee() {
   const rx = Math.min(marquee.x0, marquee.x1), ry = Math.min(marquee.y0, marquee.y1);
   const rw = Math.abs(marquee.x1 - marquee.x0), rh = Math.abs(marquee.y1 - marquee.y0);
@@ -378,6 +430,7 @@ function finalizeMarquee() {
     const h = resolveRef(ref);
     if (!h) return false;
     const b = h.box;
+    if (ref.kind === 'spotlight') return b.x >= rx && b.y >= ry && b.x + b.w <= rx + rw && b.y + b.h <= ry + rh;
     return !(b.x > rx + rw || b.x + b.w < rx || b.y > ry + rh || b.y + b.h < ry);
   });
   setSelection(hits);
@@ -390,10 +443,20 @@ function canvasMouseMove(e) {
 
   // v28 — group drag: move every selected object by the pointer delta.
   if (groupDrag.active) {
-    if (!groupDrag.saved) { saveStateToHistory(); groupDrag.saved = true; }
     const dx = x - groupDrag.lastX, dy = y - groupDrag.lastY;
+    if (dx === 0 && dy === 0) return; // no movement: no move, no empty undo entry
+    if (!groupDrag.saved) { saveStateToHistory(); groupDrag.saved = true; }
     state.canvasSelection.forEach((ref) => { const h = resolveRef(ref); if (h) h.moveBy(dx, dy); });
     groupDrag.lastX = x; groupDrag.lastY = y;
+    render();
+    return;
+  }
+  // v34 — resize a spotlight region from its bottom-right corner.
+  if (regionResize) {
+    if (!regionResize.saved) { saveStateToHistory(); regionResize.saved = true; }
+    const r = regionResize.region;
+    r.w = Math.max(8, x - r.x * canvas.width) / canvas.width;
+    r.h = Math.max(8, y - r.y * canvas.height) / canvas.height;
     render();
     return;
   }
@@ -454,8 +517,9 @@ function canvasMouseMove(e) {
 
   if (state.tool === 'select') {
     const canMove = hitTestText(x, y) || hitTestExtraImageAtPoint(x, y, canvas) !== -1 ||
-                    hitTestAnnotations(x, y) !== -1 || hitTestRedactions(x, y) !== -1;
-    canvas.style.cursor = canMove ? 'move' : '';
+                    hitTestAnnotations(x, y) !== -1 || hitTestRedactions(x, y) !== -1 ||
+                    hitTestSpotlight(x, y) != null;
+    canvas.style.cursor = spotlightCornerHit(x, y) ? 'nwse-resize' : (canMove ? 'move' : '');
   }
 
   if (!drawing.active) return;
@@ -465,6 +529,7 @@ function canvasMouseMove(e) {
       drawing.points.push({ x, y });
     }
   }
+  drawing.shift = e.shiftKey;   // v34 — Shift-drag previews an ellipse spotlight region
   drawPreviewAnnotation(drawing.startX, drawing.startY, x, y);
 }
 
@@ -482,6 +547,8 @@ function canvasMouseUp(e) {
 function canvasUpLogic(e) {
   if (!state.image) return;
   const canvas = el.previewCanvas;
+  // v34 — end a spotlight corner resize (history saved on first move).
+  if (regionResize) { regionResize = null; return; }
 
   // v28 — end a group drag (history already saved on first move).
   if (groupDrag.active) { groupDrag.active = false; return; }
@@ -578,18 +645,17 @@ function canvasUpLogic(e) {
       });
     }
   } else if (state.tool === 'spotlight') {
+    // v34 — every drag adds a focus region (Shift = ellipse) and selects it.
     const cw = canvas.width, ch = canvas.height;
-    const rx = Math.min(drawing.startX, x);
-    const ry = Math.min(drawing.startY, y);
-    const rw = Math.abs(x - drawing.startX);
-    const rh = Math.abs(y - drawing.startY);
-    state.spotlight.x = rx / cw;
-    state.spotlight.y = ry / ch;
-    state.spotlight.w = rw / cw;
-    state.spotlight.h = rh / ch;
-    state.spotlight.enabled = true;
-    if (el.spotlightEnabled) el.spotlightEnabled.checked = true;
-    if (el.spotlightControls) el.spotlightControls.style.display = 'block';
+    if (Math.abs(x - drawing.startX) > 4 && Math.abs(y - drawing.startY) > 4) {
+      const sp = state.spotlight = upgradeSpotlight(state.spotlight);
+      const region = regionFromDrag(drawing.startX, drawing.startY, x, y, cw, ch,
+        e.shiftKey ? 'ellipse' : sp.shape, Date.now());
+      sp.regions.push(region);
+      sp.enabled = true;
+      selectOnly({ kind: 'spotlight', id: region.id });
+      window.__updateUIFromState?.();
+    }
   } else if (state.tool === 'glass') {
     // v16.1 — commit the glass panel region (fractional, like spotlight).
     const cw = canvas.width, ch = canvas.height;
@@ -651,12 +717,7 @@ export function bindCanvasTools() {
   if (annSides) annSides.addEventListener('change', (e) => { state.polygonSides = Math.max(3, Math.min(12, parseInt(e.target.value) || 6)); });
   if (annPoints) annPoints.addEventListener('change', (e) => { state.starPoints = Math.max(3, Math.min(12, parseInt(e.target.value) || 5)); });
   if (annDeleteBtn) annDeleteBtn.addEventListener('click', deleteSelected);
-  if (annClearBtn) annClearBtn.addEventListener('click', () => {
-    saveStateToHistory();
-    state.annotations = [];
-    clearSelection();
-    render();
-  });
+  if (annClearBtn) annClearBtn.addEventListener('click', clearAllAnnotations);
 
   // v14 — align the selected element to the canvas.
   document.querySelectorAll('.align-canvas-btn[data-align-canvas]').forEach(btn => {

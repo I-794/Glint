@@ -201,6 +201,7 @@ function commitCrop() {
   newImg.onload = () => {
     state.image = newImg;
     render();
+    window.__updateUIFromState?.();
   };
   newImg.src = out.toDataURL('image/png');
   showNotification('Cropped.', 'success');

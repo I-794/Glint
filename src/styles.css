@@ -10,7 +10,7 @@
     --border-glow: rgba(84, 112, 255, 0.16);
     --text-primary: #ecedf1;
     --text-secondary: #9a9ca8;
-    --text-tertiary: #63656f;
+    --text-tertiary: #8a8d99;   /* ≥4.5:1 on the dark panels (was #63656f, 3.2:1) */
     /* Electric cobalt brand — same family as the landing, tuned brighter for dark UI */
     --accent-primary: #5470ff;
     --accent-secondary: #7d92ff;
@@ -436,10 +436,12 @@ input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-i
     border: 1px solid var(--glass-border); border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
     display: flex; align-items: center; gap: 10px; z-index: 2000;
-    transform: translateX(400px); opacity: 0;
+    transform: translateX(calc(100% + 40px)); opacity: 0;
+    /* Hidden toasts must not swallow clicks on the toolbar beneath them. */
+    pointer-events: none; visibility: hidden;
     transition: all var(--transition-smooth);
 }
-.notification.show { transform: translateX(0); opacity: 1; }
+.notification.show { transform: translateX(0); opacity: 1; pointer-events: auto; visibility: visible; }
 .notification.success { border-color: rgba(52, 211, 153, 0.3); box-shadow: var(--shadow-lg), 0 0 20px rgba(52, 211, 153, 0.08); }
 .notification.error { border-color: rgba(248, 113, 113, 0.3); box-shadow: var(--shadow-lg), 0 0 20px rgba(248, 113, 113, 0.08); }
 .notification-icon { font-size: 18px; }
@@ -1381,14 +1383,6 @@ kbd {
 }
 .canvas-viewport { touch-action: none; }
 
-#sidebar-toggle-btn { display: none; }
-.sidebar-backdrop {
-    position: fixed; inset: 52px 0 0 0; background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    z-index: 1050; opacity: 0; pointer-events: none; transition: opacity var(--transition-smooth);
-}
-.sidebar-backdrop.show { opacity: 1; pointer-events: auto; }
-
 .header { padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); }
 .history-timeline { padding-bottom: env(safe-area-inset-bottom); }
 
@@ -1412,7 +1406,6 @@ kbd {
     .main-content { margin-right: 0; padding: 8px 12px 48px; }
     .layers-panel { display: none; }
     #preview-canvas { max-height: calc(100vh - 180px); }
-    #sidebar-toggle-btn { display: inline-flex; }
     .header { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
     .logo { font-size: 15px; gap: 8px; }
     /* v23 — compact, canvas-first header. The desktop action row does not fit a
@@ -1507,10 +1500,6 @@ kbd {
         content: ''; position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
         width: 40px; height: 5px; border-radius: 3px; background: var(--border-color);
     }
-
-    /* Superseded affordances. */
-    #sidebar-toggle-btn { display: none; }
-    .sidebar-backdrop { display: none; }
 
     /* Canvas claims the space above the peeked sheet + dock. dvh avoids the iOS
        URL-bar collapse clipping the canvas (the old 100vh math did). */
@@ -1835,3 +1824,93 @@ kbd {
   .board-resize { width: 24px; height: 24px; right: 2px; bottom: 2px; }   /* card has overflow:hidden */
   .board-toolbar button { padding: 8px 10px; }
 }
+
+/* v35 — Simple / Pro mode switch (header) */
+.ui-mode-toggle {
+    display: inline-flex; padding: 2px; gap: 2px; margin-right: 4px;
+    background: var(--bg-tertiary); border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+}
+.ui-mode-toggle button {
+    border: none; background: transparent; color: var(--text-secondary);
+    font: 500 12px/1 var(--font-sans); padding: 7px 12px; border-radius: var(--radius-pill);
+    cursor: pointer; transition: background var(--transition-fast), color var(--transition-fast);
+}
+.ui-mode-toggle button:hover { color: var(--text-primary); }
+.ui-mode-toggle button.active { background: var(--accent-primary); color: #fff; box-shadow: 0 1px 6px var(--accent-glow); }
+.ui-mode-toggle button:focus-visible { outline: 2px solid var(--accent-secondary); outline-offset: 1px; }
+
+/* v35 — Simple mode "more tools" footer at the bottom of a panel */
+.simple-more { padding: 4px 16px 20px; }
+.simple-more-btn {
+    width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+    padding: 12px 14px; text-align: left; cursor: pointer;
+    background: transparent; color: var(--text-primary); font-family: var(--font-sans);
+    border: 1px dashed var(--border-color); border-radius: var(--radius-md);
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.simple-more-btn:hover { border-color: var(--accent-primary); background: var(--accent-light); }
+.simple-more-title { font-size: 13px; font-weight: 600; }
+.simple-more-list { font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; }
+.simple-more-cta { font-size: 12px; font-weight: 600; color: var(--accent-secondary); margin-top: 2px; }
+
+/* v35 — floating selection toolbar (preview-only HTML, never exported) */
+.floating-toolbar {
+    position: absolute; top: 0; left: 0; z-index: 120;
+    display: flex; align-items: center; gap: 2px; padding: 4px;
+    background: var(--bg-elevated); color: var(--text-primary);
+    border: 1px solid var(--border-color); border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md); font-family: var(--font-sans);
+    white-space: nowrap; user-select: none;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity var(--transition-fast), visibility var(--transition-fast);
+}
+.floating-toolbar.visible { opacity: 1; visibility: visible; pointer-events: auto; }
+.ftb-label {
+    font-size: 11.5px; font-weight: 600; color: var(--text-secondary);
+    padding: 0 8px 0 6px; max-width: 110px; overflow: hidden; text-overflow: ellipsis;
+}
+.ftb-sep { width: 1px; height: 20px; background: var(--border-color); margin: 0 3px; }
+.ftb-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 30px; height: 30px; padding: 0 6px; border: none; border-radius: var(--radius-sm);
+    background: transparent; color: var(--text-primary); cursor: pointer;
+    transition: background var(--transition-fast);
+}
+.ftb-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.ftb-btn:hover { background: var(--bg-tertiary); }
+.ftb-btn:focus-visible { outline: 2px solid var(--accent-secondary); outline-offset: -2px; }
+.ftb-btn.ftb-text { font: 600 14px/1 var(--font-sans); min-width: 26px; }
+.ftb-btn[aria-pressed="true"] { background: var(--accent-light); color: var(--accent-secondary); }
+.ftb-btn.ftb-danger:hover { background: rgba(248, 113, 113, 0.14); color: var(--error); }
+.ftb-stepper { display: inline-flex; align-items: center; }
+.ftb-value { min-width: 26px; text-align: center; font: 500 12px/1 var(--font-mono); color: var(--text-primary); }
+.ftb-color {
+    position: relative; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm); cursor: pointer;
+}
+.ftb-color:hover { background: var(--bg-tertiary); }
+.ftb-color::before {
+    content: ''; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--swatch, #fff); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--border-color);
+}
+.ftb-color input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: none; padding: 0; }
+.ftb-color:focus-within { outline: 2px solid var(--accent-secondary); outline-offset: -2px; }
+.ftb-select {
+    height: 28px; padding: 0 6px; border-radius: var(--radius-sm);
+    background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color);
+    font: 500 12px var(--font-sans);
+}
+@media (max-width: 767px) {
+    .ui-mode-toggle button { padding: 7px 9px; }
+    .ftb-label { display: none; }
+}
+
+/* v35 — Before / After Compare: the Before thumbnail row */
+.compare-thumb-row {
+    display: flex; align-items: center; gap: 8px; margin: 4px 0 8px;
+    padding: 6px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-tertiary);
+}
+.compare-thumb-row img { width: 54px; height: 36px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0; background: var(--bg-primary); }
+.compare-thumb-label { flex: 1; font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.compare-thumb-row .btn { padding: 6px 10px; font-size: 12px; }

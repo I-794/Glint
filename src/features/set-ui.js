@@ -7,7 +7,6 @@
 // filmstrip, caption editor, and batch list are rendered here.
 
 import { state, imageRegistry } from '../state/state.js';
-import { el } from '../ui/elements.js';
 import { render } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
 import { fitZoom } from './zoom-pan.js';

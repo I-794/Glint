@@ -1,4 +1,5 @@
 import { el } from './elements.js';
+import { history, undo } from '../state/history.js';
 
 // v33 — optional action button (e.g. { label: 'Undo', run }) and a single
 // shared hide timer, so a newer toast is never cut short by an older one's timer.
@@ -25,6 +26,17 @@ export function showNotification(message, type = 'success', { action = null, dur
     el.notification.classList.remove('show');
     el.notification.querySelector('.notification-action')?.remove();
   }, duration || (action ? 6000 : 3000));
+}
+
+// v33.2 — toast with a one-click Undo for a destructive action that has just
+// pushed exactly one history entry (delete, Reset, Clear All). Undo only fires
+// if that entry is still the newest; otherwise it would revert a later edit.
+export function showUndoToast(message, rerender) {
+  const entry = history.past[history.past.length - 1];
+  showNotification(message, 'success', { action: { label: 'Undo', run: () => {
+    if (entry && history.past[history.past.length - 1] === entry) undo(rerender);
+    else showNotification('Use Cmd/Ctrl+Z to step back through later edits', 'error');
+  } } });
 }
 
 let statusTimer = null;

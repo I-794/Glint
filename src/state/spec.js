@@ -18,7 +18,7 @@
 // default so a malformed spec can never corrupt state.
 
 import { state } from './state.js';
-import { gradientPresets, meshPresets, shadowPresets, artFilterPresets } from './presets.js';
+import { shadowPresets, artFilterPresets } from './presets.js';
 
 const BG_MODES = ['gradient', 'mesh', 'solid', 'pattern'];
 const PATTERN_TYPES = ['dots', 'grid', 'lines', 'checker', 'diagonal'];

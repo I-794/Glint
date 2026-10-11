@@ -13,6 +13,11 @@ import { refreshEffectsUI } from '../features/effects-ui.js';
 import { refreshPalettesUI } from '../features/palettes.js';
 import { refreshColorMapUI } from '../features/color-map.js';
 import { refreshMockup3dUI } from '../features/mockup-3d-ui.js';
+import { upgradeSpotlight } from '../render/spotlight-geom.js';
+import { refreshBokehUI } from '../features/bokeh-ui.js';
+import { refreshCompareUI } from '../features/compare-ui.js';
+import { setSelection } from '../features/selection.js';
+import { clearAllRedactions } from '../features/canvas-tools.js';
 
 // Helper: link a slider+display to a state value with optional onChange (for history).
 function linkSlider(input, display, getStr, setVal, opts = {}) {
@@ -187,8 +192,26 @@ function updateWatermarkControls() {
   if (el.watermarkControls) el.watermarkControls.style.display = state.watermark.enabled ? 'block' : 'none';
 }
 
+// v34 — push state.spotlight into the Spotlight section (also run after undo/redo).
+export function refreshSpotlightUI() {
+  if (!el.spotlightEnabled || !state.spotlight) return;
+  const set = (e, val) => { if (e) e.value = val; };
+  const txt = (e, val) => { if (e) e.textContent = val; };
+  const sp = state.spotlight;
+  el.spotlightEnabled.checked = sp.enabled;
+  set(el.spotlightOpacity, Math.round(sp.opacity * 100));
+  txt(el.spotlightOpacityValue, Math.round(sp.opacity * 100) + '%');
+  set(el.spotlightBlur, sp.blur || 0); txt(el.spotlightBlurValue, (sp.blur || 0) + 'px');
+  set(el.spotlightFeather, sp.feather || 0); txt(el.spotlightFeatherValue, (sp.feather || 0) + 'px');
+  set(el.spotlightTint, sp.tint || '#000000'); set(el.spotlightTintText, sp.tint || '#000000');
+  set(el.spotlightShape, sp.shape || 'rect');
+  updateSpotlightControls();
+}
+
 function updateSpotlightControls() {
   if (el.spotlightControls) el.spotlightControls.style.display = state.spotlight.enabled ? 'block' : 'none';
+  const n = Array.isArray(state.spotlight.regions) ? state.spotlight.regions.length : 0;
+  if (el.spotlightCount) el.spotlightCount.textContent = n === 1 ? '1 focus area.' : `${n} focus areas.`;
 }
 
 function updateReflectionControls() {
@@ -372,18 +395,39 @@ function bindShadow() {
 function bindRedactionSpotlight() {
   if (el.redactType) el.redactType.addEventListener('change', (e) => { state.redactType = e.target.value; });
   linkSlider(el.redactIntensity, el.redactIntensityValue, v => String(v), v => state.redactIntensity = v);
-  if (el.clearRedactionsBtn) el.clearRedactionsBtn.addEventListener('click', () => {
-    saveStateToHistory();
-    state.redactions = [];
-    render();
-  });
+  if (el.clearRedactionsBtn) el.clearRedactionsBtn.addEventListener('click', clearAllRedactions);
   if (el.spotlightEnabled) el.spotlightEnabled.addEventListener('change', (e) => {
     saveStateToHistory();
+    state.spotlight = upgradeSpotlight(state.spotlight);
     state.spotlight.enabled = e.target.checked;
+    // v34 — turning it on with no focus areas adds a centered one to start from.
+    if (state.spotlight.enabled && !state.spotlight.regions.length) {
+      state.spotlight.regions.push({ id: Date.now(), x: 0.2, y: 0.2, w: 0.6, h: 0.6, shape: state.spotlight.shape });
+    }
     updateSpotlightControls();
     render();
   });
   linkSlider(el.spotlightOpacity, el.spotlightOpacityValue, v => v + '%', v => state.spotlight.opacity = v / 100);
+  linkSlider(el.spotlightBlur, el.spotlightBlurValue, v => v + 'px', v => state.spotlight.blur = v);
+  linkSlider(el.spotlightFeather, el.spotlightFeatherValue, v => v + 'px', v => state.spotlight.feather = v);
+  linkColor(el.spotlightTint, el.spotlightTintText, v => state.spotlight.tint = v);
+  if (el.spotlightShape) el.spotlightShape.addEventListener('change', (e) => {
+    saveStateToHistory();
+    const shape = e.target.value;
+    state.spotlight = upgradeSpotlight(state.spotlight);
+    state.spotlight.shape = shape;
+    // Reshape the selected focus areas too; new ones use this shape.
+    const ids = state.canvasSelection.filter((s) => s.kind === 'spotlight').map((s) => s.id);
+    (state.spotlight.regions || []).forEach((r) => { if (ids.includes(r.id)) r.shape = shape; });
+    render();
+  });
+  if (el.spotlightClearBtn) el.spotlightClearBtn.addEventListener('click', () => {
+    saveStateToHistory();
+    state.spotlight.regions = [];
+    setSelection(state.canvasSelection.filter((s) => s.kind !== 'spotlight'));
+    updateSpotlightControls();
+    render();
+  });
 }
 
 function bindReflection() {
@@ -650,12 +694,9 @@ export function updateUIFromState() {
     updateWatermarkControls();
   }
 
-  if (el.spotlightEnabled) {
-    el.spotlightEnabled.checked = state.spotlight.enabled;
-    set(el.spotlightOpacity, Math.round(state.spotlight.opacity * 100));
-    txt(el.spotlightOpacityValue, Math.round(state.spotlight.opacity * 100) + '%');
-    updateSpotlightControls();
-  }
+  refreshSpotlightUI();   // v34
+  refreshBokehUI();   // v34
+  refreshCompareUI(); // v35
 
   if (el.reflectionEnabled) {
     el.reflectionEnabled.checked = state.reflection.enabled;
@@ -712,4 +753,5 @@ export function bindAllControls() {
 
   // expose for templates/reset
   window.__updateUIFromState = updateUIFromState;
+  window.__refreshSpotlightUI = refreshSpotlightUI;   // v34
 }

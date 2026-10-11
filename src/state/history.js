@@ -75,22 +75,61 @@ function snapshot() {
     // v27 — Surface Studio (physical & print mockup) settings are undoable.
     surface: state.surface,
     // v30 — Brand Brain system is undoable (Apply / Extract are one undo step).
-    brand: state.brand
+    brand: state.brand,
+    // v34 — Subject Bokeh (Detect subject / sliders are undoable).
+    bokeh: state.bokeh,
+    // v35 — Before / After Compare (carries the Before dataURL).
+    compare: state.compare
   }));
 }
 
 function restore(snap) {
   Object.assign(state, snap);
+  // Sidebar controls mirror state; without this, sliders kept showing the
+  // undone value. window hook avoids an import cycle with ui/bindings.js.
+  if (typeof window !== 'undefined' && typeof window.__updateUIFromState === 'function') window.__updateUIFromState();
+}
+
+// v33.2 — Sliders, color pickers and text fields mutate state on every `input`
+// event but call saveStateToHistory() on `change`, i.e. after the value has
+// already moved, so the first Undo after a drag restored the new value. Rather
+// than touch every handler, capture a snapshot at the gesture's first `input`
+// (window capture phase, so it runs before any feature's own input listener)
+// and hand that snapshot to a saveStateToHistory() made while the same
+// control's `change` is dispatching. The save still happens on `change`, so
+// history listeners (collab broadcast, autosave) fire exactly when they did.
+let pendingEdit = null;   // { target, snap } from the first input of a gesture
+let changeTarget = null;  // control whose `change` event is being dispatched
+
+function isFormControl(t) {
+  return !!t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA');
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('input', (e) => {
+    if (!isFormControl(e.target)) return;
+    if (pendingEdit && pendingEdit.target === e.target) return;
+    pendingEdit = { target: e.target, snap: snapshot() };
+  }, true);
+  window.addEventListener('change', (e) => { changeTarget = e.target; }, true);
+  // Bubble phase on window runs after the control's own change handlers.
+  window.addEventListener('change', (e) => {
+    if (changeTarget === e.target) changeTarget = null;
+    if (pendingEdit && pendingEdit.target === e.target) pendingEdit = null;
+  });
 }
 
 export function saveStateToHistory() {
-  history.past.push(snapshot());
+  const usePending = pendingEdit && changeTarget && pendingEdit.target === changeTarget;
+  history.past.push(usePending ? pendingEdit.snap : snapshot());
+  pendingEdit = null;
   if (history.past.length > history.maxSize) history.past.shift();
   history.future = [];
   emit();
 }
 
 export function undo(rerender) {
+  pendingEdit = null;
   if (history.past.length === 0) return;
   history.future.push(snapshot());
   restore(history.past.pop());
@@ -99,6 +138,7 @@ export function undo(rerender) {
 }
 
 export function redo(rerender) {
+  pendingEdit = null;
   if (history.future.length === 0) return;
   history.past.push(snapshot());
   restore(history.future.pop());

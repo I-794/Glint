@@ -5,6 +5,7 @@ import { saveStateToHistory } from '../state/history.js';
 import { render } from '../render/render.js';
 import { loadVideoFile, clearVideo } from './video.js';
 import { captureAsset } from './asset-library.js';
+import { refreshBokehUI } from './bokeh-ui.js';
 
 // v28 — load a still image from any source (dataURL / object URL). Shared by the
 // file upload path and the reusable asset library ("set as main image").
@@ -14,6 +15,9 @@ export function loadImageFromSrc(src) {
     clearVideo();          // a still image takes over from any loaded clip
     state.image = img;
     state.svgCode = null;
+    // v34 — a new image needs its own subject mask.
+    if (state.bokeh) state.bokeh = { ...state.bokeh, enabled: false, maskDataUrl: null, maskSig: null };
+    refreshBokehUI();
     el.uploadZone.style.display = 'none';
     el.canvasWrapper.style.display = 'block';
     el.annotationToolbar.style.display = 'flex';

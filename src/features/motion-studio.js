@@ -14,7 +14,6 @@
 // truth per parameter.
 
 import { state } from '../state/state.js';
-import { render } from '../render/render.js';
 import { saveStateToHistory, onHistoryChange } from '../state/history.js';
 import {
   bindPlayback, pause, togglePlay, seek, stop,
@@ -43,7 +42,8 @@ const KIND_META = {
   entrance:  { icon: '✦', accent: 'var(--accent-primary)' },
   kenburns:  { icon: '🎥', accent: '#10b981' },
   video:     { icon: '🎬', accent: '#f59e0b' },
-  turntable: { icon: '↻', accent: '#8b5cf6' }
+  turntable: { icon: '↻', accent: '#8b5cf6' },
+  compare:   { icon: '◧', accent: '#ec4899' }   // v35
 };
 
 // ── lane reconciliation ────────────────────────────────────────────────────
@@ -94,6 +94,14 @@ export function syncLanesFromState() {
     const old = keep('turntable', 0);
     lanes.push({ id: 'turntable', kind: 'turntable', target: null, label: 'Turntable spin',
       clips: [{ start: old.start, duration: old.duration || 3000, ref: { turns: state.mockup3d.spin.turns || 1 } }] });
+  }
+
+  // v35 — Before / After wipe: the divider sweeps from Before to After.
+  const cmp = state.compare;
+  if (cmp && cmp.enabled && cmp.wipe && cmp.beforeSrc && !state.video.loaded) {
+    const old = keep('compare', 0);
+    lanes.push({ id: 'compare', kind: 'compare', target: null, label: 'Before / After wipe',
+      clips: [{ start: old.start, duration: old.duration || baseDur, ref: {} }] });
   }
 
   tl.lanes = lanes;

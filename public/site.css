@@ -14,7 +14,7 @@
     --bg-sunken: #0b0f1c;
     --ink: #eef1f8;
     --ink-2: #aab2c8;
-    --ink-3: #6f7794;
+    --ink-3: #7d85a2;   /* ≥4.5:1 on --bg (was #6f7794, 4.4:1) */
     --line: rgba(255, 255, 255, 0.10);
     --line-strong: rgba(255, 255, 255, 0.18);
     /* Frosted surfaces */
@@ -89,6 +89,17 @@ nav.scrolled { border-bottom-color: var(--glass-line); background: rgba(8, 11, 2
 .nav-right { display: flex; align-items: center; gap: clamp(16px, 3vw, 30px); }
 .nav-link { font-size: 14.5px; font-weight: 500; color: var(--ink-2); transition: color 0.18s; }
 .nav-link:hover { color: var(--ink); }
+.nav-link[aria-current="page"] { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+/* Phone menu button (shown <=560px) and skip link (visible only on focus). */
+.nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 4px; flex-shrink: 0; width: 40px; height: 40px; padding: 0; border-radius: 10px; border: 1px solid var(--glass-line); background: transparent; color: var(--ink); cursor: pointer; -webkit-appearance: none; appearance: none; }
+/* Explicit bar width: iOS Safari doesn't stretch flex items inside a <button>, so the bars collapsed to nothing. */
+.nav-toggle span { display: block; width: 18px; height: 2px; flex-shrink: 0; border-radius: 2px; background: currentColor; transition: transform 0.2s, opacity 0.2s; }
+nav.open .nav-toggle span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+nav.open .nav-toggle span:nth-child(2) { opacity: 0; }
+nav.open .nav-toggle span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.skip-link { position: absolute; left: 12px; top: -48px; z-index: 200; padding: 10px 16px; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 600; font-size: 14px; transition: top 0.15s; }
+.skip-link:focus { top: 10px; }
+p a:not(.btn) { text-decoration: underline; text-underline-offset: 2px; }
 
 /* Buttons */
 .btn {
@@ -145,6 +156,15 @@ footer { border-top: 1px solid var(--glass-line); padding: clamp(40px, 5vw, 64px
 
 @media (max-width: 560px) {
     .nav-link { display: none; }
+    /* Header on phones: brand, a compact one-line CTA, then the menu button at the far right. */
+    .nav-toggle { display: inline-flex; order: 3; margin-left: 10px; }
+    .nav-right { margin-left: auto; }
+    nav:not(.open) .nav-right .btn { padding: 9px 14px; font-size: 14px; white-space: nowrap; }
+    nav:not(.open) .nav-right .btn .ar { display: none; }
+    nav.open { background: var(--bg-2); border-bottom-color: var(--glass-line); }
+    nav.open .nav-right { position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 0; padding: 8px 20px 18px; background: var(--bg-2); border-bottom: 1px solid var(--glass-line); }
+    nav.open .nav-link { display: block; padding: 12px 0; font-size: 16px; border-bottom: 1px solid var(--glass-line); }
+    nav.open .nav-right .btn { margin-top: 14px; justify-content: center; }
     .foot-inner { flex-direction: column; align-items: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) {

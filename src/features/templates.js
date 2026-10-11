@@ -2,6 +2,7 @@ import { state } from '../state/state.js';
 import { el } from '../ui/elements.js';
 import { showNotification } from '../ui/notification.js';
 import { render } from '../render/render.js';
+import { saveStateToHistory } from '../state/history.js';
 
 const KEY = 'snapshotpro_templates';
 
@@ -54,6 +55,7 @@ export function loadTemplate() {
   const all = loadAll();
   const snap = all[name];
   if (!snap) { showNotification('Template not found.', 'error'); return; }
+  saveStateToHistory();   // so Undo restores the design the template replaced
   Object.assign(state, snap);
   render();
   showNotification(`Loaded "${name}"`, 'success');

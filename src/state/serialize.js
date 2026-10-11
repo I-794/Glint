@@ -7,6 +7,9 @@
 // the single source of truth for "what travels with a saved/shared design".
 
 import { state } from './state.js';
+import { upgradeSpotlight } from '../render/spotlight-geom.js';
+import { bokehDefaults } from '../render/bokeh-core.js';
+import { normalizeCompare } from '../render/compare-core.js';
 
 export const SERIALIZED_FIELDS = [
   'imageTransform', 'imageFilters', 'imageLayer', 'textOverlay', 'watermark', 'gradient',
@@ -76,7 +79,7 @@ export function snapshotProject() {
 // restores the artwork — unlike snapshotProject(), which stays deliberately
 // lean for realtime collab/gallery payloads. Bump SCHEMA_VERSION whenever the
 // field set changes so normalizeProject() can migrate older saves.
-export const SCHEMA_VERSION = 19;
+export const SCHEMA_VERSION = 21;
 
 // SERIALIZED_FIELDS + the rest of the design-defining state. Kept separate from
 // SERIALIZED_FIELDS so collab/gallery stay small; projects want full fidelity.
@@ -95,7 +98,11 @@ export const PROJECT_FIELDS = [
   'tour',
   // v30 — Brand Brain system (carries logo dataUrl; full-fidelity project field
   // only, deliberately not in the lean SERIALIZED_FIELDS, mirroring `logo`).
-  'brand'
+  'brand',
+  // v34 — Subject Bokeh (carries a mask dataURL, so project-only like `brand`).
+  'bokeh',
+  // v35 — Before / After Compare (carries the Before dataURL, so project-only).
+  'compare'
 ];
 
 // v25 — guarantee every applied design carries a `tour` block. Because
@@ -195,6 +202,28 @@ export function ensureBrandDefaults(design) {
   return design;
 }
 
+// v34 — guarantee every applied design carries a `bokeh` block, so a page that
+// predates v34 never inherits the previous page's mask via Object.assign.
+export function ensureBokehDefaults(design) {
+  if (design && !design.bokeh) design.bokeh = bokehDefaults();
+  return design;
+}
+
+// v35 — schema 21 migration: every applied design carries a valid `compare`
+// block, so a page that predates v35 never inherits the previous page's Before
+// image via Object.assign. Mutates + returns the design.
+export function ensureCompareDefaults(design) {
+  if (design) design.compare = normalizeCompare(design.compare);
+  return design;
+}
+
+// v34 — schema 20 migration: v1's single spotlight rect becomes regions[0] of
+// Spotlight 2.0 (blur/feather/tint default to the v1 look). Mutates + returns.
+export function migrateSpotlightV20(design) {
+  if (design && 'spotlight' in design) design.spotlight = upgradeSpotlight(design.spotlight);
+  return design;
+}
+
 // Accept both the v12 envelope ({schemaVersion, design, image, svgCode}) and
 // the legacy flat payload written by the old cloud-sync saveProject() (raw
 // design fields, no image), returning a normalized v12 envelope either way.
@@ -202,14 +231,15 @@ export function normalizeProject(payload) {
   if (!payload || typeof payload !== 'object') {
     return { schemaVersion: SCHEMA_VERSION, design: {}, image: null, svgCode: null };
   }
+  const migrate = (d) => ensureCompareDefaults(ensureBokehDefaults(migrateSpotlightV20(ensureBrandDefaults(migrateTimelineV18(ensureTourDefaults(sanitizeMotionRuntime(d)))))));
   if (payload.design) {
     return {
       schemaVersion: payload.schemaVersion || SCHEMA_VERSION,
-      design: ensureBrandDefaults(migrateTimelineV18(ensureTourDefaults(sanitizeMotionRuntime(payload.design)))),
+      design: migrate(payload.design),
       image: payload.image || null,
       svgCode: payload.svgCode || null
     };
   }
   // Legacy flat design payload (pre-v12): the whole object is the design.
-  return { schemaVersion: 11, design: ensureBrandDefaults(migrateTimelineV18(ensureTourDefaults(sanitizeMotionRuntime(payload)))), image: null, svgCode: payload.svgCode || null };
+  return { schemaVersion: 11, design: migrate(payload), image: null, svgCode: payload.svgCode || null };
 }

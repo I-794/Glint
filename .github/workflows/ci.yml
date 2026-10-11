@@ -1,0 +1,38 @@
+# v33.2 — runs on every PR and every push to main, so a broken build, a failing
+# regression test, or new dead code is caught before it lands.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # scripts/build-site-shots.mjs needs Playwright, but CI never runs it.
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint (unused imports and variables)
+        run: npm run lint
+      - name: Dead code (knip)
+        run: npm run knip
+      - name: Regression tests
+        run: npm test
+      - name: Build
+        run: npm run build

@@ -1,18 +1,19 @@
 <!-- Shared marketing nav. One source of truth for every page's menu. Kept to a
-     single line at desktop; secondary links live in the columned footer. -->
-<nav id="nav">
+     single line at desktop with six links; everything else (Code, Studio
+     Intelligence, Guide, ...) lives in the columned footer. On
+     phones (<=560px) the links fold into a dropdown behind .nav-toggle (site.js). -->
+<a class="skip-link" href="#main">Skip to content</a>
+<nav id="nav" aria-label="Main">
     <div class="wrap nav-inner">
         <a href="/" class="brand"><svg class="brand-mark"><use href="#mark"/></svg>SnapShotPro</a>
-        <div class="nav-right">
+        <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu"><span></span><span></span><span></span></button>
+        <div class="nav-right" id="nav-menu">
             <a href="/features/" class="nav-link">Features</a>
             <a href="/tools/" class="nav-link">Tools</a>
-            <a href="/extension/" class="nav-link">Extension</a>
-            <a href="/code-screenshots/" class="nav-link">Code</a>
             <a href="/gallery/" class="nav-link">Gallery</a>
             <a href="/ai/" class="nav-link">AI</a>
-            <a href="/studio-intelligence/" class="nav-link">Studio Intelligence</a>
+            <a href="/extension/" class="nav-link">Extension</a>
             <a href="/pricing/" class="nav-link">Pricing</a>
-            <a href="/guide/" class="nav-link">Guide</a>
             <a href="/editor/" class="btn btn-primary">Open the studio <span class="ar">→</span></a>
         </div>
     </div>

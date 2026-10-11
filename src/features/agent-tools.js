@@ -3,7 +3,7 @@
 // agent receives. Mutations are followed by render() at the loop level.
 
 import { state } from '../state/state.js';
-import { render, renderInto } from '../render/render.js';
+import { renderInto } from '../render/render.js';
 import { applySpec } from '../state/spec.js';
 import { generateBackgroundImage, runVisionOnDataUrl } from './ai-cloud.js';
 import { cutSubject } from './bg-remove.js';

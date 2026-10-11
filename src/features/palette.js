@@ -8,8 +8,9 @@ import { exportImage, copyToClipboard, exportAsHTML } from './export.js';
 import { resetTilt, applyTiltPreset } from './tilt.js';
 import { applyMeshPreset } from './mesh-pad.js';
 import { setScene } from './scene-select.js';
-import { setTool } from './canvas-tools.js';
-import { selectAll, duplicateSelection, groupDistribute, groupMatchSize, setSelectionFlag, unlockAll } from './selection.js';
+import { setTool, clearAllAnnotations, clearAllRedactions } from './canvas-tools.js';
+import { selectAll, duplicateSelection, groupDistribute, groupMatchSize, setSelectionFlag, unlockAll, pruneSelection } from './selection.js';
+import { upgradeSpotlight } from '../render/spotlight-geom.js';
 import { listExportPresets, applyExportPreset, quickExport } from './export-presets.js';
 import { toggleLayersPanel, renderLayersPanel } from './layers.js';
 import { openStickerDrawer } from './stickers.js';
@@ -33,8 +34,12 @@ import { seedFromUrl } from './seed.js';
 import { openGalleryBrowse } from './gallery.js';
 import { exportVideoMp4, exportVideoGif } from './video-export.js';
 import { resetOnboarding } from './welcome.js';
+import { canInstallApp, installApp } from './install-app.js';
 import { formatKeys } from './shortcuts.js';
 import { getFrequencyBoost, getRecent, recordUse } from './command-usage.js';
+import { getUiMode, setUiMode } from './ui-mode.js';
+import { pickBeforeImage, useCurrentAsBefore, swapBeforeAfter, toggleCompare } from './compare-ui.js';
+import { toggleFloatingToolbar, isFloatingToolbarEnabled } from './floating-toolbar.js';
 
 let commands = [];
 
@@ -61,14 +66,15 @@ function groupFor(id) {
       id === 'screen-record' || id === 'auto-zoom-toggle') return 'Motion';
   if (id.startsWith('export') || id === 'copy-clipboard' || id === 'load-url' ||
       id.startsWith('share') || id === 'generate-qr' || id.startsWith('mode-') ||
-      id.startsWith('tour-') || id === 'code-studio' || id.startsWith('merge-')) return 'File';
+      id.startsWith('tour-') || id === 'code-studio' || id.startsWith('merge-') || id === 'compare-export-html') return 'File';
   if (id === 'undo' || id === 'redo' || id === 'duplicate-selection' || id === 'select-all-objects' ||
       id.startsWith('distribute-') || id.startsWith('match-') || id === 'hide-selection' ||
       id === 'lock-selection' || id === 'unlock-all') return 'Edit';
   if (id.startsWith('bg-') || id.startsWith('mesh-') || id.startsWith('scene-') ||
       id.startsWith('tilt-') || id === 'reset-tilt' || id.startsWith('style-') ||
       id === 'toggle-layers' || id.startsWith('zoom') || id.startsWith('theme') ||
-      id === 'toggle-spotlight' || id === 'toggleBoard' || id.startsWith('board') || id === 'seedFromUrl' || id === 'askAgentBoard') return 'View';
+      id.startsWith('ui-') || id === 'toggle-float-toolbar' || id.startsWith('compare-') ||
+      id === 'toggle-spotlight' || id.startsWith('spotlight-') || id.startsWith('bokeh-') || id === 'toggleBoard' || id.startsWith('board') || id === 'seedFromUrl' || id === 'askAgentBoard') return 'View';
   return 'More';
 }
 
@@ -90,6 +96,21 @@ export function registerCommands() {
     { id: 'select-all-objects',  label: 'Select all objects',  icon: '▦', run: () => { selectAll(); render(); }, when: () => !!state.image },
     { id: 'theme-dark',       label: 'Theme: Dark',           icon: '🌙', run: () => applyTheme('dark') },
     { id: 'theme-light',      label: 'Theme: Light',          icon: '☀️', run: () => applyTheme('light') },
+    // v35 — Before / After Compare.
+    { id: 'compare-add-before', label: 'Before / After: Add Before image', icon: '◧', run: pickBeforeImage },
+    { id: 'compare-use-current', label: 'Before / After: Use current screenshot as Before', icon: '◧', run: useCurrentAsBefore, when: () => !!state.image },
+    { id: 'compare-toggle', label: 'Before / After: Show or hide comparison', icon: '◧', run: toggleCompare, when: () => !!state.compare?.beforeSrc },
+    { id: 'compare-swap', label: 'Before / After: Swap Before and After', icon: '⇄', run: swapBeforeAfter, when: () => !!(state.compare?.beforeSrc && state.image) },
+    { id: 'compare-export-html', label: 'Before / After: Export interactive slider (HTML)', icon: '🌐',
+      run: () => import('./compare-export.js').then((m) => m.exportCompareHTML()), when: () => !!(state.compare?.beforeSrc && state.image) },
+    // v35 — Simple / Pro sidebar + floating selection toolbar.
+    { id: 'ui-simple', label: 'Simple mode: show only the essential tools', icon: '◐',
+      run: () => setUiMode('simple', { announce: true }), when: () => getUiMode() !== 'simple' },
+    { id: 'ui-pro',    label: 'Pro mode: show every tool', icon: '◑',
+      run: () => setUiMode('pro', { announce: true }), when: () => getUiMode() !== 'pro' },
+    { id: 'toggle-float-toolbar', label: 'Floating selection toolbar: on / off', icon: '▭',
+      run: toggleFloatingToolbar, when: () => state.mode === 'single' || !isFloatingToolbarEnabled() },
+    { id: 'install-app',      label: 'Install SnapShotPro as an app', icon: '⬇', run: installApp, when: canInstallApp },
     { id: 'zoom-in',          label: 'Zoom in',               icon: '🔍', run: () => setZoom(state.view.zoom * 1.2) },
     { id: 'zoom-out',         label: 'Zoom out',              icon: '🔍', run: () => setZoom(state.view.zoom / 1.2) },
     { id: 'zoom-fit',         label: 'Fit to screen',         icon: '⌧',  run: fitZoom },
@@ -170,9 +191,22 @@ export function registerCommands() {
     { id: 'tool-highlighter', label: 'Tool: Highlighter',     icon: '🖍', run: () => setTool('highlighter') },
     { id: 'tool-number',      label: 'Tool: Number',          icon: '①',  run: () => setTool('number') },
     { id: 'tool-redact',      label: 'Tool: Redact',          icon: '▓',  run: () => setTool('redact') },
-    { id: 'clear-annotations', label: 'Clear all annotations', icon: '🗑', run: () => { saveStateToHistory(); state.annotations = []; render(); showStatus('Annotations cleared'); } },
-    { id: 'clear-redactions',  label: 'Clear all redactions',  icon: '🗑', run: () => { saveStateToHistory(); state.redactions = []; render(); showStatus('Redactions cleared'); } },
-    { id: 'toggle-spotlight',  label: 'Toggle Spotlight',     icon: '◎',  run: () => { saveStateToHistory(); state.spotlight.enabled = !state.spotlight.enabled; render(); } },
+    { id: 'clear-annotations', label: 'Clear all annotations', icon: '🗑', run: clearAllAnnotations },
+    { id: 'clear-redactions',  label: 'Clear all redactions',  icon: '🗑', run: clearAllRedactions },
+    { id: 'toggle-spotlight',  label: 'Toggle Spotlight',     icon: '◎',  run: () => {
+      saveStateToHistory();
+      state.spotlight = upgradeSpotlight(state.spotlight);
+      state.spotlight.enabled = !state.spotlight.enabled;
+      // Same as the sidebar: turning it on with no focus areas adds a centered one.
+      if (state.spotlight.enabled && !state.spotlight.regions.length) {
+        state.spotlight.regions.push({ id: Date.now(), x: 0.2, y: 0.2, w: 0.6, h: 0.6, shape: state.spotlight.shape });
+      }
+      pruneSelection(); render(); window.__updateUIFromState?.();
+    } },
+    { id: 'spotlight-add-region', label: 'Spotlight: Add focus area',   icon: '◎', run: () => setTool('spotlight') },
+    { id: 'spotlight-clear',      label: 'Spotlight: Clear focus areas', icon: '🗑', run: () => { saveStateToHistory(); state.spotlight.regions = []; pruneSelection(); render(); window.__updateUIFromState?.(); showStatus('Focus areas cleared'); } },
+    { id: 'bokeh-detect', label: 'Bokeh: Detect subject', icon: '◉', run: () => import('./bokeh-ui.js').then((m) => m.detectSubject()), when: () => !!state.image },
+    { id: 'bokeh-toggle', label: 'Bokeh: Toggle background blur', icon: '◉', run: () => { if (!state.bokeh?.maskDataUrl) { showStatus('Detect the subject first'); return; } saveStateToHistory(); state.bokeh.enabled = !state.bokeh.enabled; render(); window.__updateUIFromState?.(); } },
     { id: 'ai-enhance',       label: 'AI Auto-Enhance',      icon: '✨', run: () => document.getElementById('ai-enhance-btn')?.click() },
     { id: 'style-watercolor', label: 'Style: Watercolor',    icon: '🎨', run: () => document.querySelector('[data-style-preset="watercolor"]')?.click() },
     { id: 'style-sketch',     label: 'Style: Sketch',        icon: '✏️', run: () => document.querySelector('[data-style-preset="sketch"]')?.click() },

@@ -16,6 +16,8 @@ import { showNotification } from '../ui/notification.js';
 import {
   luminance, rgbToLab, labToRgb, buildGradientRamp, nearestSwatch, paletteLabStats
 } from '../utils/color.js';
+import { applyBokeh, bokehActive, maskFits } from './bokeh.js';
+import { applyCompare } from './compare.js';
 
 let idCounter = 0;
 const cache = { sig: null, canvas: null };
@@ -65,7 +67,7 @@ function applyTempTint(rgb, tempK, tintK) {
   rgb[1] -= tintK;       // green (magenta when reduced)
 }
 
-export function getGradedImage(srcImage) {
+function gradeImage(srcImage) {
   if (!srcImage || !srcImage.width || !srcImage.height) return srcImage;
   if (!gradeActive()) return srcImage;
 
@@ -195,3 +197,26 @@ function sampleSourceLabStats(data) {
 
 // Let a fresh image re-warn about tainting (called from image load if desired).
 export function resetGradeCache() { cache.sig = null; cache.canvas = null; }
+
+function imageId(img) {
+  if (!img.__gradeId) img.__gradeId = ++idCounter;
+  return img.__gradeId;
+}
+
+// v34 — every caller gets Bokeh on top of the grade for free: this one seam
+// feeds the flat, 2D mockup, 3D screen, and Surface paths.
+export function getGradedImage(srcImage) {
+  // v35 — Before / After Compare wraps the finished After image (grade + Bokeh).
+  const out = gradeAndBlur(srcImage);
+  return srcImage === state.image ? applyCompare(out) : out;
+}
+
+function gradeAndBlur(srcImage) {
+  const graded = gradeImage(srcImage);
+  if (!graded || !graded.width) return graded;
+  // maskFits first (even with Bokeh off) so the one-shot claim after a page
+  // load goes to that page's own image, not one rendered later.
+  if (!maskFits(srcImage) || !bokehActive()) return graded;   // mask belongs to another image
+  const baseKey = graded === srcImage ? 'src:' + imageId(srcImage) : 'grade:' + cache.sig;
+  return applyBokeh(graded, baseKey);
+}

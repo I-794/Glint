@@ -9,7 +9,6 @@
 // are evicted if localStorage is full). It's a convenience cache, not a backup.
 
 import { el } from '../ui/elements.js';
-import { showNotification } from '../ui/notification.js';
 import { addExtraImageFromSrc } from './extra-images.js';
 import { loadImageFromSrc } from './upload.js';
 

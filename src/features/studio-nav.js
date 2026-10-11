@@ -8,6 +8,10 @@
 // Every element ID stays put, so feature wiring is unaffected.
 //
 // On narrow screens grouping is disabled (all panels show in one scroll).
+//
+// v35 — Simple mode (ui-mode.js) narrows each panel to the sections tagged
+// data-simple in editor/index.html; a footer button lists what Pro adds.
+// revealSection() lets code that jumps to a Pro section show it anyway.
 
 const NARROW = 860;
 const PHONE = 767;   // v23 — at/below this the Mobile Studio dock+sheet take over
@@ -53,6 +57,13 @@ function saveCollapsed(map) {
 
 let active = 'import';
 let sections = [];
+let simpleOnly = false;
+// Pro sections opened on purpose while in Simple mode (key prompts, Cmd-K).
+const peeked = new Set();
+
+function inTier(el) {
+  return !simpleOnly || el.hasAttribute('data-simple') || peeked.has(el);
+}
 
 function isNarrow() { return window.innerWidth <= NARROW; }
 export function isPhone() { return window.innerWidth <= PHONE; }
@@ -70,7 +81,7 @@ function apply() {
   // active group's sections are shown in the bottom sheet.
   const grouped = !narrow || isPhone();
   sections.forEach(({ el, group, titleEl, redundant }) => {
-    el.style.display = (grouped ? group === active : true) ? '' : 'none';
+    el.style.display = (grouped ? group === active : true) && inTier(el) ? '' : 'none';
     // Hide a panel's own title when it just repeats the group name (wide only).
     if (redundant && titleEl) {
       titleEl.style.display = narrow ? '' : 'none';
@@ -84,6 +95,43 @@ function apply() {
     b.classList.toggle('active', b.dataset.group === active));
   const titleEl = document.getElementById('panel-title');
   if (titleEl) titleEl.textContent = (TABS.find(t => t.id === active) || {}).label || '';
+  renderMoreFooter(grouped);
+}
+
+// v35 — Simple mode footer: "N more tools in Pro mode" with their names.
+function renderMoreFooter(grouped) {
+  const foot = document.getElementById('simple-more');
+  if (!foot) return;
+  const hidden = simpleOnly
+    ? sections.filter(s => !inTier(s.el) && (!grouped || s.group === active))
+    : [];
+  foot.style.display = hidden.length ? '' : 'none';
+  if (!hidden.length) return;
+  // First text node only, so title badges ("AI", "CSV → N") stay out.
+  const names = hidden.map(s => ((s.titleEl && s.titleEl.firstChild && s.titleEl.firstChild.textContent) || '')
+    .replace(/[^\w&/ .-]/g, '').trim()).filter(Boolean);
+  foot.querySelector('.simple-more-title').textContent =
+    `${hidden.length} more tool${hidden.length === 1 ? '' : 's'} in Pro mode`;
+  foot.querySelector('.simple-more-list').textContent = names.join(' · ');
+}
+
+export function setSimpleFilter(on) {
+  simpleOnly = !!on;
+  peeked.clear();
+  apply();
+}
+
+// v35 — show the sidebar section holding `node` (switching tabs if needed),
+// even when Simple mode would hide it. Callers scroll to it afterwards.
+export function revealSection(node) {
+  const sec = node && node.closest ? node.closest('.sidebar-section') : null;
+  if (!sec) return;
+  if (!inTier(sec)) peeked.add(sec);
+  sec.classList.remove('collapsed');
+  sec.querySelector('.section-title')?.setAttribute('aria-expanded', 'true');
+  const group = sec.dataset.group;
+  if (group && group !== active && TABS.some(t => t.id === group)) setGroup(group);
+  else apply();
 }
 
 export function setGroup(id) {
@@ -136,6 +184,16 @@ export function bindStudioNav() {
   header.id = 'panel-header';
   header.innerHTML = '<h2 id="panel-title">Import</h2>';
   sidebar.prepend(header);
+
+  const foot = document.createElement('div');
+  foot.className = 'simple-more';
+  foot.id = 'simple-more';
+  foot.style.display = 'none';
+  foot.innerHTML = '<button type="button" class="simple-more-btn">' +
+    '<span class="simple-more-title"></span><span class="simple-more-list"></span>' +
+    '<span class="simple-more-cta">Switch to Pro</span></button>';
+  foot.querySelector('button').addEventListener('click', () => window.__setUiMode?.('pro'));
+  sidebar.appendChild(foot);
 
   document.querySelectorAll('.rail-btn').forEach(b =>
     b.addEventListener('click', () => setGroup(b.dataset.group)));

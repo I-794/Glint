@@ -1,7 +1,7 @@
 import { state } from '../state/state.js';
 import { el } from '../ui/elements.js';
 import { showNotification } from '../ui/notification.js';
-import { getClient, getUser, isConfigured } from './auth.js';
+import { getClient, getUser } from './auth.js';
 
 const SHARE_BUCKET = 'shares';
 
@@ -16,15 +16,6 @@ function canvasToBlob() {
   return new Promise(resolve => {
     el.previewCanvas.toBlob(blob => resolve(blob), 'image/png');
   });
-}
-
-function expiryToSeconds(value) {
-  switch (value) {
-    case '24h': return 86400;
-    case '7d': return 604800;
-    case '30d': return 2592000;
-    default: return 0;
-  }
 }
 
 export async function shareImage() {

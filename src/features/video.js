@@ -15,6 +15,7 @@ import { render } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
 import { fitZoom } from './zoom-pan.js';
 import { sampleZoom } from './auto-zoom.js';
+import { refreshBokehUI } from './bokeh-ui.js';
 
 let videoEl = null;
 let frameCanvas = null;
@@ -90,6 +91,9 @@ export function loadVideoFile(file) {
     const w = videoEl.videoWidth, h = videoEl.videoHeight;
     ensureFrameCanvas(w, h);
     state.video.loaded = true;
+    // v34 — Bokeh is still-image only; drop any mask from the previous image.
+    if (state.bokeh) state.bokeh = { ...state.bokeh, enabled: false, maskDataUrl: null, maskSig: null };
+    refreshBokehUI();
     state.video.duration = videoEl.duration || 0;
     state.video.in = 0;
     state.video.out = videoEl.duration || 0;

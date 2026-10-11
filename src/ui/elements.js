@@ -12,7 +12,7 @@ const IDS = [
   'code-chrome', 'code-window-title', 'code-font', 'code-font-size', 'code-font-size-value',
   'code-pad', 'code-pad-value', 'code-tab-size', 'code-line-numbers', 'code-wrap', 'code-apply-btn',
   'export-btn', 'reset-btn', 'undo-btn', 'redo-btn', 'drop-zone',
-  'notification', 'notification-text', 'theme-toggle-btn',
+  'notification', 'notification-text', 'theme-toggle-btn', 'install-app-btn',
   'shortcuts-btn', 'shortcuts-overlay', 'shortcuts-grid', 'close-shortcuts-btn', 'annotation-toolbar',
 
   // Image editing
@@ -74,6 +74,20 @@ const IDS = [
 
   // Spotlight
   'spotlight-enabled', 'spotlight-controls', 'spotlight-opacity', 'spotlight-opacity-value',
+  // v34 — Spotlight 2.0
+  'spotlight-shape', 'spotlight-blur', 'spotlight-blur-value', 'spotlight-feather', 'spotlight-feather-value',
+  'spotlight-tint', 'spotlight-tint-text', 'spotlight-clear-btn', 'spotlight-count',
+  // v34 — Subject Bokeh
+  'bokeh-detect-btn', 'bokeh-status', 'bokeh-enabled', 'bokeh-controls',
+  'bokeh-amount', 'bokeh-amount-value', 'bokeh-highlights', 'bokeh-highlights-value', 'bokeh-shape',
+
+  // v35 — Before / After Compare
+  'compare-upload-btn', 'compare-use-current-btn', 'compare-file-input', 'compare-thumb-row', 'compare-thumb',
+  'compare-swap-btn', 'compare-remove-btn', 'compare-status', 'compare-enabled', 'compare-controls',
+  'compare-split', 'compare-split-value', 'compare-orientation', 'compare-fit', 'compare-labels-enabled',
+  'compare-label-fields', 'compare-label-before', 'compare-label-after', 'compare-label-position',
+  'compare-divider-color', 'compare-divider-color-text', 'compare-divider-width', 'compare-divider-width-value',
+  'compare-handle', 'compare-wipe', 'compare-export-html-btn',
 
   // v16.1 — Studio Effects: liquid glass + film grain
   'glass-enabled', 'glass-controls', 'glass-blur', 'glass-blur-value',

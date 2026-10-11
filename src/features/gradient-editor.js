@@ -47,7 +47,7 @@ export function renderGradientEditor() {
     stopCtrls.innerHTML = `
       <div class="control-group" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
         <input type="color" id="grad-stop-color" value="${cur}" style="width:44px;height:32px;border-radius:6px;border:1px solid var(--border-color);cursor:pointer;">
-        <input type="range" class="range-input" id="grad-stop-pos" min="0" max="100" value="${pos}" style="flex:1;">
+        <input type="range" class="range-input" id="grad-stop-pos" aria-label="Stop position" min="0" max="100" value="${pos}" style="flex:1;">
         <span class="range-value" id="grad-stop-pos-value" style="min-width:42px;">${pos}%</span>
         <button class="btn btn-secondary" id="grad-stop-delete" ${canDelete ? '' : 'disabled'} style="padding:4px 8px;" title="Delete color stop" aria-label="Delete color stop">🗑</button>
       </div>

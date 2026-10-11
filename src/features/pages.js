@@ -10,7 +10,7 @@
 // numbered PNG ZIP, and presents the pages fullscreen.
 
 import { state } from '../state/state.js';
-import { render, renderInto } from '../render/render.js';
+import { renderInto } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
 import { onHistoryChange } from '../state/history.js';
 import { serializeFull, imageToDataUrl } from '../state/serialize.js';
@@ -404,7 +404,8 @@ function refreshActiveTile() {
 
 // ── Bind ─────────────────────────────────────────────────────────────────────
 let stripTimer = null;
-const idle = window.requestIdleCallback
+// typeof guard: scripts/regression-tests.mjs imports this module under Node.
+const idle = typeof window !== 'undefined' && window.requestIdleCallback
   ? (fn) => window.requestIdleCallback(fn, { timeout: 1000 })
   : (fn) => setTimeout(fn, 0);
 export function bindPages() {

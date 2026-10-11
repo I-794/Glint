@@ -127,9 +127,12 @@ function buildItems() {
   const items = [];
   if (dupable) items.push({ label: n > 1 ? `Duplicate ${n} items` : 'Duplicate', icon: '⧉', keys: 'Ctrl/⌘ D', run: duplicate });
   items.push({ label: n > 1 ? `Delete ${n} items` : 'Delete', icon: '🗑', keys: 'Del', run: () => { deleteSelected(); closeMenu(); } });
-  items.push({ sep: true });
-  items.push({ label: 'Bring to front', icon: '⤒', run: () => reorder('front') });
-  items.push({ label: 'Send to back', icon: '⤓', run: () => reorder('back') });
+  // v34 — focus areas have no stacking order.
+  if (!state.canvasSelection.every((r) => r.kind === 'spotlight')) {
+    items.push({ sep: true });
+    items.push({ label: 'Bring to front', icon: '⤒', run: () => reorder('front') });
+    items.push({ label: 'Send to back', icon: '⤓', run: () => reorder('back') });
+  }
   if (hasAnnotationSelected()) {
     items.push({ sep: true });
     items.push({ label: 'Copy style', icon: '🎨', run: copyStyle });
@@ -149,7 +152,7 @@ function buildItems() {
       { label: 'Height (largest)', run: () => matchSize('h') },
     ] });
   }
-  if (state.canvasSelection.some((r) => r.kind !== 'text')) {
+  if (state.canvasSelection.some((r) => r.kind !== 'text' && r.kind !== 'spotlight')) {
     items.push({ sep: true });
     items.push({ label: 'Hide', icon: '⊘', run: () => flag('hide') });
     items.push({ label: 'Lock', icon: '🔒', run: () => flag('lock') });
@@ -220,6 +223,12 @@ function openMenu(clientX, clientY) {
     window.addEventListener('blur', closeMenu);
     document.addEventListener('scroll', closeMenu, true);
   }, 0);
+}
+
+// v35 — the floating toolbar's "More" button opens the same menu for the
+// current selection.
+export function openContextMenuAt(clientX, clientY) {
+  openMenu(clientX, clientY);
 }
 
 function closeMenu() {

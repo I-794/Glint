@@ -1,9 +1,7 @@
 import { state } from '../state/state.js';
-import { el } from '../ui/elements.js';
-import { saveStateToHistory } from '../state/history.js';
-import { render } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
 import { getKey } from './api-keys.js';
+import { revealSection } from './studio-nav.js';
 
 function imageToDataUrl(img) {
   const c = document.createElement('canvas');
@@ -34,6 +32,7 @@ function showAiResult(text) {
 function promptForKey() {
   const details = document.getElementById('api-keys-details');
   if (details) {
+    revealSection(details);   // v35 — the key fields live in a Pro-only section
     details.open = true;
     details.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const inp = document.getElementById('anthropic-key-input');

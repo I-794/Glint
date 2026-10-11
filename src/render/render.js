@@ -6,7 +6,7 @@ import { drawShadow, drawBorder } from './shadow.js';
 import { drawDeviceFrame } from './frames.js';
 import { drawAnnotations } from './annotations.js';
 import { drawRedactions } from './redactions.js';
-import { drawSpotlight } from './spotlight.js';
+import { drawSpotlight, drawSpotlightChrome } from './spotlight.js';
 import { drawTextOverlay, drawWatermark, drawLogo } from './overlays.js';
 import { renderAutoLayout } from './autolayout.js';
 import { drawSceneBackground } from './scenes.js';
@@ -48,6 +48,10 @@ export function render(forExport) {
     return;
   }
   renderInto(el.previewCanvas, forExport);
+  // v34 — spotlight region selection chrome is preview-only.
+  if (!forExport) drawSpotlightChrome(el.previewCanvas.getContext('2d'), el.previewCanvas);
+  // v35 — the floating selection toolbar follows the selection (HTML, preview-only).
+  if (!forExport) window.__syncFloatingToolbar?.();
 }
 
 // Render the current global state into an arbitrary canvas. `render()` targets

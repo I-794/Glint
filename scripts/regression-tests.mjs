@@ -3,7 +3,8 @@ import fs from 'node:fs';
 
 import fetchUrlHandler from '../api/fetch-url.js';
 import { state } from '../src/state/state.js';
-import { serializeFull } from '../src/state/serialize.js';
+import { serializeFull, normalizeProject } from '../src/state/serialize.js';
+import { normalizeCompare, wipeSplit, splitFromPoint, hitDivider, fitRect } from '../src/render/compare-core.js';
 import { applyDesignToState } from '../src/features/document.js';
 
 function mockRes() {
@@ -99,12 +100,65 @@ function testGalleryTemplateApplySnapshotsHistory() {
   );
 }
 
+// v35 — Before / After Compare: migration + geometry.
+function testCompareMigratesAndPersists() {
+  // A pre-v35 design gets a full default block (no Before image leaks in).
+  const old = normalizeProject({ schemaVersion: 20, design: { bgColor: '#000000' }, image: null });
+  assert.equal(old.design.compare.enabled, false);
+  assert.equal(old.design.compare.beforeSrc, null);
+  assert.equal(old.design.compare.split, 0.5);
+
+  // Bad values are repaired; good ones survive.
+  const fixed = normalizeCompare({ enabled: true, beforeSrc: 'data:x', split: 7, orientation: 'diagonal', fit: 'contain',
+    labels: { before: 'v1', position: 'side' }, divider: { width: 99 } });
+  assert.equal(fixed.split, 1);
+  assert.equal(fixed.orientation, 'vertical');
+  assert.equal(fixed.fit, 'contain');
+  assert.equal(fixed.labels.before, 'v1');
+  assert.equal(fixed.labels.after, 'After');
+  assert.equal(fixed.labels.position, 'top');
+  assert.equal(fixed.divider.width, 12);
+
+  // It round-trips through a saved project.
+  const saved = state.compare;
+  try {
+    state.compare = normalizeCompare({ enabled: true, beforeSrc: 'data:image/png;base64,AAAA', split: 0.3, orientation: 'horizontal' });
+    const payload = serializeFull();
+    const back = normalizeProject(payload).design.compare;
+    assert.equal(back.beforeSrc, 'data:image/png;base64,AAAA');
+    assert.equal(back.split, 0.3);
+    assert.equal(back.orientation, 'horizontal');
+    assert.equal(payload.schemaVersion, 21);
+  } finally {
+    state.compare = saved;
+  }
+}
+
+function testCompareGeometry() {
+  assert.equal(wipeSplit(0), 1);
+  assert.equal(wipeSplit(1), 0);
+  assert.ok(Math.abs(wipeSplit(0.5) - 0.5) < 1e-9);
+  const rect = { x: 100, y: 50, w: 400, h: 200 };
+  assert.equal(splitFromPoint(rect, 200, 0, 'vertical'), 0.25);
+  assert.equal(splitFromPoint(rect, 0, 150, 'horizontal'), 0.5);
+  assert.equal(splitFromPoint(rect, 9999, 0, 'vertical'), 1);
+  assert.ok(hitDivider(rect, 0.5, 'vertical', 305, 120, 10));
+  assert.ok(!hitDivider(rect, 0.5, 'vertical', 330, 120, 10));
+  assert.ok(!hitDivider(rect, 0.5, 'vertical', 300, 400, 10));   // outside the image
+  const cover = fitRect(100, 100, 400, 200, 'cover');
+  assert.deepEqual(cover, { x: 0, y: -100, w: 400, h: 400 });
+  const contain = fitRect(100, 100, 400, 200, 'contain');
+  assert.deepEqual(contain, { x: 100, y: 0, w: 200, h: 200 });
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
   testColorMapPersistsInProjects,
   testFailedProjectImageDecodeClearsPreviousImage,
-  testGalleryTemplateApplySnapshotsHistory
+  testGalleryTemplateApplySnapshotsHistory,
+  testCompareMigratesAndPersists,
+  testCompareGeometry
 ];
 
 for (const test of tests) {

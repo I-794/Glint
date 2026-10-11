@@ -37,7 +37,6 @@ export function renderApiKeyStatus() {
   const providers = ['openai', 'anthropic'];
   status.innerHTML = providers.map(p => {
     const v = all[p];
-    const tone = v ? 'success' : 'secondary';
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;">
       <span><strong>${p}</strong> <span class="account-pill" style="background:var(--bg-tertiary);">${maskKey(v)}</span></span>
       ${v ? `<button class="btn btn-secondary" data-clear="${p}" style="padding:2px 8px;font-size:11px;">Clear</button>` : ''}

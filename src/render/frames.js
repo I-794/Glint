@@ -1,6 +1,5 @@
 import { state } from '../state/state.js';
 import { FRAME_INSETS } from '../state/presets.js';
-import { roundRectPath } from '../utils/geometry.js';
 
 export function drawDeviceFrame(ctx, x, y, width, height) {
   const t = state.deviceFrame.type;

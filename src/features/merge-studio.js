@@ -22,6 +22,7 @@ import { showNotification } from '../ui/notification.js';
 import { saveStateToHistory } from '../state/history.js';
 import { downloadZip } from './batch-export.js';
 import { loadImageEl } from './url-load.js';
+import { revealSection } from './studio-nav.js';
 
 // The fields a {{token}} may live in. `type` drives the panel affordance:
 // text fields are edited in their normal sidebar controls; color fields can't
@@ -324,6 +325,7 @@ export function openMergeStudio() {
   document.querySelector('.rail-btn[data-group="export"]')?.click();
   const section = document.getElementById('merge-studio-section');
   if (section) {
+    revealSection(section);   // v35 — shown even in Simple mode
     section.classList.remove('collapsed');
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }

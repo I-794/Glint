@@ -10,10 +10,25 @@
 //    whatever opened it when it closes. Open/close is detected by watching each
 //    overlay's class/style, so the features keep toggling `.visible` /
 //    `style.display` exactly as before.
+// 3. (v33.1) Form controls get a name from their visible caption. The sidebar's
+//    `<label class="control-label">` captions were never linked to their input
+//    (no `for`), so screen readers announced a bare "slider". Each caption is
+//    linked to the first unnamed control after it in the same parent; controls
+//    still unnamed fall back to their title or placeholder.
+// 4. (v33.1) Click-only `<div>` tiles (background/size/shadow presets, scenes,
+//    3D demos, the upload drop zone) become focusable buttons: role="button",
+//    tabindex=0, and Enter/Space fire the same click the mouse would.
+// 5. (v33.1) Escape closes the Welcome and cloud/auth/versions dialogs by
+//    clicking their own ✕, so each feature's close logic still runs.
 
 const DIALOGS = '.auth-modal-overlay, .welcome-overlay, .present-overlay, .shortcuts-overlay, .palette-overlay';
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 const CLOSE_GLYPHS = new Set(['✕', '×', '✖', 'x', 'X']);
+const CONTROLS = 'input:not([type="hidden"]), select, textarea';
+const TILES = '.preset-button, .size-preset-btn, .shadow-preset-btn, .scene-tile, #upload-zone';
+const NATIVE = 'button, a[href], input, select, textarea, summary';
+// Dialogs that only close via their ✕ (the palette/shortcuts overlays already handle Esc).
+const ESC_DIALOGS = '.welcome-overlay, .auth-modal-overlay';
 
 // Text with no letters or digits (emoji, arrows, symbols) is not a usable name.
 function isIconOnly(btn) {
@@ -29,9 +44,63 @@ function labelButton(btn) {
   if (CLOSE_GLYPHS.has((btn.textContent || '').trim())) btn.setAttribute('aria-label', 'Close');
 }
 
+// A wrapping <label> only names the control if it has text (the toggle
+// switches wrap their checkbox in an empty <label class="switch">).
+function hasName(c) {
+  return c.hasAttribute('aria-label') || c.hasAttribute('aria-labelledby') ||
+    [...(c.labels || [])].some(l => l.textContent.trim());
+}
+
+let ctlSeq = 0;
+function linkCaption(label) {
+  if (label.htmlFor || label.querySelector(CONTROLS)) return;
+  const scope = label.parentElement;
+  if (!scope) return;
+  const ctrl = [...scope.querySelectorAll(CONTROLS)].find(c =>
+    (label.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING) && !hasName(c));
+  if (!ctrl) return;
+  if (!ctrl.id) ctrl.id = 'a11y-ctl-' + (++ctlSeq);
+  label.htmlFor = ctrl.id;
+}
+
+function captionText(c) {
+  const lbl = c.labels && c.labels[0];
+  return lbl ? lbl.textContent.trim() : (c.getAttribute('aria-label') || '');
+}
+
+function nameControl(c) {
+  if (hasName(c)) return;
+  let name = c.getAttribute('title') || c.getAttribute('placeholder');
+  // The hex text box beside a color swatch shares the swatch's caption.
+  const wrap = !name && c.closest('.color-picker-wrapper');
+  const swatch = wrap && wrap.querySelector('input[type="color"]');
+  if (swatch && swatch !== c && captionText(swatch)) name = captionText(swatch) + ' hex';
+  if (!name) name = c.closest('.toggle-switch')?.querySelector('.toggle-label')?.textContent.trim();
+  if (!name) {
+    const cap = c.closest('.control-group')?.querySelector('.control-label');
+    if (cap) name = cap.textContent.trim();
+  }
+  if (name) c.setAttribute('aria-label', name);
+}
+
+function makeKeyable(tile) {
+  if (tile.matches(NATIVE) || tile.hasAttribute('tabindex')) return;
+  tile.setAttribute('role', 'button');
+  tile.tabIndex = 0;
+  tile.dataset.a11yKey = '';
+  if (tile.id === 'upload-zone' && !tile.hasAttribute('aria-label')) tile.setAttribute('aria-label', 'Choose an image to upload');
+}
+
+function each(root, sel, fn) {
+  if (root.matches && root.matches(sel)) fn(root);
+  if (root.querySelectorAll) root.querySelectorAll(sel).forEach(fn);
+}
+
 function labelAll(root) {
-  if (root.matches && root.matches('button')) labelButton(root);
-  if (root.querySelectorAll) root.querySelectorAll('button').forEach(labelButton);
+  each(root, 'button', labelButton);
+  each(root, 'label.control-label', linkCaption);
+  each(root, CONTROLS, nameControl);
+  each(root, TILES, makeKeyable);
 }
 
 function isOpen(overlay) {
@@ -95,6 +164,23 @@ function setupDialog(overlay) {
 export function bindA11y() {
   labelAll(document.body);
   document.querySelectorAll(DIALOGS).forEach(setupDialog);
+
+  // Capture phase so these run before keyboard.js's document-level shortcuts.
+  document.addEventListener('keydown', (e) => {
+    const t = e.target;
+    if ((e.key === 'Enter' || e.key === ' ') && t instanceof Element && t.hasAttribute('data-a11y-key')) {
+      e.preventDefault();
+      e.stopPropagation();
+      t.click();
+      return;
+    }
+    if (e.key === 'Escape') {
+      const open = [...document.querySelectorAll(ESC_DIALOGS)].filter(isOpen);
+      const top = open[open.length - 1];
+      const close = top && top.querySelector('.welcome-close, [id$="-close"]');
+      if (close) { e.preventDefault(); e.stopPropagation(); close.click(); }
+    }
+  }, true);
   new MutationObserver((muts) => {
     for (const m of muts) m.addedNodes.forEach(n => { if (n.nodeType === 1) labelAll(n); });
   }).observe(document.body, { childList: true, subtree: true });

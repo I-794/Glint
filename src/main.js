@@ -42,6 +42,8 @@ import { bindCompose } from './features/compose.js';
 import { bindBrandKit } from './features/brand-kit.js';
 import { bindBrandBrain } from './features/brand-brain.js';
 import { bindBgRemove } from './features/bg-remove.js';
+import { bindBokeh } from './features/bokeh-ui.js';
+import { bindCompare } from './features/compare-ui.js';
 import { bindAiAssets } from './features/ai-assets.js';
 import { bindAiAgent } from './features/ai-agent.js';
 import { bindProducer } from './features/producer.js';
@@ -59,6 +61,7 @@ import { bindPages } from './features/pages.js';
 import { bindBoard } from './features/board.js';
 import { bindSeed } from './features/seed.js';
 import { bindA11y } from './ui/a11y.js';
+import { bindStaleBuildReload } from './ui/stale-build.js';
 import { bindTours } from './features/tours.js';
 import { bindGallery } from './features/gallery.js';
 import { bindCrop } from './features/crop.js';
@@ -81,10 +84,13 @@ import { bindKeyboard } from './features/keyboard.js';
 import { bindAllControls, updateUIFromState } from './ui/bindings.js';
 import { bindMobileStudio } from './ui/mobile-studio.js';
 import { bindStudioNav } from './features/studio-nav.js';
+import { bindUiMode } from './features/ui-mode.js';
+import { bindFloatingToolbar } from './features/floating-toolbar.js';
 import { bindShareTarget } from './features/share-target.js';
 import { bindExtReceiver } from './features/ext-receiver.js';
 import { bindWelcome } from './features/welcome.js';
 import { bindWhatsNew } from './features/whats-new.js';
+import { bindInstallApp } from './features/install-app.js';
 
 function bindHeader() {
   el.themeToggleBtn.addEventListener('click', () => applyTheme(state.theme === 'dark' ? 'light' : 'dark'));
@@ -120,6 +126,7 @@ function init() {
   bindExtraImagesEvents();
   bindCanvasTools();
   bindContextMenu();    // v28 — right-click canvas object menu
+  bindFloatingToolbar(); // v35 — toolbar that floats above the canvas selection
   bindAssetLibrary();   // v28 — reusable asset library (Import group)
   bindExportPresets();  // v28 — export presets (Export group)
   bindColorTools();     // v33 — eyedropper + brand/recent swatches on color pickers
@@ -146,6 +153,8 @@ function init() {
   bindBrandKit();
   bindBrandBrain();
   bindBgRemove();
+  bindBokeh();          // v34 — Subject Bokeh (Adjust group)
+  bindCompare();        // v35 — Before / After Compare (after canvas tools: its hover cursor wins)
   bindAiAssets();      // v19 — AI Assets (on-brand background + isolate)
   bindAiAgent();       // v20 — AI Design Agent copilot
   bindProducer();      // v30 — Producer autopilot (separate surface)
@@ -161,6 +170,7 @@ function init() {
   bindBoard();     // v32 — Open Canvas board surface
   bindSeed();       // v32 — Seed: URL -> board cards
   bindA11y();       // v32.1 — button names + modal dialog focus handling
+  bindStaleBuildReload();   // v34 — offer a reload if a new deploy removed a lazy chunk
   bindTours();
   bindProjects();
   bindCampaigns();
@@ -185,9 +195,11 @@ function init() {
   bindAllControls();
   bindKeyboard();
   bindStudioNav();
+  bindUiMode();         // v35 — Simple / Pro sidebar (before welcome/what's-new write their flags)
   bindMobileStudio();   // v23 — phone bottom dock + sheet (after studio-nav wires setGroup)
   bindWelcome();
   bindWhatsNew();
+  bindInstallApp();   // v34.1 — header "Install app" button (PWA)
 
   setInitialActivePresets();
   renderMeshPad();

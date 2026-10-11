@@ -10,22 +10,22 @@
 // release's highlights — same checklist step as the editor version badge and
 // the changelog page.
 
-const CURRENT_VERSION = '33.0';
+const CURRENT_VERSION = '35.0';
 const LASTSEEN_KEY = 'snapshotpro_lastseen_version';
 const WELCOME_KEY  = 'snapshotpro_welcome_v1';   // set by welcome.js on dismissal
 
 // Latest release only — the newest version’s highlights, not an accumulation.
 const WHATS_NEW = {
-  heading: "📷 v33 · Aperture",
+  heading: "📷 v35 · Contrast",
   items: [
-    { title: 'Pick colors from anywhere',
-      desc: 'Every color picker has an eyedropper, plus your brand colors and last 8 colors one click away.' },
-    { title: 'Space things evenly',
-      desc: 'Right-click 3+ objects to Distribute them, or Match size to the largest. Hide and Lock are there too.' },
-    { title: 'Undo from the toast',
-      desc: 'Deleting objects, pages, or board cards shows an Undo button. Deleted pages come back with their edits.' },
-    { title: 'Quick export',
-      desc: 'Cmd/Ctrl+Shift+S re-exports with the last preset you used. Page thumbnails now sit under the canvas.' }
+    { title: 'Before / After',
+      desc: 'Add your old screenshot as Before (Import tab) and drag the divider to show what changed.' },
+    { title: 'Wipe and slider exports',
+      desc: 'Animate a wipe in Motion Studio, or export an interactive slider page you can embed anywhere.' },
+    { title: 'Simple and Pro modes',
+      desc: 'Simple shows just the essential tools. Switch to Pro in the header for everything.' },
+    { title: 'Floating toolbar',
+      desc: 'Select something on the canvas to change its color, size, or order right where it is.' }
   ]
 };
 

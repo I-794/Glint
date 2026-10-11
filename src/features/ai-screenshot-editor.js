@@ -11,8 +11,6 @@ import { canvasToBlob, nearestGptImageSize } from './ai-shared.js';
 import { edit, applyResultAsImage } from './ai-image-edit.js';
 import { runVisionJsonOnDataUrl } from './ai-cloud.js';
 import { recognizeWords } from './ocr.js';
-import { saveStateToHistory } from '../state/history.js';
-import { render } from '../render/render.js';
 
 // Draw the current screenshot onto a full-resolution canvas.
 export function sourceCanvas() {
