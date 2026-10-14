@@ -11,7 +11,7 @@ const SLIDES = [
   {
     grad: 'linear-gradient(135deg,#f6bb5e,#e8913a)',
     icon: '<path d="M4 7a2 2 0 0 1 2-2h2.2l1.3-1.6A2 2 0 0 1 12 2.7h0a2 2 0 0 1 1.5.7L14.8 5H18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12" r="3.4"/>',
-    title: 'Welcome to the Studio',
+    title: 'Welcome to Glint',
     tip: 'Drop in a screenshot, frame it with backgrounds and device mockups, then export in seconds. Everything runs in your browser, no account needed.'
   },
   {

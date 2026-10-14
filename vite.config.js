@@ -140,7 +140,8 @@ export default defineConfig({
         alternatives: resolve(__dirname, 'alternatives/index.html'),
         faq: resolve(__dirname, 'faq/index.html'),
         roadmap: resolve(__dirname, 'roadmap/index.html'),
-        terms: resolve(__dirname, 'terms/index.html')
+        terms: resolve(__dirname, 'terms/index.html'),
+        glint: resolve(__dirname, 'glint/index.html')
       },
       output: {
         manualChunks: {
