@@ -13,8 +13,8 @@
 import { setSimpleFilter } from './studio-nav.js';
 import { showNotification } from '../ui/notification.js';
 
-const KEY = 'snapshotpro_ui_mode';
-const RETURNING_KEYS = ['snapshotpro_welcome_v1', 'snapshotpro_studio_group', 'snapshotpro_lastseen_version'];
+const KEY = 'glint_ui_mode';
+const RETURNING_KEYS = ['glint_welcome_v1', 'glint_studio_group', 'glint_lastseen_version'];
 
 let mode = 'pro';
 

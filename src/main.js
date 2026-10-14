@@ -1,6 +1,7 @@
-// SnapShotPro v7 — app entry.
+// Glint (formerly SnapShotPro) v7+ — app entry.
 // Initialize DOM refs, bind every module, then render.
 
+import './state/brand-migrate.js';   // v36: must run before any module reads localStorage
 import { inject } from '@vercel/analytics';
 import { state } from './state/state.js';
 import { onHistoryChange, undo, redo } from './state/history.js';

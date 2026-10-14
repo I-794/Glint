@@ -6,6 +6,7 @@ import { state } from '../src/state/state.js';
 import { serializeFull, normalizeProject } from '../src/state/serialize.js';
 import { normalizeCompare, wipeSplit, splitFromPoint, hitDivider, fitRect } from '../src/render/compare-core.js';
 import { applyDesignToState } from '../src/features/document.js';
+import { migrateLocalStorage, MIGRATED_FLAG } from '../src/state/brand-migrate.js';
 
 function mockRes() {
   return {
@@ -151,6 +152,53 @@ function testCompareGeometry() {
   assert.deepEqual(contain, { x: 100, y: 0, w: 200, h: 200 });
 }
 
+function fakeStorage(init = {}) {
+  const m = new Map(Object.entries(init));
+  return {
+    get length() { return m.size; },
+    key(i) { return [...m.keys()][i] ?? null; },
+    getItem(k) { return m.has(k) ? m.get(k) : null; },
+    setItem(k, v) { m.set(k, String(v)); },
+    removeItem(k) { m.delete(k); },
+    _map: m
+  };
+}
+
+function testBrandMigrateCopiesOnce() {
+  const s = fakeStorage({
+    snapshotpro_theme: 'light',
+    snapshotpro_agent_chat_abc: '[1]',
+    snapshotpro_ui_mode: 'pro',
+    glint_ui_mode: 'simple',
+    unrelated: 'x'
+  });
+  const copied = migrateLocalStorage(s);
+  assert.equal(copied, 2);
+  assert.equal(s.getItem('glint_theme'), 'light');
+  assert.equal(s.getItem('glint_agent_chat_abc'), '[1]');
+  assert.equal(s.getItem('glint_ui_mode'), 'simple', 'never overwrite an existing glint_ key');
+  assert.equal(s.getItem('snapshotpro_theme'), 'light', 'old keys stay as a backup');
+  assert.equal(s.getItem(MIGRATED_FLAG), '1');
+  // A key the user deletes after migrating must not come back from the backup.
+  s.removeItem('glint_theme');
+  assert.equal(migrateLocalStorage(s), 0);
+  assert.equal(s.getItem('glint_theme'), null);
+}
+
+function testBrandMigrateMovesWhenQuotaIsFull() {
+  const s = fakeStorage({ snapshotpro_projects_v12: 'BIG' });
+  const realSet = s.setItem.bind(s);
+  // Simulate a full quota: writing a new key fails while the old copy exists.
+  s.setItem = (k, v) => {
+    if (k === 'glint_projects_v12' && s._map.has('snapshotpro_projects_v12')) {
+      const e = new Error('quota'); e.name = 'QuotaExceededError'; throw e;
+    }
+    realSet(k, v);
+  };
+  migrateLocalStorage(s);
+  assert.equal(s.getItem('glint_projects_v12'), 'BIG', 'falls back to a move when a copy does not fit');
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -158,7 +206,9 @@ const tests = [
   testFailedProjectImageDecodeClearsPreviousImage,
   testGalleryTemplateApplySnapshotsHistory,
   testCompareMigratesAndPersists,
-  testCompareGeometry
+  testCompareGeometry,
+  testBrandMigrateCopiesOnce,
+  testBrandMigrateMovesWhenQuotaIsFull
 ];
 
 for (const test of tests) {

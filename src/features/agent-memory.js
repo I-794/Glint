@@ -3,8 +3,8 @@
 
 import { state } from '../state/state.js';
 
-const CHAT_PREFIX = 'snapshotpro_agent_chat_';
-const MEM_KEY = 'snapshotpro_agent_memory';
+const CHAT_PREFIX = 'glint_agent_chat_';
+const MEM_KEY = 'glint_agent_memory';
 const MAX_TURNS = 20;     // keep last N messages (lossy by design)
 const MAX_MEMORY = 20;    // keep last N learned-preference notes
 

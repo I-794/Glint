@@ -22,7 +22,7 @@ import { openContextMenuAt } from './context-menu.js';
 import { gesture } from './gesture.js';
 import { showNotification } from '../ui/notification.js';
 
-const ENABLED_KEY = 'snapshotpro_float_toolbar';
+const ENABLED_KEY = 'glint_float_toolbar';
 const GAP = 10;          // px between the selection and the toolbar
 const EDGE = 8;          // keep this far from the container edges
 const STROKE_MIN = 1, STROKE_MAX = 30;

@@ -221,8 +221,8 @@ await ctx.addInitScript((ver) => {
   // them out of literal import() calls stops knip resolving them as Node imports.
   window.__shotImport = (url) => import(url);
   try {
-    localStorage.setItem('snapshotpro_welcome_v1', 'dismissed');
-    localStorage.setItem('snapshotpro_lastseen_version', ver);
+    localStorage.setItem('glint_welcome_v1', 'dismissed');
+    localStorage.setItem('glint_lastseen_version', ver);
   } catch (e) {}
 }, whatsNew);
 const page = await ctx.newPage();

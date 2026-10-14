@@ -1,6 +1,6 @@
 // v26 — Browser-extension capture receiver.
 //
-// The SnapShotPro Capture extension (Chrome MV3) screenshots a page and opens
+// The Glint Capture extension (Chrome MV3) screenshots a page and opens
 // the studio at /editor/?ext=<nonce>. The extension and the site are different
 // origins, so the capture can't ride Cache Storage like the PWA share-target
 // (caches.js is origin-scoped). Instead the extension's *bridge* content script
@@ -11,8 +11,10 @@
 import { loadImage } from './upload.js';
 import { showNotification } from '../ui/notification.js';
 
-const SOURCE = 'snapshotpro-capture';
-const ACK = 'snapshotpro-capture-ack';
+// v36: Glint Capture sends 'glint-capture'; SnapShotPro Capture builds still in
+// users' browsers send 'snapshotpro-capture'. Ack with the matching type so the
+// sender stops retrying.
+const SOURCES = { 'glint-capture': 'glint-capture-ack', 'snapshotpro-capture': 'snapshotpro-capture-ack' };
 const TIMEOUT_MS = 15000;   // stop listening if no capture arrives
 
 async function dataUrlToBlob(dataUrl) {
@@ -35,13 +37,13 @@ export function bindExtReceiver() {
     // Only trust a same-origin message from our bridge carrying the exact nonce.
     if (e.origin !== location.origin) return;
     const d = e.data;
-    if (!d || d.source !== SOURCE || d.nonce !== nonce || typeof d.dataUrl !== 'string') return;
+    if (!d || !Object.prototype.hasOwnProperty.call(SOURCES, d.source) || d.nonce !== nonce || typeof d.dataUrl !== 'string') return;
     if (!d.dataUrl.startsWith('data:image/')) return;
 
     done = true;
     window.removeEventListener('message', onMessage);
     // Tell the bridge to stop retrying.
-    try { (e.source || window).postMessage({ source: ACK, nonce }, e.origin); } catch (_) {}
+    try { (e.source || window).postMessage({ source: SOURCES[d.source], nonce }, e.origin); } catch (_) {}
 
     try {
       const blob = await dataUrlToBlob(d.dataUrl);

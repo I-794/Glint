@@ -6,7 +6,7 @@
 import { showNotification } from '../ui/notification.js';
 import { getClient, getUser } from './auth.js';
 
-const KEY = 'snapshotpro_campaigns_v1';
+const KEY = 'glint_campaigns_v1';
 
 export function loadCampaigns() {
   try { return JSON.parse(localStorage.getItem(KEY)) || {}; }

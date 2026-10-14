@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     try { parsed = new URL(target); } catch (_) { throw new ApiError(400, 'Invalid URL'); }
     assertHttpUrl(parsed);
 
-    const upstream = await fetchPublic(parsed, { userAgent: 'Mozilla/5.0 SnapShotPro/32 scraper' });
+    const upstream = await fetchPublic(parsed, { userAgent: 'Mozilla/5.0 Glint/36 scraper' });
     if (!upstream.ok) throw new ApiError(upstream.status, `Upstream returned ${upstream.status}`);
 
     const type = (upstream.headers.get('content-type') || '').toLowerCase();

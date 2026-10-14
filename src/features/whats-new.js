@@ -11,8 +11,8 @@
 // the changelog page.
 
 const CURRENT_VERSION = '35.0';
-const LASTSEEN_KEY = 'snapshotpro_lastseen_version';
-const WELCOME_KEY  = 'snapshotpro_welcome_v1';   // set by welcome.js on dismissal
+const LASTSEEN_KEY = 'glint_lastseen_version';
+const WELCOME_KEY  = 'glint_welcome_v1';   // set by welcome.js on dismissal
 
 // Latest release only — the newest version’s highlights, not an accumulation.
 const WHATS_NEW = {

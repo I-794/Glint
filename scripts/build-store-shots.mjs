@@ -49,7 +49,7 @@ await page.waitForTimeout(500);
 await page.screenshot({ path: path.join(OUT, '02-region.png') });   // 1280x800 viewport = hero
 
 // 03 — a real capture framed in the studio.
-await ctx.addInitScript(() => { try { localStorage.setItem('snapshotpro_welcome_v1', 'dismissed'); } catch (e) {} });
+await ctx.addInitScript(() => { try { localStorage.setItem('glint_welcome_v1', 'dismissed'); } catch (e) {} });
 const studio = await ctx.newPage();
 await studio.goto(`${BASE}/editor/`, { waitUntil: 'load' });
 await studio.waitForSelector('#upload-zone');

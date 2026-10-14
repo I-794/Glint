@@ -149,7 +149,7 @@ export function assertHttpUrl(url) {
   }
 }
 
-export async function fetchPublic(startUrl, { maxRedirects = MAX_REDIRECTS, userAgent = 'Mozilla/5.0 SnapShotPro/11' } = {}) {
+export async function fetchPublic(startUrl, { maxRedirects = MAX_REDIRECTS, userAgent = 'Mozilla/5.0 Glint/36' } = {}) {
   let current = startUrl;
   for (let redirects = 0; redirects <= maxRedirects; redirects += 1) {
     assertHttpUrl(current);

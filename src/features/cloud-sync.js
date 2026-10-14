@@ -3,7 +3,7 @@
 import { showNotification } from '../ui/notification.js';
 import { getClient, getUser, onAuthChange } from './auth.js';
 
-const TEMPLATES_KEY = 'snapshotpro_templates';
+const TEMPLATES_KEY = 'glint_templates';
 
 function loadLocalTemplates() {
   try { return JSON.parse(localStorage.getItem(TEMPLATES_KEY)) || {}; }

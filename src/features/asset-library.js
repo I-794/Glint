@@ -12,7 +12,7 @@ import { el } from '../ui/elements.js';
 import { addExtraImageFromSrc } from './extra-images.js';
 import { loadImageFromSrc } from './upload.js';
 
-const LS_KEY = 'snapshotpro_assets';
+const LS_KEY = 'glint_assets';
 const MAX_ITEMS = 18;
 const MAX_EDGE = 800;       // downscale cap for stored images
 

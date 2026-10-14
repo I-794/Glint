@@ -1,6 +1,6 @@
 import { showNotification } from '../ui/notification.js';
 
-const KEY = 'snapshotpro_api_keys';
+const KEY = 'glint_api_keys';
 
 function loadKeys() {
   try { return JSON.parse(localStorage.getItem(KEY)) || {}; }

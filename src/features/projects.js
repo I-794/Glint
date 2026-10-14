@@ -9,7 +9,7 @@
 //    project store found in localStorage (pre-v34, or saved while IndexedDB
 //    failed to load) is merged into IndexedDB and then removed. When IndexedDB
 //    is unavailable, or does not load within OPEN_TIMEOUT, the old localStorage
-//    path is used; `snapshotpro_projects_idb` records that IndexedDB was used
+//    path is used; `glint_projects_idb` records that IndexedDB was used
 //    before, so a later failure retries once and tells the user.
 //  • The status line says "Saved" only after the write has committed.
 //  • Debounced autosave of the active project after every committed edit.
@@ -29,8 +29,8 @@ import { serializeDocument, applyDocument, onDocumentChange, pageCount } from '.
 import { getClient, getUser, onAuthChange } from './auth.js';
 import { idbAvailable, idbGet, idbUpdate, idbReset } from '../state/project-db.js';
 
-const STORE_KEY = 'snapshotpro_projects_v12';
-const ACTIVE_KEY = 'snapshotpro_active_project';
+const STORE_KEY = 'glint_projects_v12';
+const ACTIVE_KEY = 'glint_active_project';
 const AUTOSAVE_DELAY = 1500;            // ms after the last edit before we save
 const AUTO_VERSION_INTERVAL = 3 * 60_000; // min spacing between auto-snapshots
 const MAX_AUTO_VERSIONS = 15;           // named versions are never pruned
@@ -78,12 +78,12 @@ function markDirty(id) { if (id) dirtyIds.set(id, ++dirtySeq); }
 // A change to an existing project: bump updatedAt, never backwards (a clock step
 // back must not make this tab's newest save look older than its previous one).
 function touch(p) { p.updatedAt = Math.max(Date.now(), (p.updatedAt || 0) + 1); markDirty(p.id); }
-const IDB_USED_KEY = 'snapshotpro_projects_idb';
+const IDB_USED_KEY = 'glint_projects_idb';
 // IndexedDB was used before but failed to load: ACTIVE_KEY keeps pointing at the
 // IndexedDB project so a later healthy load reopens it.
 let keepActiveKey = false;
 const channel = (typeof BroadcastChannel === 'function')
-  ? (() => { try { return new BroadcastChannel('snapshotpro-projects'); } catch (e) { return null; } })()
+  ? (() => { try { return new BroadcastChannel('glint-projects'); } catch (e) { return null; } })()
   : null;
 
 function cloneDoc(x) {

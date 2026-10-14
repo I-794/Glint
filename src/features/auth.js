@@ -1,6 +1,6 @@
 import { showNotification } from '../ui/notification.js';
 
-const CFG_KEY = 'snapshotpro_supabase_cfg';
+const CFG_KEY = 'glint_supabase_cfg';
 
 let supabaseClient = null;
 let currentUser = null;

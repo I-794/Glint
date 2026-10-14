@@ -4,7 +4,7 @@
 // illustrative visuals. A "Don't show this again" checkbox (checked by default)
 // persists dismissal in localStorage so it only ever appears once.
 
-const SEEN_KEY = 'snapshotpro_welcome_v1';
+const SEEN_KEY = 'glint_welcome_v1';
 
 // Each slide: a brand-gradient visual (icon) + a title + a one-line tip.
 const SLIDES = [
@@ -86,7 +86,7 @@ function closeWelcome() {
 export function resetOnboarding() {
   try {
     localStorage.removeItem(SEEN_KEY);
-    localStorage.removeItem('snapshotpro_lastseen_version');
+    localStorage.removeItem('glint_lastseen_version');
   } catch (e) {}
   openWelcome();
 }

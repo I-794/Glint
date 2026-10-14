@@ -1,4 +1,4 @@
-// SnapShotPro Capture — studio bridge content script.
+// Glint Capture — studio bridge content script.
 //
 // Runs at document_start on the editor page so it can read ?ext=<nonce> BEFORE
 // the SPA strips it. Pulls the stashed capture from the background, then relays
@@ -16,7 +16,7 @@
   window.addEventListener('message', (e) => {
     if (e.source !== window || e.origin !== location.origin) return;
     const d = e.data;
-    if (d && d.source === 'snapshotpro-capture-ack' && d.nonce === nonce) acked = true;
+    if (d && d.source === 'glint-capture-ack' && d.nonce === nonce) acked = true;
   });
 
   // Fetch (and clear) the one-time capture for this nonce, then relay it.
@@ -27,7 +27,7 @@
     let tries = 0;
     const post = () => {
       if (acked || tries++ > 40) return;   // ~10s of retries, then give up
-      window.postMessage({ source: 'snapshotpro-capture', nonce, dataUrl }, location.origin);
+      window.postMessage({ source: 'glint-capture', nonce, dataUrl }, location.origin);
       setTimeout(post, 250);
     };
     post();
