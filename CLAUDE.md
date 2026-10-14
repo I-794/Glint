@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-The product is **Glint**, a browser screenshot and mockup studio. It was called SnapShotPro through v35; v36 (Darkroom) renamed it. Past changelog entries, old docs under `docs/`, the GitHub repo path (`I-794/SnapShotPro`), the domain (`snapshotpro.xyz`) and the legacy `SnapShot-Pro-main/` folder keep the old name on purpose. Everything else, including new copy and code, says Glint.
+The product is **Glint**, a browser screenshot and mockup studio. It was called SnapShotPro through v35; v36 (Darkroom) renamed it. Past changelog entries, old docs under `docs/`, the domain (`snapshotpro.xyz`) and the legacy `SnapShot-Pro-main/` folder keep the old name on purpose. Everything else, including new copy and code, says Glint. The GitHub repo is `I-794/Glint` (renamed from `I-794/SnapShotPro`; GitHub redirects the old URL).
 
 ## Models / Preferences
 

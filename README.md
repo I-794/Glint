@@ -80,7 +80,7 @@ is optional via Supabase. Architecture notes are in [`CLAUDE.md`](CLAUDE.md); de
 
 Issues and pull requests are welcome. If you are adding a feature, a good place to start is the
 `bind*` pattern in `src/features/` and the single `render()` pipeline described in `CLAUDE.md`.
-Found a bug or have an idea? [Open an issue](https://github.com/I-794/SnapShotPro/issues).
+Found a bug or have an idea? [Open an issue](https://github.com/I-794/Glint/issues).
 
 ## License
 

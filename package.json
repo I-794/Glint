@@ -7,7 +7,7 @@
   "homepage": "https://snapshotpro.xyz",
   "repository": {
     "type": "git",
-    "url": "https://github.com/I-794/SnapShotPro.git"
+    "url": "https://github.com/I-794/Glint.git"
   },
   "scripts": {
     "dev": "vite",
