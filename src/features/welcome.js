@@ -9,25 +9,25 @@ const SEEN_KEY = 'glint_welcome_v1';
 // Each slide: a brand-gradient visual (icon) + a title + a one-line tip.
 const SLIDES = [
   {
-    grad: 'linear-gradient(135deg,#5470ff,#7d92ff)',
+    grad: 'linear-gradient(135deg,#f6bb5e,#e8913a)',
     icon: '<path d="M4 7a2 2 0 0 1 2-2h2.2l1.3-1.6A2 2 0 0 1 12 2.7h0a2 2 0 0 1 1.5.7L14.8 5H18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12" r="3.4"/>',
     title: 'Welcome to the Studio',
     tip: 'Drop in a screenshot, frame it with backgrounds and device mockups, then export in seconds. Everything runs in your browser, no account needed.'
   },
   {
-    grad: 'linear-gradient(135deg,#2348ff,#5470ff)',
+    grad: 'linear-gradient(135deg,#f2a93b,#e8613a)',
     icon: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><path d="M11 7h10M11 12h10M11 17h6"/>',
     title: 'New: navigate from the rail',
     tip: 'The icon rail on the left groups every tool: Import, Adjust, Background, Frame, Markup, AI, Export, and Project. Click an icon to jump straight to those controls.'
   },
   {
-    grad: 'linear-gradient(135deg,#6d86ff,#43a5ff)',
+    grad: 'linear-gradient(135deg,#f6bb5e,#f2a93b)',
     icon: '<rect x="6" y="3" width="13" height="16" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h11"/>',
     title: 'Build multi-page decks',
     tip: 'Add pages from the filmstrip under the canvas. Each page keeps its own size and design. Present them full screen or export the whole set as a PDF.'
   },
   {
-    grad: 'linear-gradient(135deg,#5470ff,#34d399)',
+    grad: 'linear-gradient(135deg,#f2a93b,#34d399)',
     icon: '<path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5a3.5 3.5 0 0 1 .5 8.5z"/><path d="M12 11v5M10 14l2 2 2-2"/>',
     title: 'Your work is always saved',
     tip: 'Projects autosave as you edit, with full version history you can roll back to. Sign in to sync across devices. Nothing gets lost.'
@@ -42,7 +42,7 @@ function buildSlides() {
   wrap.innerHTML = SLIDES.map((s, i) => `
     <div class="welcome-slide${i === 0 ? ' active' : ''}" data-i="${i}">
       <div class="welcome-visual" style="background:${s.grad};">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${s.icon}</svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#141416" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${s.icon}</svg>
       </div>
       <h3 class="welcome-title">${s.title}</h3>
       <p class="welcome-tip">${s.tip}</p>

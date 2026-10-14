@@ -408,8 +408,8 @@ function drawMarquee() {
   const rx = Math.min(marquee.x0, marquee.x1), ry = Math.min(marquee.y0, marquee.y1);
   const rw = Math.abs(marquee.x1 - marquee.x0), rh = Math.abs(marquee.y1 - marquee.y0);
   ctx.save();
-  ctx.fillStyle = 'rgba(84,112,255,0.12)';
-  ctx.strokeStyle = 'rgba(84,112,255,0.9)';
+  ctx.fillStyle = 'rgba(242,169,59,0.12)';
+  ctx.strokeStyle = 'rgba(242,169,59,0.95)';
   ctx.lineWidth = Math.max(1.5, el.previewCanvas.width * 0.0015);
   ctx.setLineDash([5, 3]);
   ctx.fillRect(rx, ry, rw, rh);

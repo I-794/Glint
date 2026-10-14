@@ -142,7 +142,7 @@ export function drawGuides(ctx) {
   if (!_guides.length) return;
   const canvas = ctx.canvas;
   ctx.save();
-  ctx.strokeStyle = '#2348ff';
+  ctx.strokeStyle = '#f2a93b';
   ctx.lineWidth = Math.max(1, canvas.width * 0.0012);
   ctx.setLineDash([]);
   _guides.forEach(g => {

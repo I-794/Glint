@@ -10,7 +10,7 @@
     <meta property="og:title" content="SnapShotPro Capture · Browser Extension">
     <meta property="og:description" content="Capture any page — visible, full-page, or region — and edit it in the SnapShotPro studio. One click, nothing uploaded until you say so.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
-    <meta name="theme-color" content="#080b14">
+    <meta name="theme-color" content="#0d0d0f">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -30,18 +30,18 @@
         .ex-bar { height: 36px; background: #151a2b; display: flex; align-items: center; gap: 7px; padding: 0 13px; border-bottom: 1px solid rgba(255,255,255,0.06); }
         .ex-bar i { width: 10px; height: 10px; border-radius: 50%; }
         .ex-bar i:nth-child(1){ background:#ff5f57; } .ex-bar i:nth-child(2){ background:#febc2e; } .ex-bar i:nth-child(3){ background:#28c840; }
-        .ex-bar .u { margin-left: 9px; height: 20px; flex: 1; border-radius: 6px; background: #0b0e1a; display: flex; align-items: center; padding: 0 10px; font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); }
-        .ex-canvas { display: block; width: 100%; aspect-ratio: 16/10; object-fit: cover; background: #0b0e1a; }
+        .ex-bar .u { margin-left: 9px; height: 20px; flex: 1; border-radius: 6px; background: #101013; display: flex; align-items: center; padding: 0 10px; font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); }
+        .ex-canvas { display: block; width: 100%; aspect-ratio: 16/10; object-fit: cover; background: #101013; }
         /* the region marquee, drawn over the shot = the product's signature move */
-        .ex-marquee { position: absolute; left: 16%; top: 34%; width: 52%; height: 44%; border: 2px solid var(--accent); border-radius: 4px; background: rgba(35,72,255,0.10); box-shadow: 0 0 0 9999px rgba(8,11,20,0.34); }
+        .ex-marquee { position: absolute; left: 16%; top: 34%; width: 52%; height: 44%; border: 2px solid var(--accent); border-radius: 4px; background: rgba(196,122,20,0.10); box-shadow: 0 0 0 9999px rgba(13,13,15,0.34); }
         .ex-marquee span { position: absolute; width: 9px; height: 9px; background: #fff; border: 2px solid var(--accent); border-radius: 2px; }
         .ex-marquee span:nth-child(1){ top:-5px; left:-5px; } .ex-marquee span:nth-child(2){ top:-5px; right:-5px; }
         .ex-marquee span:nth-child(3){ bottom:-5px; left:-5px; } .ex-marquee span:nth-child(4){ bottom:-5px; right:-5px; }
         .ex-marquee .dim { position:absolute; top:-26px; left:0; font-family: var(--font-mono); font-size: 11px; color:#fff; background:var(--accent); padding:2px 7px; border-radius:5px; }
         /* the floating extension popup, depicted */
-        .ex-pop { position: absolute; right: -6%; bottom: -8%; width: 188px; background: #0b0e1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 13px; padding: 11px; box-shadow: 0 24px 50px rgba(0,0,0,0.55); }
+        .ex-pop { position: absolute; right: -6%; bottom: -8%; width: 188px; background: #101013; border: 1px solid rgba(255,255,255,0.1); border-radius: 13px; padding: 11px; box-shadow: 0 24px 50px rgba(0,0,0,0.55); }
         .ex-pop .ph { display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--ink-2); margin-bottom:9px; }
-        .ex-pop .ph b { color:#fff; font-weight:700; } .ex-pop .ph .d { width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px rgba(35,72,255,0.25); }
+        .ex-pop .ph b { color:#fff; font-weight:700; } .ex-pop .ph .d { width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px rgba(196,122,20,0.25); }
         .ex-pop .row { display:flex; align-items:center; gap:9px; padding:8px 9px; border-radius:9px; background:#141a2b; border:1px solid rgba(255,255,255,0.07); margin-bottom:6px; font-size:11.5px; color:var(--ink); }
         .ex-pop .row.on { border-color: var(--accent); background:#18203a; }
         .ex-pop .row svg { width:15px; height:15px; color:var(--accent); }
@@ -49,7 +49,7 @@
         /* ── Modes bento: 1 big + 2, never three equal cards ── */
         .ex-modes { display: grid; grid-template-columns: 1.4fr 1fr; grid-template-rows: auto auto; gap: 16px; }
         .ex-mode { border-radius: var(--r-card); padding: clamp(22px,2.6vw,30px); background: linear-gradient(150deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border: 1px solid var(--glass-line); box-shadow: var(--shadow-glass); display:flex; flex-direction:column; gap:11px; }
-        .ex-mode.lead { grid-row: 1 / 3; justify-content:flex-end; background: radial-gradient(80% 70% at 18% 12%, rgba(35,72,255,0.16), transparent 60%), linear-gradient(150deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); }
+        .ex-mode.lead { grid-row: 1 / 3; justify-content:flex-end; background: radial-gradient(80% 70% at 18% 12%, rgba(196,122,20,0.16), transparent 60%), linear-gradient(150deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); }
         .ex-mode .ico { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; background: var(--accent-soft); color:var(--accent); border:1px solid var(--accent-line); }
         .ex-mode .ico svg { width:22px; height:22px; }
         .ex-mode h3 { font-size: clamp(18px,2vw,22px); font-weight: 650; letter-spacing:-0.02em; color:var(--ink); }

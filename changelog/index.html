@@ -10,7 +10,7 @@
     <meta property="og:title" content="SnapShotPro Changelog">
     <meta property="og:description" content="Every SnapShotPro release, up to v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (quality of life), and v32 Open Canvas: an infinite board of cards for your whole project, seed it from a URL, drive it by chat, and export it as one image. Plus v31 Merge Studio (CSV to N on-brand designs) and the full trail back to a single HTML file.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
-    <meta name="theme-color" content="#2348ff">
+    <meta name="theme-color" content="#0d0d0f">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -25,8 +25,8 @@
             content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
             background:
                 radial-gradient(48% 58% at 12% 6%, rgba(91,130,255,0.18), transparent 60%),
-                radial-gradient(44% 54% at 88% 12%, rgba(138,107,255,0.15), transparent 60%),
-                radial-gradient(60% 60% at 72% 100%, rgba(35,72,255,0.10), transparent 62%);
+                radial-gradient(44% 54% at 88% 12%, rgba(232,97,58,0.15), transparent 60%),
+                radial-gradient(60% 60% at 72% 100%, rgba(196,122,20,0.10), transparent 62%);
         }
 
         /* v16 — glassmorphism spotlight. An aurora backdrop sits behind a frosted
@@ -38,9 +38,9 @@
             display: grid; grid-template-columns: 1.04fr 0.96fr; gap: clamp(28px, 4vw, 56px);
             align-items: center; color: #fff; box-shadow: var(--shadow-product);
             background:
-                radial-gradient(78% 120% at 10% 8%, #5b82ff 0%, transparent 52%),
-                radial-gradient(64% 100% at 92% 16%, #8a6bff 0%, transparent 48%),
-                radial-gradient(90% 120% at 72% 104%, #1a37d6 0%, transparent 56%),
+                radial-gradient(78% 120% at 10% 8%, #f6bb5e 0%, transparent 52%),
+                radial-gradient(64% 100% at 92% 16%, #e8613a 0%, transparent 48%),
+                radial-gradient(90% 120% at 72% 104%, #b06a0e 0%, transparent 56%),
                 #0a0f1f;
         }
         /* Faint light specks drifting behind the glass, purely decorative. */
@@ -104,7 +104,7 @@
                 radial-gradient(58% 90% at 6% 2%, rgba(255,90,90,0.20), transparent 55%),
                 radial-gradient(58% 90% at 94% 8%, rgba(74,168,255,0.22), transparent 55%),
                 radial-gradient(85% 105% at 62% 106%, rgba(87,227,155,0.16), transparent 58%),
-                #0b0d14;
+                #0e0e11;
         }
         .spotlight-color::after { display: none; }   /* drop the v16 light-speck layer */
         .spotlight-color .spot-copy {
@@ -114,11 +114,11 @@
             box-shadow: 0 20px 52px rgba(4,7,18,0.55);
         }
         /* The spectrum bar IS the gradient-map feature, used as the section signature. */
-        .spectrum-bar { height: 12px; border-radius: var(--r-pill); margin-bottom: 22px; background: linear-gradient(90deg, #ff5a5a, #ffb14a, #ffe24a, #57e39b, #4aa8ff, #8a6bff); }
+        .spectrum-bar { height: 12px; border-radius: var(--r-pill); margin-bottom: 22px; background: linear-gradient(90deg, #ff5a5a, #ffb14a, #ffe24a, #57e39b, #4aa8ff, #e8613a); }
         .swatch-row { display: flex; gap: 9px; margin-bottom: 24px; }
         .swatch-row i { width: 30px; height: 30px; border-radius: 9px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); }
-        .spotlight-color .spot-feat-ico { background: linear-gradient(135deg, rgba(74,168,255,0.34), rgba(138,107,255,0.28)); }
-        .spotlight-color .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-color .spot-feat-ico { background: linear-gradient(135deg, rgba(74,168,255,0.34), rgba(232,97,58,0.28)); }
+        .spotlight-color .btn-primary { background: #fff; color: #141416; }
         .spotlight-color .btn-primary:hover { background: #f0f0ee; }
         /* Duotone overlay: a color ramp blended over the shot to preview the map. */
         .spot-shot-wrap { position: relative; }
@@ -134,9 +134,9 @@
            v17 spectrum band. */
         .spotlight-variations {
             background:
-                radial-gradient(52% 82% at 100% 0%, rgba(138,107,255,0.22), transparent 56%),
+                radial-gradient(52% 82% at 100% 0%, rgba(232,97,58,0.22), transparent 56%),
                 radial-gradient(55% 82% at 0% 100%, rgba(74,168,255,0.18), transparent 56%),
-                #0b0d14;
+                #0e0e11;
         }
         .spotlight-variations::after { display: none; }
         .spotlight-variations .spot-copy {
@@ -145,8 +145,8 @@
             border: 1px solid rgba(255,255,255,0.10);
             box-shadow: 0 20px 52px rgba(4,7,18,0.55);
         }
-        .spotlight-variations .spot-feat-ico { background: linear-gradient(135deg, rgba(138,107,255,0.32), rgba(74,168,255,0.26)); }
-        .spotlight-variations .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-variations .spot-feat-ico { background: linear-gradient(135deg, rgba(232,97,58,0.32), rgba(74,168,255,0.26)); }
+        .spotlight-variations .btn-primary { background: #fff; color: #141416; }
         .spotlight-variations .btn-primary:hover { background: #f0f0ee; }
         /* Generative signature pill: animated spectrum sweep, matching the
            studio's Generate button. */
@@ -154,7 +154,7 @@
             display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px;
             font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; color: #fff;
             padding: 7px 14px; border-radius: var(--r-pill);
-            background: linear-gradient(90deg, #ff5a5a, #ffb14a, #57e39b, #4aa8ff, #8a6bff, #ff5a5a);
+            background: linear-gradient(90deg, #ff5a5a, #ffb14a, #57e39b, #4aa8ff, #e8613a, #ff5a5a);
             background-size: 220% 100%; animation: gen-sweep 6s linear infinite;
         }
         @keyframes gen-sweep { to { background-position: 220% 0; } }
@@ -169,7 +169,7 @@
         .vary-tile.active { outline: 2px solid #fff; outline-offset: 3px; }
         .vary-tile.active::before {
             content: 'Applied'; position: absolute; top: 8px; right: 8px; z-index: 1;
-            font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #11131c;
+            font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #141416;
             background: #fff; padding: 2px 7px; border-radius: 999px;
         }
         @media (prefers-reduced-motion: reduce) { .gen-pill { animation: none; } }
@@ -181,7 +181,7 @@
             background:
                 radial-gradient(55% 85% at 0% 0%, rgba(74,168,255,0.20), transparent 56%),
                 radial-gradient(55% 85% at 100% 100%, rgba(255,90,90,0.16), transparent 56%),
-                #0b0d14;
+                #0e0e11;
         }
         .spotlight-assets::after { display: none; }
         .spotlight-assets .spot-copy {
@@ -190,8 +190,8 @@
             border: 1px solid rgba(255,255,255,0.10);
             box-shadow: 0 20px 52px rgba(4,7,18,0.55);
         }
-        .spotlight-assets .spot-feat-ico { background: linear-gradient(135deg, rgba(74,168,255,0.32), rgba(138,107,255,0.26)); }
-        .spotlight-assets .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-assets .spot-feat-ico { background: linear-gradient(135deg, rgba(74,168,255,0.32), rgba(232,97,58,0.26)); }
+        .spotlight-assets .btn-primary { background: #fff; color: #141416; }
         .spotlight-assets .btn-primary:hover { background: #f0f0ee; }
         .asset-demo { display: flex; flex-direction: column; gap: 14px; }
         .prompt-line {
@@ -223,8 +223,8 @@
         .spotlight-agent {
             background:
                 radial-gradient(55% 85% at 100% 0%, rgba(87,227,155,0.18), transparent 56%),
-                radial-gradient(55% 85% at 0% 100%, rgba(138,107,255,0.20), transparent 56%),
-                #0b0d14;
+                radial-gradient(55% 85% at 0% 100%, rgba(232,97,58,0.20), transparent 56%),
+                #0e0e11;
         }
         .spotlight-agent::after { display: none; }
         .spotlight-agent .spot-copy {
@@ -234,12 +234,12 @@
             box-shadow: 0 20px 52px rgba(4,7,18,0.55);
         }
         .spotlight-agent .spot-feat-ico { background: linear-gradient(135deg, rgba(87,227,155,0.30), rgba(74,168,255,0.26)); }
-        .spotlight-agent .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-agent .btn-primary { background: #fff; color: #141416; }
         .spotlight-agent .btn-primary:hover { background: #f0f0ee; }
         /* The chat thread = the agent conversation, depicted. */
         .agent-thread { display: flex; flex-direction: column; gap: 10px; }
         .chat-b { padding: 10px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.45; max-width: 86%; }
-        .chat-u { align-self: flex-end; background: #2348ff; color: #fff; border-bottom-right-radius: 5px; }
+        .chat-u { align-self: flex-end; background: #c47a14; color: #fff; border-bottom-right-radius: 5px; }
         .chat-a { align-self: flex-start; background: rgba(255,255,255,0.10); color: #fff; border: 1px solid rgba(255,255,255,0.14); border-bottom-left-radius: 5px; }
         .chat-act { align-self: flex-start; font-family: var(--font-mono); font-size: 11.5px; color: rgba(255,255,255,0.66); padding-left: 4px; }
         .chat-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 4px; }
@@ -250,9 +250,9 @@
            shadow. Cobalt accent, distinct from every prior spotlight. */
         .spotlight-3d {
             background:
-                radial-gradient(58% 88% at 4% 0%, rgba(79,124,255,0.24), transparent 56%),
-                radial-gradient(56% 84% at 100% 100%, rgba(122,92,255,0.24), transparent 56%),
-                #0b0d14;
+                radial-gradient(58% 88% at 4% 0%, rgba(242,169,59,0.24), transparent 56%),
+                radial-gradient(56% 84% at 100% 100%, rgba(232,97,58,0.24), transparent 56%),
+                #0e0e11;
         }
         .spotlight-3d::after { display: none; }
         .spotlight-3d .spot-copy {
@@ -261,8 +261,8 @@
             border: 1px solid rgba(255,255,255,0.10);
             box-shadow: 0 20px 52px rgba(4,7,18,0.55);
         }
-        .spotlight-3d .spot-feat-ico { background: linear-gradient(135deg, rgba(79,124,255,0.32), rgba(122,92,255,0.28)); }
-        .spotlight-3d .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-3d .spot-feat-ico { background: linear-gradient(135deg, rgba(242,169,59,0.32), rgba(232,97,58,0.28)); }
+        .spotlight-3d .btn-primary { background: #fff; color: #141416; }
         .spotlight-3d .btn-primary:hover { background: #f0f0ee; }
         /* the device, rendered in perspective: this IS the 3D mockup feature, depicted */
         .mock3d-stage { width: 100%; display: flex; align-items: center; justify-content: center; perspective: 1100px; }
@@ -284,7 +284,7 @@
             background:
                 radial-gradient(56% 86% at 0% 0%, rgba(245,176,84,0.20), transparent 56%),
                 radial-gradient(54% 82% at 100% 100%, rgba(255,107,74,0.18), transparent 56%),
-                #0b0d14;
+                #0e0e11;
         }
         .spotlight-command::after { display: none; }
         .spotlight-command .spot-copy {
@@ -294,7 +294,7 @@
             box-shadow: 0 20px 52px rgba(4,7,18,0.55);
         }
         .spotlight-command .spot-feat-ico { background: linear-gradient(135deg, rgba(245,176,84,0.32), rgba(255,107,74,0.26)); }
-        .spotlight-command .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-command .btn-primary { background: #fff; color: #141416; }
         .spotlight-command .btn-primary:hover { background: #f0f0ee; }
         /* the command palette, depicted: search line + grouped/recent results
            with shortcut-hint chips. This IS the Command Center feature, shown. */
@@ -326,7 +326,7 @@
             background:
                 radial-gradient(56% 86% at 0% 0%, rgba(45,212,191,0.20), transparent 56%),
                 radial-gradient(54% 82% at 100% 100%, rgba(56,148,255,0.18), transparent 56%),
-                #0b0d14;
+                #0e0e11;
         }
         .spotlight-mobile::after { display: none; }
         .spotlight-mobile .spot-copy {
@@ -336,7 +336,7 @@
             box-shadow: 0 20px 52px rgba(4,7,18,0.55);
         }
         .spotlight-mobile .spot-feat-ico { background: linear-gradient(135deg, rgba(45,212,191,0.32), rgba(56,148,255,0.26)); }
-        .spotlight-mobile .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-mobile .btn-primary { background: #fff; color: #141416; }
         .spotlight-mobile .btn-primary:hover { background: #f0f0ee; }
         /* the phone, depicting the canvas-first layout. This IS Mobile Studio, shown. */
         .ms-stage { width: 100%; display: flex; align-items: center; justify-content: center; }
@@ -382,14 +382,14 @@
             background:
                 radial-gradient(70% 90% at 12% 0%, #1f3a8a 0%, transparent 52%),
                 radial-gradient(64% 100% at 94% 14%, #5b3ea8 0%, transparent 48%),
-                #06080f;
+                #09090b;
         }
         .spotlight-code::after { display: none; }
         .spotlight-code .spot-copy {
             background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05));
         }
-        .spotlight-code .spot-feat-ico { background: linear-gradient(135deg, rgba(79,124,255,0.32), rgba(122,92,255,0.26)); }
-        .spotlight-code .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-code .spot-feat-ico { background: linear-gradient(135deg, rgba(242,169,59,0.32), rgba(232,97,58,0.26)); }
+        .spotlight-code .btn-primary { background: #fff; color: #141416; }
         .spotlight-code .btn-primary:hover { background: #f0f0ee; }
         /* the code window: this IS Code Snippet Studio, shown. */
         .cw-stage { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -407,7 +407,7 @@
         .cw-win .kw { color: #ff6ac1; } .cw-win .fn { color: #57c7ff; } .cw-win .st { color: #5af78e; } .cw-win .cm { color: #686868; }
         .cw-prompt { margin-top: 16px; font-family: var(--font-mono); font-size: 12px; color: rgba(255,255,255,0.7); }
         .cw-prompt b { color: #5af78e; font-weight: 500; }
-        .cw-prompt em { display: inline-block; width: 7px; height: 1em; transform: translateY(2px); background: #5b82ff; margin-left: 3px; font-style: normal; animation: cwblink 1.1s steps(1) infinite; }
+        .cw-prompt em { display: inline-block; width: 7px; height: 1em; transform: translateY(2px); background: #f6bb5e; margin-left: 3px; font-style: normal; animation: cwblink 1.1s steps(1) infinite; }
         @keyframes cwblink { 50% { opacity: 0; } }
         @media (prefers-reduced-motion: reduce) { .cw-prompt em { animation: none; } }
 
@@ -420,12 +420,12 @@
             background:
                 radial-gradient(68% 92% at 8% 0%, #1d3aa8 0%, transparent 52%),
                 radial-gradient(60% 96% at 96% 12%, #5b3ea8 0%, transparent 50%),
-                #06080f;
+                #09090b;
         }
         .spotlight-tour::after { display: none; }
         .spotlight-tour .spot-copy { background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); }
-        .spotlight-tour .spot-feat-ico { background: linear-gradient(135deg, rgba(79,124,255,0.32), rgba(255,107,74,0.28)); }
-        .spotlight-tour .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-tour .spot-feat-ico { background: linear-gradient(135deg, rgba(242,169,59,0.32), rgba(255,107,74,0.28)); }
+        .spotlight-tour .btn-primary { background: #fff; color: #141416; }
         .spotlight-tour .btn-primary:hover { background: #f0f0ee; }
         /* The tour player, depicted: a framed screen carries one pulsing hotspot
            and a pinned callout; a step rail sits below. The shapes are abstract
@@ -435,7 +435,7 @@
             position: relative; width: min(94%, 384px); aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden;
             transform: rotate(-1.2deg); box-shadow: 0 38px 72px -26px rgba(0,0,0,0.72);
             background:
-                radial-gradient(78% 70% at 24% 16%, #4f7cff, transparent 60%),
+                radial-gradient(78% 70% at 24% 16%, #f2a93b, transparent 60%),
                 radial-gradient(80% 80% at 86% 94%, #ff6b4a, transparent 62%),
                 linear-gradient(150deg, #131a3e, #241b56);
         }
@@ -452,7 +452,7 @@
         }
         .tp-callout {
             position: absolute; right: 7%; top: calc(28% + 74px); width: 158px;
-            background: #fff; color: #11131c; border-radius: 13px; padding: 11px 13px;
+            background: #fff; color: #141416; border-radius: 13px; padding: 11px 13px;
             box-shadow: 0 18px 44px rgba(0,0,0,0.42);
         }
         .tp-callout b { display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 2px; }
@@ -473,12 +473,12 @@
             background:
                 radial-gradient(70% 92% at 6% 2%, #1d3aa8 0%, transparent 52%),
                 radial-gradient(58% 96% at 96% 14%, #243a8f 0%, transparent 50%),
-                #06080f;
+                #09090b;
         }
         .spotlight-ext::after { display: none; }
         .spotlight-ext .spot-copy { background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); }
-        .spotlight-ext .spot-feat-ico { background: linear-gradient(135deg, rgba(79,124,255,0.34), rgba(91,130,255,0.24)); }
-        .spotlight-ext .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-ext .spot-feat-ico { background: linear-gradient(135deg, rgba(242,169,59,0.34), rgba(91,130,255,0.24)); }
+        .spotlight-ext .btn-primary { background: #fff; color: #141416; }
         .spotlight-ext .btn-primary:hover { background: #f0f0ee; }
         /* the captured browser, depicted: a window with a region marquee mid-grab
            and the extension popup at the corner. Abstract shapes, not a fake UI. */
@@ -488,22 +488,22 @@
         .ec-bar { height: 30px; background: #151a2b; display: flex; align-items: center; gap: 6px; padding: 0 11px; border-bottom: 1px solid rgba(255,255,255,0.06); }
         .ec-bar i { width: 8px; height: 8px; border-radius: 50%; }
         .ec-bar i:nth-child(1){ background:#ff5f57; } .ec-bar i:nth-child(2){ background:#febc2e; } .ec-bar i:nth-child(3){ background:#28c840; }
-        .ec-bar .u { margin-left: 7px; height: 16px; flex: 1; border-radius: 5px; background: #0b0e1a; }
+        .ec-bar .u { margin-left: 7px; height: 16px; flex: 1; border-radius: 5px; background: #101013; }
         .ec-shot { aspect-ratio: 16 / 10; background: radial-gradient(70% 80% at 22% 18%, #3a4ea8, transparent 60%), radial-gradient(70% 80% at 86% 92%, #5b3ea8, transparent 60%), linear-gradient(150deg, #131a3e, #1d1647); }
-        .ec-marquee { position: absolute; left: 14%; top: 34%; width: 50%; height: 42%; border: 2px solid #5b82ff; border-radius: 4px; background: rgba(91,130,255,0.10); animation: ec-pulse 1.9s ease-in-out infinite; }
-        .ec-marquee b { position: absolute; top: -22px; left: 0; font-family: var(--font-mono); font-size: 10px; font-weight: 500; color: #fff; background: #5b82ff; padding: 2px 7px; border-radius: 5px; }
-        .ec-marquee s { position: absolute; width: 8px; height: 8px; background: #fff; border: 2px solid #5b82ff; border-radius: 2px; }
+        .ec-marquee { position: absolute; left: 14%; top: 34%; width: 50%; height: 42%; border: 2px solid #f6bb5e; border-radius: 4px; background: rgba(91,130,255,0.10); animation: ec-pulse 1.9s ease-in-out infinite; }
+        .ec-marquee b { position: absolute; top: -22px; left: 0; font-family: var(--font-mono); font-size: 10px; font-weight: 500; color: #fff; background: #f6bb5e; padding: 2px 7px; border-radius: 5px; }
+        .ec-marquee s { position: absolute; width: 8px; height: 8px; background: #fff; border: 2px solid #f6bb5e; border-radius: 2px; }
         .ec-marquee s:nth-child(1){ top:-5px; left:-5px; } .ec-marquee s:nth-child(2){ top:-5px; right:-5px; }
         .ec-marquee s:nth-child(3){ bottom:-5px; left:-5px; } .ec-marquee s:nth-child(4){ bottom:-5px; right:-5px; }
         @keyframes ec-pulse {
             0%,100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.4), 0 0 0 0 rgba(91,130,255,0.5); }
             50%     { box-shadow: 0 0 0 1px rgba(255,255,255,0.4), 0 0 0 12px rgba(91,130,255,0); }
         }
-        .ec-pop { position: absolute; right: -10%; bottom: -12%; width: 150px; background: #0b0e1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px; box-shadow: 0 24px 50px rgba(0,0,0,0.55); }
+        .ec-pop { position: absolute; right: -10%; bottom: -12%; width: 150px; background: #101013; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px; box-shadow: 0 24px 50px rgba(0,0,0,0.55); }
         .ec-pop .h { display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: rgba(255,255,255,0.7); margin-bottom: 8px; }
-        .ec-pop .h b { color: #fff; font-weight: 700; } .ec-pop .h .d { width: 6px; height: 6px; border-radius: 50%; background: #5b82ff; box-shadow: 0 0 0 3px rgba(91,130,255,0.25); }
+        .ec-pop .h b { color: #fff; font-weight: 700; } .ec-pop .h .d { width: 6px; height: 6px; border-radius: 50%; background: #f6bb5e; box-shadow: 0 0 0 3px rgba(91,130,255,0.25); }
         .ec-pop .r { height: 24px; border-radius: 7px; background: #141a2b; border: 1px solid rgba(255,255,255,0.07); margin-bottom: 5px; }
-        .ec-pop .r.on { border-color: #5b82ff; background: #18203a; }
+        .ec-pop .r.on { border-color: #f6bb5e; background: #18203a; }
         @media (prefers-reduced-motion: reduce) { .ec-marquee { animation: none; } }
 
         /* v27 — Surface Studio spotlight. Its own motif: one design (the small
@@ -513,27 +513,27 @@
            3D, command palette, mobile sheet, tour player, extension capture). */
         .spotlight-surface {
             background:
-                radial-gradient(64% 90% at 4% 4%, rgba(79,124,255,0.22), transparent 54%),
+                radial-gradient(64% 90% at 4% 4%, rgba(242,169,59,0.22), transparent 54%),
                 radial-gradient(58% 88% at 100% 100%, rgba(91,130,255,0.18), transparent 52%),
-                #06080f;
+                #09090b;
         }
         .spotlight-surface::after { display: none; }
         .spotlight-surface .spot-copy { background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); }
-        .spotlight-surface .spot-feat-ico { background: linear-gradient(135deg, rgba(79,124,255,0.34), rgba(91,130,255,0.24)); }
-        .spotlight-surface .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-surface .spot-feat-ico { background: linear-gradient(135deg, rgba(242,169,59,0.34), rgba(91,130,255,0.24)); }
+        .spotlight-surface .btn-primary { background: #fff; color: #141416; }
         .spotlight-surface .btn-primary:hover { background: #f0f0ee; }
         /* the three surfaces, depicted as abstract shapes (not fake product UI). */
         .sf-stage { width: 100%; display: grid; grid-template-columns: 1.1fr 0.95fr; grid-template-rows: 1fr 1fr; gap: 16px; align-items: stretch; }
         .sf-card { position: relative; border-radius: 16px; overflow: hidden; background: #0e1120; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 24px 50px -22px rgba(0,0,0,0.6); display: grid; place-items: center; }
-        .sf-print { width: 46%; aspect-ratio: 1; border-radius: 8px; background: linear-gradient(135deg, #5b82ff, #8a6bff); box-shadow: 0 8px 22px rgba(0,0,0,0.4); }
+        .sf-print { width: 46%; aspect-ratio: 1; border-radius: 8px; background: linear-gradient(135deg, #f6bb5e, #e8613a); box-shadow: 0 8px 22px rgba(0,0,0,0.4); }
         /* tee: tall card, left column spanning both rows */
         .sf-tee { grid-row: span 2; background: radial-gradient(80% 70% at 50% 30%, #1d2542, #0c0f1c); }
         .sf-tee .sf-print { width: 40%; border-radius: 6px; transform: translateY(6%); }
         /* mug: round print on a curved field */
-        .sf-mug { background: radial-gradient(70% 90% at 35% 40%, #20283f, #0b0e1a); }
+        .sf-mug { background: radial-gradient(70% 90% at 35% 40%, #20283f, #101013); }
         .sf-mug .sf-print { border-radius: 50%; width: 48%; }
         /* poster: framed print */
-        .sf-poster { background: linear-gradient(160deg, #161b2e, #0b0e1a); }
+        .sf-poster { background: linear-gradient(160deg, #161b2e, #101013); }
         .sf-poster .sf-print { width: 52%; aspect-ratio: 3/4; border-radius: 4px; border: 5px solid #f7f5f0; }
         .sf-tag { position: absolute; left: 10px; bottom: 9px; font-family: var(--font-mono); font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.7); }
         @media (max-width: 860px) { .sf-stage { max-width: 460px; margin: 0 auto; } }
@@ -545,30 +545,30 @@
            spotlight (surface, command palette, tour player, extension, …). */
         .spotlight-qol {
             background:
-                radial-gradient(64% 90% at 6% 2%, rgba(79,124,255,0.22), transparent 54%),
+                radial-gradient(64% 90% at 6% 2%, rgba(242,169,59,0.22), transparent 54%),
                 radial-gradient(58% 86% at 100% 100%, rgba(122,103,255,0.18), transparent 52%),
-                #06080f;
+                #09090b;
         }
         .spotlight-qol::after { display: none; }
         .spotlight-qol .spot-copy { background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); }
-        .spotlight-qol .spot-feat-ico { background: linear-gradient(135deg, rgba(79,124,255,0.34), rgba(122,103,255,0.24)); }
+        .spotlight-qol .spot-feat-ico { background: linear-gradient(135deg, rgba(242,169,59,0.34), rgba(122,103,255,0.24)); }
         .qol-stage { position: relative; width: 100%; aspect-ratio: 5/4; border-radius: 18px; overflow: hidden;
             background: radial-gradient(80% 70% at 50% 28%, #131a31, #0a0d18);
             border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 24px 50px -22px rgba(0,0,0,0.6); }
         .qol-obj { position: absolute; border-radius: 10px; box-shadow: 0 8px 22px rgba(0,0,0,0.4); }
-        .qol-obj.a { left: 13%; top: 20%; width: 30%; height: 22%; background: linear-gradient(135deg, #5b82ff, #8a6bff); }
+        .qol-obj.a { left: 13%; top: 20%; width: 30%; height: 22%; background: linear-gradient(135deg, #f6bb5e, #e8613a); }
         .qol-obj.b { left: 47%; top: 31%; width: 25%; height: 30%; background: linear-gradient(135deg, #22c3a6, #2f8bff); }
         .qol-obj.c { left: 22%; top: 55%; width: 22%; height: 17%; background: linear-gradient(135deg, #ff8a5b, #ff5b9e); }
         .qol-marq { position: absolute; left: 8%; top: 14%; width: 68%; height: 65%; border: 1.5px dashed rgba(123,150,255,0.95);
-            border-radius: 8px; background: rgba(84,112,255,0.08); }
-        .qol-handle { position: absolute; width: 10px; height: 10px; background: #fff; border: 1.5px solid #5470ff; border-radius: 2px; }
+            border-radius: 8px; background: rgba(242,169,59,0.08); }
+        .qol-handle { position: absolute; width: 10px; height: 10px; background: #fff; border: 1.5px solid #f2a93b; border-radius: 2px; }
         .qol-handle.tl { left: -5px; top: -5px; } .qol-handle.tr { right: -5px; top: -5px; }
         .qol-handle.bl { left: -5px; bottom: -5px; } .qol-handle.br { right: -5px; bottom: -5px; }
         .qol-menu { position: absolute; right: 5%; top: 17%; width: 142px; padding: 6px;
             border-radius: 10px; background: rgba(20,24,38,0.96); border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 14px 34px rgba(0,0,0,0.5); }
         .qol-menu .mi { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; font-size: 11.5px; color: rgba(255,255,255,0.82); }
-        .qol-menu .mi.on { background: #5470ff; color: #fff; }
+        .qol-menu .mi.on { background: #f2a93b; color: #fff; }
         .qol-menu .mi .ic { width: 13px; text-align: center; opacity: 0.9; }
         .qol-menu .sep { height: 1px; margin: 4px 3px; background: rgba(255,255,255,0.1); }
         @media (max-width: 860px) { .qol-stage { max-width: 460px; margin: 0 auto; } }
@@ -581,14 +581,14 @@
            extension, tour player, command palette, code window, …). */
         .spotlight-motion {
             background:
-                radial-gradient(64% 90% at 5% 2%, rgba(79,124,255,0.22), transparent 54%),
+                radial-gradient(64% 90% at 5% 2%, rgba(242,169,59,0.22), transparent 54%),
                 radial-gradient(58% 86% at 100% 100%, rgba(139,92,246,0.16), transparent 52%),
-                #06080f;
+                #09090b;
         }
         .spotlight-motion::after { display: none; }
         .spotlight-motion .spot-copy { background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); }
-        .spotlight-motion .spot-feat-ico { background: linear-gradient(135deg, rgba(79,124,255,0.34), rgba(139,92,246,0.24)); }
-        .spotlight-motion .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-motion .spot-feat-ico { background: linear-gradient(135deg, rgba(242,169,59,0.34), rgba(139,92,246,0.24)); }
+        .spotlight-motion .btn-primary { background: #fff; color: #141416; }
         .spotlight-motion .btn-primary:hover { background: #f0f0ee; }
         /* the timeline, depicted with abstract shapes (lanes + clips), not fake UI. */
         .mo-stage { position: relative; container-type: inline-size; width: 100%; aspect-ratio: 5/4;
@@ -603,7 +603,7 @@
             background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); }
         .mo-clip { position: absolute; top: 50%; transform: translateY(-50%); height: 62%; border-radius: 6px;
             box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
-        .mo-clip.l1 { left: 6%;  width: 44%; background: linear-gradient(135deg, #5b82ff, #8a6bff); }
+        .mo-clip.l1 { left: 6%;  width: 44%; background: linear-gradient(135deg, #f6bb5e, #e8613a); }
         .mo-clip.l2 { left: 30%; width: 40%; background: linear-gradient(135deg, #22c3a6, #2f8bff); }
         .mo-clip.l3 { left: 12%; width: 74%; background: linear-gradient(135deg, #f59e0b, #ff7a5b); }
         .mo-clip.l4 { left: 54%; width: 30%; background: linear-gradient(135deg, #8b5cf6, #c06bff); }
@@ -630,12 +630,12 @@
             background:
                 radial-gradient(60% 90% at 6% 2%, rgba(245,196,64,0.22), transparent 54%),
                 radial-gradient(56% 86% at 100% 100%, rgba(139,92,246,0.20), transparent 52%),
-                #06080f;
+                #09090b;
         }
         .spotlight-intelligence::after { display: none; }
         .spotlight-intelligence .spot-copy { background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); }
         .spotlight-intelligence .spot-feat-ico { background: linear-gradient(135deg, rgba(245,196,64,0.34), rgba(139,92,246,0.28)); }
-        .spotlight-intelligence .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-intelligence .btn-primary { background: #fff; color: #141416; }
         .spotlight-intelligence .btn-primary:hover { background: #f0f0ee; }
         /* Brand Brain UI, depicted: a URL field resolving into a palette + type row */
         .bi-stage { width: 100%; display: flex; flex-direction: column; gap: 14px; }
@@ -671,12 +671,12 @@
             background:
                 radial-gradient(58% 88% at 4% 4%, rgba(34,211,238,0.20), transparent 54%),
                 radial-gradient(56% 86% at 100% 100%, rgba(99,102,241,0.20), transparent 52%),
-                #06080f;
+                #09090b;
         }
         .spotlight-merge::after { display: none; }
         .spotlight-merge .spot-copy { background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); }
         .spotlight-merge .spot-feat-ico { background: linear-gradient(135deg, rgba(34,211,238,0.32), rgba(99,102,241,0.28)); }
-        .spotlight-merge .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-merge .btn-primary { background: #fff; color: #141416; }
         .spotlight-merge .btn-primary:hover { background: #f0f0ee; }
         /* Merge motif, depicted: a data table whose rows fan into rendered cards. */
         .mg-stage { width: 100%; display: flex; flex-direction: column; gap: 18px; }
@@ -706,14 +706,14 @@
            v18 variations, v19 assets, and v31 merge. */
         .spotlight-canvas {
             background:
-                radial-gradient(50% 80% at 12% 8%, rgba(35,72,255,0.20), transparent 56%),
+                radial-gradient(50% 80% at 12% 8%, rgba(196,122,20,0.20), transparent 56%),
                 radial-gradient(46% 78% at 92% 96%, rgba(124,131,255,0.14), transparent 54%),
                 #070912;
         }
         .spotlight-canvas::after { display: none; }
         .spotlight-canvas .spot-copy { background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); }
-        .spotlight-canvas .spot-feat-ico { background: linear-gradient(135deg, rgba(35,72,255,0.34), rgba(124,131,255,0.26)); }
-        .spotlight-canvas .btn-primary { background: #fff; color: #11131c; }
+        .spotlight-canvas .spot-feat-ico { background: linear-gradient(135deg, rgba(196,122,20,0.34), rgba(124,131,255,0.26)); }
+        .spotlight-canvas .btn-primary { background: #fff; color: #141416; }
         .spotlight-canvas .btn-primary:hover { background: #f0f0ee; }
         .oc-stage {
             position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 18px;
@@ -735,7 +735,7 @@
         .oc-card.b { left: 52%; top: 11%; width: 30%; transform: rotate(1.5deg); }
         .oc-card.c { left: 16%; top: 54%; width: 28%; transform: rotate(2deg); }
         .oc-card.d { left: 54%; top: 50%; width: 32%; transform: rotate(-1.5deg); }
-        .oc-group { position: absolute; left: 12%; top: 46%; width: 76%; height: 46%; border: 1.5px dashed rgba(35,72,255,0.85); border-radius: 8px; pointer-events: none; }
+        .oc-group { position: absolute; left: 12%; top: 46%; width: 76%; height: 46%; border: 1.5px dashed rgba(196,122,20,0.85); border-radius: 8px; pointer-events: none; }
         .oc-arrow { position: absolute; left: 44%; top: 24%; width: 9%; height: 0; border-top: 2px solid rgba(124,131,255,0.92); }
         .oc-arrow::after { content: ''; position: absolute; right: -1px; top: -5px; border: 5px solid transparent; border-left-color: rgba(124,131,255,0.92); }
         @media (max-width: 860px) { .oc-stage { max-width: 460px; margin: 0 auto; } }
@@ -842,7 +842,7 @@
         .spotlight-contrast {
             background:
                 radial-gradient(54% 80% at 94% 4%, rgba(236,72,153,0.20), transparent 56%),
-                radial-gradient(48% 78% at 4% 98%, rgba(84,112,255,0.18), transparent 54%),
+                radial-gradient(48% 78% at 4% 98%, rgba(242,169,59,0.18), transparent 54%),
                 #0a0a10;
         }
         .spotlight-contrast::after { display: none; }
@@ -870,7 +870,7 @@
         .ct-old .bar { background: #d4d4d1; } .ct-old .ttl { background: #b9b9b5; }
         .ct-old .card, .ct-old .wide { background: #e2e2df; } .ct-old .card i { background: #b1b1ad; }
         .ct-new { background: #0f1222; clip-path: inset(0 0 0 var(--split)); }
-        .ct-new .bar { background: #5470ff; } .ct-new .ttl { background: #e7e9f5; }
+        .ct-new .bar { background: #f2a93b; } .ct-new .ttl { background: #e7e9f5; }
         .ct-new .card, .ct-new .wide { background: #1c2142; }
         .ct-new .c1 i { background: #34d399; } .ct-new .c2 i { background: #f472b6; } .ct-new .c3 i { background: #fbbf24; }
         .ct-line { position: absolute; top: 0; bottom: 0; left: var(--split); width: 3px; transform: translateX(-50%); background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.35); }
@@ -901,7 +901,7 @@
         }
         .entry.latest {
             border-color: var(--accent-line);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 18px 50px rgba(35,72,255,0.22);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 18px 50px rgba(196,122,20,0.22);
         }
         .entry-meta { display: flex; flex-direction: column; gap: 8px; }
         .ver { display: inline-flex; align-items: center; align-self: flex-start; font-family: var(--font-mono); font-size: 13px; font-weight: 500; padding: 4px 11px; border-radius: var(--r-pill); background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-line); }
@@ -929,7 +929,7 @@
             mix-blend-mode: screen;
         }
         .entry.glass-interactive::after {
-            background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(35,72,255,0.20), transparent 55%);
+            background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(196,122,20,0.20), transparent 55%);
         }
 
         /* Solid fallback where translucency is unwanted or unsupported. */

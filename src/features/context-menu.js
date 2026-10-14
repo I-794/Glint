@@ -192,7 +192,7 @@ function makeMenu(items, x, y) {
       (it.submenu ? '<span style="opacity:0.6;">▸</span>' : '');
     if (!it.disabled) {
       row.addEventListener('mouseenter', () => {
-        row.style.background = 'var(--accent-color,#5470ff)';
+        row.style.background = 'var(--accent-light,rgba(242,169,59,0.12))';
         if (openSub) { openSub.remove(); openSub = null; }
         if (it.submenu) {
           const r = row.getBoundingClientRect();

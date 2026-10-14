@@ -357,7 +357,7 @@ function maybeConnect(id) {
   if (!connectMode) return false;
   if (connectFrom == null) { connectFrom = id; setHint('Connect: now click the second item'); return true; }
   if (connectFrom !== id) {
-    state.board.objects.push({ id: nextId(), kind: 'arrow', from: connectFrom, to: id, color: '#4f7cff', z: state.board.objects.length });
+    state.board.objects.push({ id: nextId(), kind: 'arrow', from: connectFrom, to: id, color: '#f2a93b', z: state.board.objects.length });
     commitBoard();
   }
   cancelConnectMode();
@@ -660,7 +660,7 @@ export function renderBoard() {
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
       line.setAttribute('x1', x1); line.setAttribute('y1', y1);
       line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-      line.setAttribute('stroke', a.color || '#4f7cff');
+      line.setAttribute('stroke', a.color || '#f2a93b');
       line.setAttribute('stroke-width', '2');
       line.setAttribute('marker-end', 'url(#board-arrowhead)');
       svg.appendChild(line);
@@ -669,7 +669,7 @@ export function renderBoard() {
     m.id = 'board-arrowhead'; m.setAttribute('markerWidth', '8'); m.setAttribute('markerHeight', '8');
     m.setAttribute('refX', '6'); m.setAttribute('refY', '4'); m.setAttribute('orient', 'auto');
     const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', 'M0,0 L8,4 L0,8 z'); p.setAttribute('fill', '#4f7cff');
+    p.setAttribute('d', 'M0,0 L8,4 L0,8 z'); p.setAttribute('fill', '#f2a93b');
     m.appendChild(p); svg.appendChild(m);
     // Group bounding boxes (drawn always so groups are findable; brighter when selected).
     const selIds = new Set(state.boardSelection.map(r => r.id));
@@ -682,7 +682,7 @@ export function renderBoard() {
       rect.setAttribute('x', b.x); rect.setAttribute('y', b.y);
       rect.setAttribute('width', b.w); rect.setAttribute('height', b.h);
       rect.setAttribute('fill', 'none');
-      rect.setAttribute('stroke', isSel ? 'var(--accent-primary, #4f7cff)' : 'rgba(154,156,168,0.5)');
+      rect.setAttribute('stroke', isSel ? 'var(--accent-primary, #f2a93b)' : 'rgba(154,156,168,0.5)');
       rect.setAttribute('stroke-width', isSel ? '2' : '1.5');
       rect.setAttribute('stroke-dasharray', '6 4');
       rect.setAttribute('rx', '8');
@@ -1112,7 +1112,7 @@ export async function exportBoard() {
       if (!f || !t) continue;
       const fx = f.x + f.w / 2 - minX + pad, fy = f.y + f.h / 2 - minY + pad;
       const tx = t.x + t.w / 2 - minX + pad, ty = t.y + t.h / 2 - minY + pad;
-      const color = a.color || '#4f7cff';
+      const color = a.color || '#f2a93b';
       ctx.strokeStyle = color; ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(fx, fy); ctx.lineTo(tx, ty); ctx.stroke();

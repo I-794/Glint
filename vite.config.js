@@ -169,8 +169,8 @@ export default defineConfig({
         name: 'SnapShotPro',
         short_name: 'SnapShotPro',
         description: 'Pro screenshot & image editor — filters, frames, AI background removal, annotations, mockups, and more.',
-        theme_color: '#1a1a2e',
-        background_color: '#1a1a2e',
+        theme_color: '#0d0d0f',
+        background_color: '#0d0d0f',
         display: 'standalone',
         // v34.1 — open the installed app on the editor; `id` keeps the original
         // identity so existing installs aren't treated as a different app.

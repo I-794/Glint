@@ -22,7 +22,7 @@
     <meta name="twitter:title" content="SnapShotPro · Screenshot Studio">
     <meta name="twitter:description" content="Screenshots that carry weight. Backgrounds, device frames, App Store sets, generative AI edits, and video, all in your browser.">
     <meta name="twitter:image" content="__OG_BASE__/og.png?v=2">
-    <meta name="theme-color" content="#2348ff">
+    <meta name="theme-color" content="#0d0d0f">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -47,8 +47,8 @@
         .browser-bar { height: 38px; background: #151a2b; display: flex; align-items: center; gap: 7px; padding: 0 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
         .browser-bar .tl { width: 11px; height: 11px; border-radius: 50%; }
         .browser-bar .tl:nth-child(1){ background:#ff5f57; } .browser-bar .tl:nth-child(2){ background:#febc2e; } .browser-bar .tl:nth-child(3){ background:#28c840; }
-        .browser-bar .url { margin-left: 10px; height: 22px; flex: 1; border-radius: 6px; background: #0b0e1a; display: flex; align-items: center; padding: 0 11px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); }
-        .browser-shot { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; background: #0b0e1a; }
+        .browser-bar .url { margin-left: 10px; height: 22px; flex: 1; border-radius: 6px; background: #101013; display: flex; align-items: center; padding: 0 11px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); }
+        .browser-shot { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; background: #101013; }
         .float-chip { position: absolute; z-index: 2; background: rgba(14,18,32,0.66); backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%); border-radius: 13px; padding: 10px 14px; box-shadow: var(--shadow-lift); border: 1px solid var(--glass-line); display: flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 600; color: var(--ink); }
         .float-chip svg { width: 16px; height: 16px; color: var(--accent); }
         /* Inside the card: .showpiece clips overflow, so negative offsets cut the chips off. */
@@ -66,9 +66,9 @@
         .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
         .gcard { border-radius: var(--r-card); overflow: hidden; position: relative; aspect-ratio: 3 / 3.6; padding: 22px; display: flex; align-items: flex-end; box-shadow: var(--shadow-lift); }
         .gcard:nth-child(1){ background: linear-gradient(160deg, #ff8a5c, #ff5e7e 55%, #c5318f); }
-        .gcard:nth-child(2){ background: linear-gradient(160deg, #2bd4c4, #2348ff 60%, #1631a8); }
+        .gcard:nth-child(2){ background: linear-gradient(160deg, #2bd4c4, #c47a14 60%, #1631a8); }
         .gcard:nth-child(3){ background: linear-gradient(160deg, #3a2d6b, #15161a); }
-        .gcard-shot { position: absolute; inset: 22px 22px 76px; border-radius: 11px; overflow: hidden; box-shadow: 0 18px 40px -10px rgba(0,0,0,0.6); background: #0b0e1a; transform: rotate(-1.5deg); }
+        .gcard-shot { position: absolute; inset: 22px 22px 76px; border-radius: 11px; overflow: hidden; box-shadow: 0 18px 40px -10px rgba(0,0,0,0.6); background: #101013; transform: rotate(-1.5deg); }
         .gcard-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .gcard-cap { position: relative; z-index: 1; color: #fff; }
         .gcard-cap strong { display: block; font-size: 15px; font-weight: 600; }
