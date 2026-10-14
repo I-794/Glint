@@ -1,4 +1,4 @@
-// Generates Chrome Web Store screenshots (1280x800 PNG) for SnapShotPro Capture.
+// Generates Chrome Web Store screenshots (1280x800 PNG) for Glint Capture.
 //
 //   node scripts/build-store-shots.mjs http://localhost:5173
 //
@@ -29,7 +29,7 @@ const popupBody = popupHtml.replace(/^[\s\S]*<body>/, '').replace(/<script[\s\S]
 await page.setContent(`<!doctype html><html><head><style>
   html,body{margin:0;height:800px;width:1280px;}
   body{display:flex;align-items:center;justify-content:center;gap:64px;
-    background:radial-gradient(60% 80% at 18% 10%,#1f2a6b,transparent 60%),radial-gradient(60% 80% at 90% 90%,#3a2d6b,transparent 60%),#080b14;
+    background:radial-gradient(55% 70% at 14% 6%,rgba(242,169,59,0.16),transparent 62%),#0d0d0f;
     font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;}
   .copy{max-width:430px;}
   .copy h1{font-size:46px;line-height:1.04;letter-spacing:-0.03em;margin:0 0 16px;font-weight:700;}
@@ -49,7 +49,7 @@ await page.waitForTimeout(500);
 await page.screenshot({ path: path.join(OUT, '02-region.png') });   // 1280x800 viewport = hero
 
 // 03 — a real capture framed in the studio.
-await ctx.addInitScript(() => { try { localStorage.setItem('glint_welcome_v1', 'dismissed'); } catch (e) {} });
+await ctx.addInitScript(() => { try { localStorage.setItem('glint_welcome_v1', 'dismissed'); localStorage.setItem('glint_lastseen_version', '36.0'); } catch (e) {} });
 const studio = await ctx.newPage();
 await studio.goto(`${BASE}/editor/`, { waitUntil: 'load' });
 await studio.waitForSelector('#upload-zone');

@@ -2,7 +2,7 @@
 //
 // When an installed PWA is registered as a share target (see the manifest
 // `share_target` in vite.config.js), the OS share sheet can send an image to
-// SnapShotPro. The service worker (public/share-handler.js) intercepts that
+// Glint. The service worker (public/share-handler.js) intercepts that
 // POST, stashes the image in the Cache Storage under 'shared-image', and
 // redirects the editor to /editor/?shared=1. On load we pull the blob back out
 // and feed it through the normal upload pipeline, then clean up.

@@ -1,4 +1,4 @@
-// Shared behavior for every SnapShotPro marketing page (landing + content
+// Shared behavior for every Glint marketing page (landing + content
 // pages). All effects are IntersectionObserver or pointer-driven CSS-variable
 // writes — no scroll listeners, no per-frame state loops. Cinematic motion
 // (cursor glass + 3D tilt) is gated on prefers-reduced-motion.

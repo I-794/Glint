@@ -22,7 +22,7 @@ This gives you auto-deploy on every push, preview URLs for branches, the works.
    git add .
    git commit -m "Initial Vite scaffold"
    git branch -M main
-   git remote add origin https://github.com/YOUR-USERNAME/snapshot-pro.git
+   git remote add origin https://github.com/YOUR-USERNAME/glint.git
    git push -u origin main
    ```
 
@@ -38,7 +38,7 @@ This gives you auto-deploy on every push, preview URLs for branches, the works.
 
    Don't change them.
 
-5. **Click Deploy.** First build takes 30–60 seconds. You get a URL like `snapshot-pro-yourname.vercel.app`.
+5. **Click Deploy.** First build takes 30–60 seconds. You get a URL like `glint-yourname.vercel.app`.
 
 6. **Done.** Every `git push` to `main` triggers a production deploy. Every push to a non-`main` branch gets its own preview URL.
 
@@ -55,7 +55,7 @@ The wizard asks:
 - Set up and deploy? **Y**
 - Which scope? Pick your account
 - Link to existing project? **N**
-- Project name? `snapshot-pro` (or whatever)
+- Project name? `glint` (or whatever)
 - Code directory? `./` (default)
 - Modify settings? **N** (Vite is auto-detected)
 

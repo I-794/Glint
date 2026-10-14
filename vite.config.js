@@ -166,8 +166,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'SnapShotPro',
-        short_name: 'SnapShotPro',
+        name: 'Glint',
+        short_name: 'Glint',
         description: 'Pro screenshot & image editor — filters, frames, AI background removal, annotations, mockups, and more.',
         theme_color: '#0d0d0f',
         background_color: '#0d0d0f',

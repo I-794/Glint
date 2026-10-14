@@ -210,7 +210,7 @@ function init() {
   applyTransform();
   setTool('select');
 
-  showNotification('SnapShotPro loaded. Drag, paste, or upload an image to begin.', 'success');
+  showNotification('Glint loaded. Drag, paste, or upload an image to begin.', 'success');
 }
 
 if (document.readyState === 'loading') {

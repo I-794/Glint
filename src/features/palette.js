@@ -110,7 +110,7 @@ export function registerCommands() {
       run: () => setUiMode('pro', { announce: true }), when: () => getUiMode() !== 'pro' },
     { id: 'toggle-float-toolbar', label: 'Floating selection toolbar: on / off', icon: '▭',
       run: toggleFloatingToolbar, when: () => state.mode === 'single' || !isFloatingToolbarEnabled() },
-    { id: 'install-app',      label: 'Install SnapShotPro as an app', icon: '⬇', run: installApp, when: canInstallApp },
+    { id: 'install-app',      label: 'Install Glint as an app', icon: '⬇', run: installApp, when: canInstallApp },
     { id: 'zoom-in',          label: 'Zoom in',               icon: '🔍', run: () => setZoom(state.view.zoom * 1.2) },
     { id: 'zoom-out',         label: 'Zoom out',              icon: '🔍', run: () => setZoom(state.view.zoom / 1.2) },
     { id: 'zoom-fit',         label: 'Fit to screen',         icon: '⌧',  run: fitZoom },

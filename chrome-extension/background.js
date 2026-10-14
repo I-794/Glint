@@ -1,4 +1,4 @@
-// SnapShotPro Capture — MV3 background service worker.
+// Glint Capture — MV3 background service worker.
 //
 // Owns the capture flow. Visible-area capture is done here with
 // chrome.tabs.captureVisibleTab. Full-page and region capture inject

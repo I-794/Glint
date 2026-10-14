@@ -1,4 +1,4 @@
-// v33.2 — Real SnapShotPro output for the marketing site (homepage + gallery),
+// v33.2 — Real Glint output for the marketing site (homepage + gallery),
 // replacing the old picsum.photos stock photos.
 //
 //   npm run dev                    (in another terminal)

@@ -1,6 +1,6 @@
 // v27 — Surface Studio: physical & print mockups.
 //
-// Breaks SnapShotPro out of "screens only". The user's artwork (the graded
+// Breaks Glint out of "screens only". The user's artwork (the graded
 // source image) is wrapped onto real-world surfaces — t-shirt, mug, poster,
 // framed print, business card, packaging box — with geometric warp + procedural
 // lighting, all rendered on canvas so it BAKES into export exactly like the

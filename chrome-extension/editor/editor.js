@@ -1,4 +1,4 @@
-// SnapShotPro Capture — quick editor.
+// Glint Capture — quick editor.
 //
 // Loads the capture stashed by the background (by ?n=<nonce>) and offers a
 // minimal edit set: crop, padding + background, and arrow/text annotations, then
@@ -86,11 +86,11 @@ function render() {
   if (state.cropRect) {
     const r = state.cropRect;
     ctx.save();
-    ctx.fillStyle = 'rgba(8,11,20,0.5)';
+    ctx.fillStyle = 'rgba(13,13,15,0.5)';
     ctx.fillRect(0, 0, w, h);
     ctx.clearRect(p + r.x, p + r.y, r.w, r.h);
     ctx.drawImage(state.base, r.x, r.y, r.w, r.h, p + r.x, p + r.y, r.w, r.h);
-    ctx.strokeStyle = '#2348ff'; ctx.lineWidth = 2; ctx.strokeRect(p + r.x, p + r.y, r.w, r.h);
+    ctx.strokeStyle = '#f2a93b'; ctx.lineWidth = 2; ctx.strokeRect(p + r.x, p + r.y, r.w, r.h);
     ctx.restore();
   }
   fitDisplay();
