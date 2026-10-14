@@ -48,7 +48,7 @@
     --border-glow: rgba(196, 122, 20, 0.18);
     --text-primary: #15161a;
     --text-secondary: #55565e;
-    --text-tertiary: #8a8b92;
+    --text-tertiary: #66676e;   /* v36: AA on every light panel (was #8a8b92, 3.2:1) */
     --accent-primary: #f2a93b;
     --accent-secondary: #e8913a;
     --accent-hover: #e39a2c;
