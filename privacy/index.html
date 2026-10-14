@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <meta name="description" content="How SnapShotPro handles your images. Editing runs in your browser; nothing is uploaded unless you use cloud AI or sharing. A plain-language breakdown.">
-    <title>Privacy · SnapShotPro</title>
+    <meta name="description" content="How Glint handles your images. Editing runs in your browser; nothing is uploaded unless you use cloud AI or sharing. A plain-language breakdown.">
+    <title>Privacy · Glint</title>
     <meta property="og:type" content="website">
-    <meta property="og:title" content="SnapShotPro Privacy">
+    <meta property="og:title" content="Glint Privacy">
     <meta property="og:description" content="Editing runs in your browser. Nothing leaves unless you choose cloud AI or sharing.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
-    <meta name="theme-color" content="#2348ff">
+    <meta name="theme-color" content="#0d0d0f">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
         .flow { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: clamp(40px, 6vw, 72px); }
         .flow-card { border-radius: var(--r-card); padding: 28px; border: 1px solid var(--line); }
         .flow-card.local { background: var(--bg-raise); }
-        .flow-card.leaves { background: rgba(79,124,255,0.10); border-color: var(--accent-line); color: var(--ink); }
+        .flow-card.leaves { background: rgba(242,169,59,0.10); border-color: var(--accent-line); color: var(--ink); }
         .flow-card .tag { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; margin-bottom: 16px; }
         .flow-card.local .tag { color: var(--accent); }
         .flow-card.leaves .tag { color: var(--accent); }
@@ -49,7 +49,7 @@
     <div class="wrap wrap-narrow">
         <p class="mono-label" style="margin-bottom:16px;">Privacy</p>
         <h1>Your screenshots <span class="accent">stay yours</span>.</h1>
-        <p class="lede">SnapShotPro runs in your browser. Editing happens on your device, and nothing is uploaded unless you reach for a cloud feature. Here is exactly what that means.</p>
+        <p class="lede">Glint runs in your browser. Editing happens on your device, and nothing is uploaded unless you reach for a cloud feature. Here is exactly what that means.</p>
     </div>
 </header>
 
@@ -81,7 +81,7 @@
             <p>When you drop in a screenshot, it is loaded straight into the page and drawn on a canvas on your machine. Styling, framing, mockups, annotations, cropping, and export all happen there. We never receive a copy. Background removal and text extraction (OCR) also run locally in your browser; the underlying AI models are downloaded once from a public CDN, but your image stays on your device.</p>
 
             <h2>Cloud AI is opt-in</h2>
-            <p>The generative tools (replace background, extend canvas, magic eraser) and the text tools (alt text, captions, screenshot to code) work by sending your current image and your prompt to an AI provider, <strong>only when you click the button</strong>. Generative edits route through a small SnapShotPro server function to the image model, or go directly to the provider if you supply your own key. The text tools call OpenAI or Anthropic directly. Whatever you send is subject to that provider's own data policy.</p>
+            <p>The generative tools (replace background, extend canvas, magic eraser) and the text tools (alt text, captions, screenshot to code) work by sending your current image and your prompt to an AI provider, <strong>only when you click the button</strong>. Generative edits route through a small Glint server function to the image model, or go directly to the provider if you supply your own key. The text tools call OpenAI or Anthropic directly. Whatever you send is subject to that provider's own data policy.</p>
 
             <h2>Your API keys</h2>
             <p>If you bring your own OpenAI or Anthropic key, it is stored only in your browser's local storage and used to call that provider directly from your machine. Your keys are never sent to or stored on our servers.</p>
@@ -90,13 +90,13 @@
             <p>The core editor needs no account. When you use Share or save a cloud project, the image or project is uploaded to our storage so it can be linked or synced; that only happens when you take the action. Sign-in (optional) exists solely to sync your projects across devices.</p>
 
             <h2>Browser extension</h2>
-            <p>The SnapShotPro Capture extension reads a tab only when you click its toolbar button and pick a capture (the <b>activeTab</b> permission); it has no standing access to your browsing and runs no tracking or analytics. The screenshot it takes is handed to the SnapShotPro studio and nowhere else: it is held in the extension's local storage for a moment in transit, then cleared once the editor loads it. The extension contains no remote code, and like the rest of the project its source is public.</p>
+            <p>The Glint Capture extension reads a tab only when you click its toolbar button and pick a capture (the <b>activeTab</b> permission); it has no standing access to your browsing and runs no tracking or analytics. The screenshot it takes is handed to the Glint studio and nowhere else: it is held in the extension's local storage for a moment in transit, then cleared once the editor loads it. The extension contains no remote code, and like the rest of the project its source is public.</p>
 
             <h2>Analytics</h2>
             <p>We use privacy-friendly, aggregate analytics (Vercel Analytics) to understand traffic. There are no advertising trackers and no cross-site profiling. We do not sell data.</p>
 
             <h2>Open source</h2>
-            <p>SnapShotPro is open source, so you can read exactly how any of this works. The code lives on <a href="https://github.com/I-794/SnapShotPro" target="_blank" rel="noopener">GitHub</a>. Questions or concerns? Open an issue there and we will respond.</p>
+            <p>Glint is open source, so you can read exactly how any of this works. The code lives on <a href="https://github.com/I-794/Glint" target="_blank" rel="noopener">GitHub</a>. Questions or concerns? Open an issue there and we will respond.</p>
 
             <p style="color:var(--ink-3);font-size:14px;margin-top:32px;">Last updated May 2026. As features change, this page changes with them.</p>
         </div>

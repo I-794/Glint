@@ -1,6 +1,6 @@
 // Source "screenshots" for scripts/build-site-shots.mjs. Fictional products
 // (Lumen, Tasklane, Orbit, Stride) rendered as plain HTML, so the marketing
-// images show SnapShotPro styling a realistic app UI without borrowing anyone
+// images show Glint styling a realistic app UI without borrowing anyone
 // else's product. Geist is inlined from .ogfonts/ so output is identical on
 // every machine.
 import { readFileSync } from 'fs';

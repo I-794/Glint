@@ -1,6 +1,6 @@
 // v34.1 — "Install app" button.
 //
-// SnapShotPro is already an installable PWA (vite-plugin-pwa), but the browser
+// Glint is already an installable PWA (vite-plugin-pwa), but the browser
 // hides the option in a menu. This surfaces it as a header button:
 // - Chrome / Edge / Android fire `beforeinstallprompt`; we keep that event and
 //   replay it when the button is clicked.
@@ -54,7 +54,7 @@ if (typeof window !== 'undefined') {
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
     refreshButton();
-    showNotification('SnapShotPro is installed. Open it from your desktop or home screen.');
+    showNotification('Glint is installed. Open it from your desktop or home screen.');
   });
 }
 

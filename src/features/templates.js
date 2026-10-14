@@ -4,7 +4,7 @@ import { showNotification } from '../ui/notification.js';
 import { render } from '../render/render.js';
 import { saveStateToHistory } from '../state/history.js';
 
-const KEY = 'snapshotpro_templates';
+const KEY = 'glint_templates';
 
 function loadAll() {
   try { return JSON.parse(localStorage.getItem(KEY)) || {}; }

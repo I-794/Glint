@@ -258,7 +258,7 @@ export const state = {
 
   // v17 — Color release.
   // colorPalettes: the active palette id + an in-memory mirror of the saved
-  // library. The durable copy lives in localStorage (snapshotpro_colorpalettes,
+  // library. The durable copy lives in localStorage (glint_colorpalettes,
   // managed by features/palettes.js); `library` here is hydrated on load so undo
   // snapshots and the Color Map can read it without touching storage.
   colorPalettes: { active: null, library: {} },

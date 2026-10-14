@@ -1,4 +1,4 @@
-// SnapShotPro Capture — popup. Dispatches the chosen capture mode to the
+// Glint Capture — popup. Dispatches the chosen capture mode to the
 // background and gets out of the way. Region/full-page need the page itself, so
 // the popup closes immediately; the studio tab opens when the capture is ready.
 

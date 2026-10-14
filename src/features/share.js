@@ -56,9 +56,9 @@ export async function shareImage() {
 export function generateEmbedCode(url, format) {
   if (!url) return '';
   switch (format) {
-    case 'html': return `<img src="${url}" alt="SnapShotPro export" style="max-width:100%;border-radius:8px;">`;
+    case 'html': return `<img src="${url}" alt="Glint export" style="max-width:100%;border-radius:8px;">`;
     case 'iframe': return `<iframe src="${url}" width="800" height="450" style="border:none;border-radius:8px;" loading="lazy"></iframe>`;
-    case 'markdown': return `![SnapShotPro export](${url})`;
+    case 'markdown': return `![Glint export](${url})`;
     default: return url;
   }
 }

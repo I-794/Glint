@@ -3,7 +3,7 @@ import { el } from '../ui/elements.js';
 import { showNotification } from '../ui/notification.js';
 import { render } from '../render/render.js';
 
-const KEY = 'snapshotpro_fonts';
+const KEY = 'glint_fonts';
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB cap per font
 
 function loadAll() {

@@ -53,7 +53,7 @@ function buildTourHTML(steps, title) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${safeTitle}</title>
 <style>
-  :root { --accent: #2348ff; --ink: #0b0b0f; }
+  :root { --accent: #f2a93b; --ink: #0b0b0f; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
   body { background: #0a0a0f; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -66,12 +66,12 @@ function buildTourHTML(steps, title) {
             border-radius: 14px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.55); }
   #frame { display: block; max-width: 100%; max-height: 82vh; width: auto; height: auto; }
   .hs { position: absolute; border: 2px solid #fff; border-radius: 8px; cursor: pointer;
-        background: rgba(35,72,255,0.16); box-shadow: 0 0 0 2px rgba(35,72,255,0.6);
+        background: rgba(242,169,59,0.16); box-shadow: 0 0 0 2px rgba(242,169,59,0.6);
         animation: pulse 1.8s ease-in-out infinite; }
   .hs:focus { outline: none; }
   @keyframes pulse {
-    0%,100% { box-shadow: 0 0 0 2px rgba(35,72,255,0.7), 0 0 0 0 rgba(35,72,255,0.5); }
-    50%     { box-shadow: 0 0 0 2px rgba(35,72,255,0.7), 0 0 0 14px rgba(35,72,255,0); }
+    0%,100% { box-shadow: 0 0 0 2px rgba(242,169,59,0.7), 0 0 0 0 rgba(242,169,59,0.5); }
+    50%     { box-shadow: 0 0 0 2px rgba(242,169,59,0.7), 0 0 0 14px rgba(242,169,59,0); }
   }
   .callout { position: absolute; z-index: 5; width: max-content; max-width: 260px; pointer-events: none;
              background: #fff; color: var(--ink); border-radius: 12px; padding: 12px 14px; line-height: 1.4;
@@ -91,7 +91,7 @@ function buildTourHTML(steps, title) {
   #prev { background: rgba(255,255,255,0.12); color: #fff; }
   #dots { display: flex; gap: 8px; }
   .dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.28); cursor: pointer; border: 0; padding: 0; }
-  .dot.on { background: var(--accent); box-shadow: 0 0 0 3px rgba(35,72,255,0.25); }
+  .dot.on { background: var(--accent); box-shadow: 0 0 0 3px rgba(242,169,59,0.25); }
   #count { font-size: 13px; color: rgba(255,255,255,0.6); min-width: 46px; text-align: center; }
   #empty { color: rgba(255,255,255,0.6); font-size: 15px; }
   #auto { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--accent); }

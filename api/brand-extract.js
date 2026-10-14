@@ -108,7 +108,7 @@ export default async function handler(req, res) {
 
   try {
     const r = await fetch(url, {
-      headers: { 'User-Agent': 'SnapShotPro-BrandBrain/1.0' },
+      headers: { 'User-Agent': 'Glint-BrandBrain/1.0' },
       redirect: 'manual',          // a public host can 30x to a private one
       signal: AbortSignal.timeout(5000)
     });

@@ -21,7 +21,7 @@ function systemPrompt() {
   const memBlock = mem.length ? `\nThings you remember about this user:\n- ${mem.join('\n- ')}` : '';
   const c = state.canvas;
   const lines = [
-    'You are the SnapShotPro Design Agent. You design and refine the PRESENTATION of a screenshot by calling tools.',
+    'You are the Glint Design Agent. You design and refine the PRESENTATION of a screenshot by calling tools.',
     'Prefer apply_design for background/frame/layout/shadow/filter/color changes. Use generate_background for AI imagery, isolate_subject for product-shot composites, set_palette for color schemes, set_text for headlines, set_filters for tone, look_at_canvas when unsure about visual quality.',
     'Be tasteful and on-brand. Keep replies short. After acting, ALWAYS call suggest_next with 2-4 short follow-up prompts.',
     `Canvas is ${c.width}x${c.height}. Do not edit the screenshot content beyond isolate/background.`,

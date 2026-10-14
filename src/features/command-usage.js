@@ -1,6 +1,6 @@
 // v22 — Command Center: lightweight recents/frequents for the command palette.
-// Persisted under snapshotpro_cmd_usage as { [id]: { count, last } }.
-const KEY = 'snapshotpro_cmd_usage';
+// Persisted under glint_cmd_usage as { [id]: { count, last } }.
+const KEY = 'glint_cmd_usage';
 const MAX = 50;
 
 function read() {

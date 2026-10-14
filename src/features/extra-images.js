@@ -8,7 +8,7 @@ import { applyEntrance } from './animation.js';
 import { captureAsset } from './asset-library.js';
 import { selectOnly, clearSelection } from './selection.js';
 
-const ACCENT = '#5470ff';
+const ACCENT = '#f2a93b';
 
 function roundRectPath(ctx, x, y, w, h, r) {
   r = Math.max(0, Math.min(r, w / 2, h / 2));

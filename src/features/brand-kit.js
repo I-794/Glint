@@ -20,7 +20,7 @@ import { showNotification } from '../ui/notification.js';
 import { saveStateToHistory } from '../state/history.js';
 import { syncFromGradientState } from './gradient-editor.js';
 
-const KEY = 'snapshotpro_brandkits';
+const KEY = 'glint_brandkits';
 const MAX_LOGO = 1.5 * 1024 * 1024; // 1.5MB cap on the stored logo dataUrl
 
 function loadAll() {

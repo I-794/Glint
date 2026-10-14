@@ -1,20 +1,20 @@
-/* Shared dark-glass design system for SnapShotPro content pages (guide,
-   changelog, privacy, app-store-screenshots). Mirrors the landing page so the
-   whole marketing site is one cohesive premium glassmorphism look. Token NAMES
+/* Shared design system for Glint marketing pages (v36 identity: neutral
+   graphite, one amber "glint" accent, ink text on amber fills). Mirrors the
+   landing page so the whole marketing site reads as one system. Token NAMES
    are preserved (--bg-raise, --line, --ink, etc.) so each page's existing
    component CSS adapts to the dark theme automatically. */
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-    /* Dark glass — deep navy base, never pure black */
-    --bg: #080b14;
-    --bg-2: #0c1020;
-    --bg-raise: #121829;      /* raised card surface */
-    --bg-sunken: #0b0f1c;
-    --ink: #eef1f8;
-    --ink-2: #aab2c8;
-    --ink-3: #7d85a2;   /* ≥4.5:1 on --bg (was #6f7794, 4.4:1) */
+    /* Neutral graphite base, never pure black */
+    --bg: #0d0d0f;
+    --bg-2: #121214;
+    --bg-raise: #18181b;      /* raised card surface */
+    --bg-sunken: #0a0a0c;
+    --ink: #f2f2f0;
+    --ink-2: #b4b4b0;
+    --ink-3: #8d8d89;   /* ≥4.5:1 on --bg */
     --line: rgba(255, 255, 255, 0.10);
     --line-strong: rgba(255, 255, 255, 0.18);
     /* Frosted surfaces */
@@ -22,13 +22,13 @@
     --glass-2: rgba(255, 255, 255, 0.08);
     --glass-line: rgba(255, 255, 255, 0.12);
     --glass-hi: rgba(255, 255, 255, 0.55);
-    /* Electric cobalt — the one and only accent (brighter on dark) */
-    --accent: #4f7cff;
-    --accent-deep: #2348ff;
-    --accent-press: #6d91ff;
-    --accent-soft: rgba(79, 124, 255, 0.14);
-    --accent-line: rgba(79, 124, 255, 0.40);
-    --on-accent: #ffffff;
+    /* Amber glint: the one and only accent */
+    --accent: #f2a93b;
+    --accent-deep: #c47a14;
+    --accent-press: #f6bb5e;
+    --accent-soft: rgba(242, 169, 59, 0.14);
+    --accent-line: rgba(242, 169, 59, 0.40);
+    --on-accent: #141416;
 
     --r-card: 22px;
     --r-sm: 12px;
@@ -37,8 +37,8 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.26);
     --shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.35), 0 28px 60px rgba(0, 0, 0, 0.45);
     --shadow-product: 0 2px 6px rgba(0, 0, 0, 0.4), 0 50px 100px -30px rgba(0, 0, 0, 0.6);
-    --shadow-glass: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 24px 60px rgba(4, 8, 24, 0.55);
-    --shadow-accent: 0 10px 30px rgba(35, 72, 255, 0.45);
+    --shadow-glass: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 24px 60px rgba(0, 0, 0, 0.5);
+    --shadow-accent: 0 8px 24px rgba(242, 169, 59, 0.18);
 
     --font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
@@ -51,13 +51,11 @@ body {
     -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden; line-height: 1.5; position: relative;
 }
-/* Fixed aurora the frosted glass refracts. */
+/* One faint light leak, top left: the "glint". No colored aurora. */
 body::before {
     content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
     background:
-        radial-gradient(46% 50% at 14% 2%, rgba(79, 124, 255, 0.28), transparent 60%),
-        radial-gradient(40% 46% at 88% 8%, rgba(122, 92, 255, 0.24), transparent 58%),
-        radial-gradient(55% 55% at 80% 98%, rgba(35, 72, 255, 0.20), transparent 60%),
+        radial-gradient(42% 46% at 10% 0%, rgba(242, 169, 59, 0.10), transparent 62%),
         var(--bg);
 }
 
@@ -75,14 +73,28 @@ a { color: inherit; text-decoration: none; }
     border: 1px solid var(--glass-line); box-shadow: var(--shadow-glass);
 }
 
+/* v36 rename notice (site/partials/announce.html). One quiet band above the nav. */
+.announce { background: var(--bg-raise); border-bottom: 1px solid var(--glass-line); font-size: 13.5px; color: var(--ink-2); }
+.no-announce .announce { display: none; }
+.announce-inner { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 40px; padding-block: 8px; }
+.announce p { display: flex; align-items: center; gap: 9px; line-height: 1.4; }
+.announce p img { flex-shrink: 0; border-radius: 4px; }
+.announce b { color: var(--ink); font-weight: 600; }
+.announce a { color: var(--ink); font-weight: 600; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 3px; white-space: nowrap; }
+.announce a:hover { color: var(--accent); }
+.announce-x { flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; border: 0; background: transparent; color: var(--ink-3); font-size: 13px; cursor: pointer; }
+.announce-x:hover { color: var(--ink); background: var(--glass-2); }
+.announce-x:focus-visible, .announce a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 560px) { .announce-inner { justify-content: space-between; align-items: flex-start; } .announce p { align-items: flex-start; } .announce p img { margin-top: 2px; } }
+
 /* Nav (glass) */
 nav {
     position: sticky; top: 0; z-index: 100; height: 66px; display: flex; align-items: center;
-    background: rgba(8, 11, 20, 0.55); backdrop-filter: blur(18px) saturate(160%);
+    background: rgba(13, 13, 15, 0.6); backdrop-filter: blur(18px) saturate(160%);
     -webkit-backdrop-filter: blur(18px) saturate(160%);
     border-bottom: 1px solid transparent; transition: border-color 0.3s, background 0.3s;
 }
-nav.scrolled { border-bottom-color: var(--glass-line); background: rgba(8, 11, 20, 0.72); }
+nav.scrolled { border-bottom-color: var(--glass-line); background: rgba(13, 13, 15, 0.78); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; }
 .brand { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 17px; letter-spacing: -0.02em; color: var(--ink); }
 .brand-mark { width: 30px; height: 30px; flex-shrink: 0; }
@@ -97,7 +109,7 @@ nav.scrolled { border-bottom-color: var(--glass-line); background: rgba(8, 11, 2
 nav.open .nav-toggle span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
 nav.open .nav-toggle span:nth-child(2) { opacity: 0; }
 nav.open .nav-toggle span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
-.skip-link { position: absolute; left: 12px; top: -48px; z-index: 200; padding: 10px 16px; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 600; font-size: 14px; transition: top 0.15s; }
+.skip-link { position: absolute; left: 12px; top: -48px; z-index: 200; padding: 10px 16px; border-radius: 10px; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 14px; transition: top 0.15s; }
 .skip-link:focus { top: 10px; }
 p a:not(.btn) { text-decoration: underline; text-underline-offset: 2px; }
 
@@ -107,8 +119,8 @@ p a:not(.btn) { text-decoration: underline; text-underline-offset: 2px; }
     font-weight: 600; letter-spacing: -0.01em; transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s;
 }
 .btn:active { transform: translateY(0) scale(0.985); }
-.btn-primary { background: var(--accent-deep); color: var(--on-accent); border-radius: var(--r-pill); padding: 11px 22px; font-size: 14.5px; box-shadow: var(--shadow-accent); }
-.btn-primary:hover { background: var(--accent); transform: translateY(-1px); box-shadow: 0 14px 38px rgba(35, 72, 255, 0.6); }
+.btn-primary { background: var(--accent); color: var(--on-accent); border-radius: var(--r-pill); padding: 11px 22px; font-size: 14.5px; box-shadow: var(--shadow-accent); }
+.btn-primary:hover { background: var(--accent-press); transform: translateY(-1px); box-shadow: 0 12px 30px rgba(242, 169, 59, 0.24); }
 .btn-ghost {
     background: var(--glass); color: var(--ink); border: 1px solid var(--glass-line);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -121,7 +133,7 @@ p a:not(.btn) { text-decoration: underline; text-underline-offset: 2px; }
 
 /* Page header band */
 .page-head { padding: clamp(56px, 9vw, 110px) 0 clamp(36px, 5vw, 56px); position: relative; overflow: hidden; }
-.page-head .glow { position: absolute; top: -30%; right: -8%; width: 60vw; height: 70vh; background: radial-gradient(closest-side, rgba(79,124,255,0.22), transparent 72%); pointer-events: none; z-index: 0; }
+.page-head .glow { position: absolute; top: -30%; right: -8%; width: 60vw; height: 70vh; background: radial-gradient(closest-side, rgba(242,169,59,0.10), transparent 72%); pointer-events: none; z-index: 0; }
 .page-head .wrap { position: relative; z-index: 1; }
 .page-head h1 { font-size: clamp(36px, 5.5vw, 62px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.02; margin-bottom: 18px; color: var(--ink); }
 .page-head h1 .accent { color: var(--accent); }
@@ -196,9 +208,8 @@ body::before { animation: auroraDrift 34s ease-in-out infinite alternate; }
 /* 3D tilt: site.js writes --rx/--ry from the pointer; CSS does the transform. */
 [data-tilt] { transform: perspective(1100px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)); transition: transform .25s var(--ease); transform-style: preserve-3d; will-change: transform; }
 
-/* Animated gradient headline. */
-.grad-text { background: linear-gradient(110deg, #6d91ff, #8a6bff 45%, #4f7cff 80%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gradShift 8s ease-in-out infinite alternate; }
-@keyframes gradShift { to { background-position: 100% 0; } }
+/* Accent headline word. */
+.grad-text { color: var(--accent); }   /* v36: solid accent; no gradient headline text */
 
 /* Eyebrow + section header */
 .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
@@ -226,12 +237,12 @@ body::before { animation: auroraDrift 34s ease-in-out infinite alternate; }
 .fc-visual { border-radius: var(--r-card); overflow: hidden; aspect-ratio: 4 / 3; box-shadow: var(--shadow-lift); border: 1px solid var(--glass-line); }
 .fc-visual img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* CTA band (glass over aurora) */
-.cta-band { position: relative; overflow: hidden; border-radius: 30px; padding: clamp(44px, 7vw, 84px) clamp(28px, 6vw, 72px); text-align: center; color: #fff; background: radial-gradient(70% 120% at 20% 0%, rgba(109,145,255,0.45), transparent 60%), radial-gradient(80% 120% at 90% 100%, rgba(122,92,255,0.4), transparent 60%), linear-gradient(150deg, rgba(35,72,255,0.5), rgba(12,16,32,0.6)); border: 1px solid var(--glass-line); box-shadow: var(--shadow-glass); }
+/* CTA band */
+.cta-band { position: relative; overflow: hidden; border-radius: 30px; padding: clamp(44px, 7vw, 84px) clamp(28px, 6vw, 72px); text-align: center; color: #fff; background: radial-gradient(60% 120% at 0% 0%, rgba(242,169,59,0.16), transparent 62%), var(--bg-raise); border: 1px solid var(--glass-line); box-shadow: var(--shadow-glass); }
 .cta-band h2 { font-size: clamp(28px, 4.4vw, 52px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.04; margin-bottom: 16px; }
 .cta-band p { font-size: 17px; color: rgba(255,255,255,0.86); max-width: 44ch; margin: 0 auto 28px; }
-.cta-band .btn-primary { background: #fff; color: var(--accent-deep); }
-.cta-band .btn-primary:hover { background: #eef1f8; }
+.cta-band .btn-primary { background: var(--accent); color: var(--on-accent); }
+.cta-band .btn-primary:hover { background: var(--accent-press); }
 
 /* Card grid helpers */
 .cards2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
@@ -287,7 +298,7 @@ body::before { animation: auroraDrift 34s ease-in-out infinite alternate; }
 .compare thead th.us { color: var(--accent); }
 .compare tbody th { font-weight: 500; color: var(--ink-2); }
 .compare td { color: var(--ink-2); }
-.compare .us { background: rgba(79,124,255,0.08); }
+.compare .us { background: rgba(242,169,59,0.08); }
 .compare .yes { color: var(--accent); font-weight: 600; }
 .compare .no { color: var(--ink-3); }
 .compare tbody tr:last-child th, .compare tbody tr:last-child td { border-bottom: none; }

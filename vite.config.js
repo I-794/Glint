@@ -23,7 +23,8 @@ function htmlPartials() {
         const wrapMain = !/<main[\s>]/.test(html) && html.includes('<!--PARTIAL:nav-->') && html.includes('<!--PARTIAL:footer-->');
         return html
           .split('<!--PARTIAL:mark-->').join(read('mark.html'))
-          .split('<!--PARTIAL:nav-->').join(read('nav.html') + (wrapMain ? '\n<main id="main">' : ''))
+          // v36: the rename notice sits after the skip link, before the <nav>.
+          .split('<!--PARTIAL:nav-->').join(read('nav.html').replace('<nav id="nav"', read('announce.html') + '<nav id="nav"') + (wrapMain ? '\n<main id="main">' : ''))
           .split('<!--PARTIAL:footer-->').join((wrapMain ? '</main>\n' : '') + read('footer.html').split('{{VERSION}}').join(version));
       }
     }
@@ -140,7 +141,8 @@ export default defineConfig({
         alternatives: resolve(__dirname, 'alternatives/index.html'),
         faq: resolve(__dirname, 'faq/index.html'),
         roadmap: resolve(__dirname, 'roadmap/index.html'),
-        terms: resolve(__dirname, 'terms/index.html')
+        terms: resolve(__dirname, 'terms/index.html'),
+        glint: resolve(__dirname, 'glint/index.html')
       },
       output: {
         manualChunks: {
@@ -166,11 +168,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'SnapShotPro',
-        short_name: 'SnapShotPro',
+        name: 'Glint',
+        short_name: 'Glint',
         description: 'Pro screenshot & image editor — filters, frames, AI background removal, annotations, mockups, and more.',
-        theme_color: '#1a1a2e',
-        background_color: '#1a1a2e',
+        theme_color: '#0d0d0f',
+        background_color: '#0d0d0f',
         display: 'standalone',
         // v34.1 — open the installed app on the editor; `id` keeps the original
         // identity so existing installs aren't treated as a different app.

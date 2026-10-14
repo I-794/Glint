@@ -1,4 +1,4 @@
-// v33.2 — Real SnapShotPro output for the marketing site (homepage + gallery),
+// v33.2 — Real Glint output for the marketing site (homepage + gallery),
 // replacing the old picsum.photos stock photos.
 //
 //   npm run dev                    (in another terminal)
@@ -144,13 +144,29 @@ const RECIPES = [
       shadow: shadow(40, 22, 18)
     }
   },
+  // v36 Glint: graphite with one amber flare, the brand's own look.
+  {
+    file: 'amber-flare', source: 'dashboard',
+    state: {
+      canvas: { width: W, height: H }, padding: 80, borderRadius: 12,
+      bgMode: 'mesh',
+      meshGradient: { points: [
+        { x: 0.5, y: 0.9, color: '#121214', radius: 0.8 },
+        { x: 0.1, y: 0.06, color: '#f2a93b', radius: 0.5 },
+        { x: 0.98, y: 0.98, color: '#e8613a', radius: 0.42 },
+        { x: 0.85, y: 0.1, color: '#2a2a30', radius: 0.5 }
+      ] },
+      deviceFrame: { type: 'chrome', color: 'dark', url: 'lumen.app/overview', title: 'Lumen' },
+      shadow: shadow(70, 50, 30)
+    }
+  },
   // Homepage "Capture & arrange": several screenshots arranged by auto-layout.
   {
     file: 'capture-arrange', source: 'dashboard', extras: ['landing', 'kanban', 'mobileToday'],
     state: {
       canvas: { width: FW, height: FH }, padding: 56, borderRadius: 10,
       autoLayout: { pattern: 'grid-2x2', gap: 28, align: 'center' },
-      bgMode: 'gradient', gradient: { type: 'linear', angle: 145, colors: ['#1b2142', '#0b0e1a'], positions: [0, 100] },
+      bgMode: 'gradient', gradient: { type: 'linear', angle: 145, colors: ['#26262b', '#0d0d0f'], positions: [0, 100] },
       shadow: shadow(40, 45, 18)
     }
   },
@@ -193,9 +209,8 @@ const SET = {
 // Homepage hero: the editor itself, mid-design.
 const HERO = {
   file: 'hero-editor', source: 'dashboard', viewport: { width: 1280, height: 800 },
-  // Same look as cobalt-mesh, minus the tilt (the live preview shows tilt as a
-  // CSS transform on the whole canvas, which reads oddly at hero size).
-  state: { ...RECIPES[1].state, canvas: { width: 1600, height: 1000 }, padding: 100, tilt3d: { rx: 0, ry: 0, rz: 0, perspective: 1200 } }
+  // Same look as amber-flare (v36 Glint), at hero size.
+  state: { ...RECIPES.find(r => r.file === 'amber-flare').state, canvas: { width: 1600, height: 1000 }, padding: 100 }
 };
 
 // ── run ──────────────────────────────────────────────────────────────────────
@@ -221,8 +236,8 @@ await ctx.addInitScript((ver) => {
   // them out of literal import() calls stops knip resolving them as Node imports.
   window.__shotImport = (url) => import(url);
   try {
-    localStorage.setItem('snapshotpro_welcome_v1', 'dismissed');
-    localStorage.setItem('snapshotpro_lastseen_version', ver);
+    localStorage.setItem('glint_welcome_v1', 'dismissed');
+    localStorage.setItem('glint_lastseen_version', ver);
   } catch (e) {}
 }, whatsNew);
 const page = await ctx.newPage();

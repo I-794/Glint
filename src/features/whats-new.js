@@ -10,22 +10,20 @@
 // release's highlights — same checklist step as the editor version badge and
 // the changelog page.
 
-const CURRENT_VERSION = '35.0';
-const LASTSEEN_KEY = 'snapshotpro_lastseen_version';
-const WELCOME_KEY  = 'snapshotpro_welcome_v1';   // set by welcome.js on dismissal
+const CURRENT_VERSION = '36.0';
+const LASTSEEN_KEY = 'glint_lastseen_version';
+const WELCOME_KEY  = 'glint_welcome_v1';   // set by welcome.js on dismissal
 
 // Latest release only — the newest version’s highlights, not an accumulation.
 const WHATS_NEW = {
-  heading: "📷 v35 · Contrast",
+  heading: "✨ v36 · Darkroom: SnapShotPro is now Glint",
   items: [
-    { title: 'Before / After',
-      desc: 'Add your old screenshot as Before (Import tab) and drag the divider to show what changed.' },
-    { title: 'Wipe and slider exports',
-      desc: 'Animate a wipe in Motion Studio, or export an interactive slider page you can embed anywhere.' },
-    { title: 'Simple and Pro modes',
-      desc: 'Simple shows just the essential tools. Switch to Pro in the header for everything.' },
-    { title: 'Floating toolbar',
-      desc: 'Select something on the canvas to change its color, size, or order right where it is.' }
+    { title: 'Same studio, new name',
+      desc: 'Every tool is where you left it. Your projects, templates and brand kits moved over automatically.' },
+    { title: 'A new look',
+      desc: 'A calmer graphite interface with a single amber accent, in light and dark.' },
+    { title: 'Update the extension',
+      desc: 'The capture extension is now Glint Capture. The old version keeps working until you update.' }
   ]
 };
 

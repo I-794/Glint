@@ -96,8 +96,8 @@ async function autoEnhance() {
     console.warn('Hosted enhance failed; falling back to browser/local enhance.', e);
   }
 
-  const anthropicKey = localStorage.getItem('snapshotpro_anthropic_key');
-  const openaiKey = localStorage.getItem('snapshotpro_openai_key');
+  const anthropicKey = localStorage.getItem('glint_anthropic_key');
+  const openaiKey = localStorage.getItem('glint_openai_key');
 
   if (anthropicKey) {
     await autoEnhanceWithClaude(anthropicKey);

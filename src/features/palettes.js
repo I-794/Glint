@@ -14,7 +14,7 @@ import { showNotification } from '../ui/notification.js';
 import { isValidHex, generateHarmony } from '../utils/color.js';
 import { refreshColorMapUI } from './color-map.js';
 
-const KEY = 'snapshotpro_colorpalettes';
+const KEY = 'glint_colorpalettes';
 const MAX = 60;
 let seq = 0;
 

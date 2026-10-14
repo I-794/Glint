@@ -5,12 +5,15 @@
 // IndexedDB has a far larger quota and stores values by structured clone, so
 // projects.js keeps its whole store here (with a localStorage fallback).
 //
-// DB `snapshotpro` v1, object store `kv` with out-of-line keys. Opening is
+// DB `glint` v1 (v36: copied once from the SnapShotPro-era `snapshotpro` db,
+// which is left as a backup), object store `kv` with out-of-line keys. Opening is
 // memoized; a failed open rejects so callers can fall back. The memo is
 // cleared whenever the connection goes away (close, versionchange, a
 // transaction that cannot start) and by idbReset(), so the next call reopens.
 
-const DB_NAME = 'snapshotpro';
+const DB_NAME = 'glint';
+const LEGACY_DB = 'snapshotpro';
+const MARKER = '__glint_migrated_from_snapshotpro';
 const DB_VERSION = 1;
 const STORE = 'kv';
 
@@ -27,6 +30,71 @@ export function idbReset() {
   const p = dbPromise;
   dbPromise = null;
   if (p) p.then(db => { try { db.close(); } catch (e) { /* already closed */ } }, () => {});
+}
+
+// v36: open the SnapShotPro-era db only if it already exists. Opening without a
+// version creates an empty db when none exists, so abort that upgrade (which
+// discards the new db) and report null.
+function openLegacy() {
+  return new Promise((resolve) => {
+    let req;
+    try { req = indexedDB.open(LEGACY_DB); } catch (e) { resolve(null); return; }
+    let fresh = false;
+    req.onupgradeneeded = () => { fresh = true; try { req.transaction.abort(); } catch (e) { /* already done */ } };
+    req.onsuccess = () => {
+      const db = req.result;
+      if (fresh || !db.objectStoreNames.contains(STORE)) { db.close(); resolve(null); return; }
+      resolve(db);
+    };
+    req.onerror = () => resolve(null);
+    req.onblocked = () => {};
+  });
+}
+
+// Copy every kv record from the legacy db into `db`, renaming snapshotpro_ keys
+// to glint_ and skipping keys that already exist, then write MARKER so it runs
+// once. Leaves the legacy db untouched. If the legacy read fails, MARKER is not
+// written and the copy retries next load.
+function migrateLegacy(db) {
+  return new Promise((resolve) => {
+    let check;
+    try { check = db.transaction(STORE, 'readonly').objectStore(STORE).get(MARKER); }
+    catch (e) { resolve(); return; }
+    check.onerror = () => resolve();
+    check.onsuccess = async () => {
+      if (check.result) { resolve(); return; }
+      const legacy = await openLegacy();
+      const finish = (records) => {
+        try {
+          const tx = db.transaction(STORE, 'readwrite');
+          const s = tx.objectStore(STORE);
+          for (const [oldKey, v] of records) {
+            // Keys inside the store were renamed too (snapshotpro_projects_v12 -> glint_projects_v12).
+            const k = typeof oldKey === 'string' && oldKey.startsWith('snapshotpro_')
+              ? 'glint_' + oldKey.slice('snapshotpro_'.length) : oldKey;
+            const g = s.get(k);
+            g.onsuccess = () => { if (g.result === undefined) s.put(v, k); };
+          }
+          s.put(Date.now(), MARKER);
+          tx.oncomplete = () => resolve();
+          tx.onerror = tx.onabort = () => { console.warn('[glint] project db migration failed', tx.error); resolve(); };
+        } catch (e) { console.warn('[glint] project db migration failed', e); resolve(); }
+      };
+      if (!legacy) { finish([]); return; }
+      try {
+        const s = legacy.transaction(STORE, 'readonly').objectStore(STORE);
+        const keysReq = s.getAllKeys();
+        const valsReq = s.getAll();
+        valsReq.onsuccess = () => {
+          const keys = keysReq.result || [];
+          const vals = valsReq.result || [];
+          legacy.close();
+          finish(keys.map((k, i) => [k, vals[i]]));
+        };
+        valsReq.onerror = () => { legacy.close(); console.warn('[glint] could not read legacy db'); resolve(); };
+      } catch (e) { legacy.close(); console.warn('[glint] could not read legacy db', e); resolve(); }
+    };
+  });
 }
 
 function openDb() {
@@ -47,7 +115,7 @@ function openDb() {
       db.onversionchange = () => { db.close(); forget(); };
       // The browser closed the connection (storage cleared, crash): reopen next time.
       db.onclose = forget;
-      resolve(db);
+      migrateLegacy(db).then(() => resolve(db));
     };
     req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
     // Blocked by an older connection in another tab: keep waiting; that tab's

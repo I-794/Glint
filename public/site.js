@@ -1,4 +1,4 @@
-// Shared behavior for every SnapShotPro marketing page (landing + content
+// Shared behavior for every Glint marketing page (landing + content
 // pages). All effects are IntersectionObserver or pointer-driven CSS-variable
 // writes — no scroll listeners, no per-frame state loops. Cinematic motion
 // (cursor glass + 3D tilt) is gated on prefers-reduced-motion.
@@ -13,6 +13,18 @@
     document.body.prepend(sentinel);
     new IntersectionObserver(([e]) => nav.classList.toggle('scrolled', !e.isIntersecting),
       { rootMargin: '-8px 0px 0px 0px' }).observe(sentinel);
+  }
+
+  // 1a) v36 rename notice (site/partials/announce.html): dismiss once, remember it.
+  const announce = document.getElementById('announce');
+  const announceX = announce && announce.querySelector('.announce-x');
+  if (announceX) {
+    announceX.addEventListener('click', () => {
+      document.documentElement.classList.add('no-announce');
+      try { localStorage.setItem('glint_rename_notice_v36', 'dismissed'); } catch (e) { /* storage blocked: hide for this page only */ }
+      const link = nav && nav.querySelector('.brand');
+      if (link) link.focus();
+    });
   }
 
   // 1b) Mark the current section in the nav, and the phone menu toggle.

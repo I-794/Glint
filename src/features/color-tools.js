@@ -12,7 +12,7 @@
 
 import { state } from '../state/state.js';
 
-const RECENTS_KEY = 'snapshotpro_recent_colors';
+const RECENTS_KEY = 'glint_recent_colors';
 const MAX_RECENTS = 8;
 const HEX = /^#[0-9a-f]{6}$/i;
 

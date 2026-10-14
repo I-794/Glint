@@ -16,7 +16,7 @@ export function isStaleBuildError(e) {
 
 // Explain the error and offer a one-tap reload.
 export function showStaleBuildNotice() {
-  showNotification('SnapShotPro was just updated. Reload to finish, then try again.', 'error', {
+  showNotification('Glint was just updated. Reload to finish, then try again.', 'error', {
     duration: 10000,
     action: { label: 'Reload', run: () => location.reload() }
   });

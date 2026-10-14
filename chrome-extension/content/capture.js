@@ -1,4 +1,4 @@
-// SnapShotPro Capture — in-page capture worker (injected on demand).
+// Glint Capture — in-page capture worker (injected on demand).
 //
 // Runs in the active tab's isolated content-script world (so it can call
 // chrome.runtime) for the two modes the background can't do alone:

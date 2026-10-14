@@ -15,7 +15,7 @@ import { snap, tab } from './haptics.js';
 
 const TABS = ['import', 'adjust', 'background', 'frame', 'markup', 'ai', 'export', 'project'];
 const DETENTS = { full: 0, half: 50, peek: 85 };   // translateY as % of sheet height
-const ACTIVE_KEY = 'snapshotpro_studio_group';
+const ACTIVE_KEY = 'glint_studio_group';
 
 let sheet = null;          // the .sidebar element, reused as the sheet surface
 let dock = null;

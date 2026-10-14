@@ -11,120 +11,55 @@ const fontFiles = readdirSync(fontDir).filter(f => f.endsWith('.ttf')).map(f => 
 
 const W = 1200, H = 630;
 
-// Rounded-rect path helper
-const rr = (x, y, w, h, r) =>
-  `M${x + r},${y} h${w - 2 * r} a${r},${r} 0 0 1 ${r},${r} v${h - 2 * r} a${r},${r} 0 0 1 ${-r},${r} h${-(w - 2 * r)} a${r},${r} 0 0 1 ${-r},${-r} v${-(h - 2 * r)} a${r},${r} 0 0 1 ${r},${-r} z`;
+// Domain shown on the card: same source as vite.config.js SITE_URL.
+const SITE = (process.env.OG_BASE_URL || 'https://snapshotpro.xyz').replace(/^https?:\/\//, '').replace(/\/$/, '');
 
-const chip = (x, y, label) => {
-  const w = 36 + label.length * 10.2;
-  return `
-    <path d="${rr(x, y, w, 42, 21)}" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
-    <text x="${x + w / 2}" y="${y + 27}" font-family="Geist" font-weight="500" font-size="16" fill="#dfe4f2" text-anchor="middle">${label}</text>`;
-};
+// The Glint sparkle (64-unit artwork from public/favicon.svg), placed at x,y and scaled.
+const STAR = 'M32 11 C34 25 39 30 53 32 C39 34 34 39 32 53 C30 39 25 34 11 32 C25 30 30 25 32 11 Z';
+const mark = (x, y, size, id) => `
+  <g transform="translate(${x} ${y}) scale(${size / 64})">
+    <rect width="64" height="64" rx="15" fill="url(#${id})"/>
+    <path d="${STAR}" fill="#141416"/>
+    <circle cx="46.5" cy="17.5" r="3" fill="#141416"/>
+  </g>`;
 
+// v36 Glint card: graphite, one amber accent, no fake UI.
 const svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#070a12"/>
-      <stop offset="1" stop-color="#0b1124"/>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6bb5e"/>
+      <stop offset="1" stop-color="#e8613a"/>
     </linearGradient>
-    <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#2348ff" stop-opacity="0.55"/>
-      <stop offset="1" stop-color="#2348ff" stop-opacity="0"/>
+    <linearGradient id="tileBig" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6bb5e"/>
+      <stop offset="1" stop-color="#e8613a"/>
+    </linearGradient>
+    <radialGradient id="leak" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f2a93b" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#f2a93b" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#7c5cff" stop-opacity="0.40"/>
-      <stop offset="1" stop-color="#7c5cff" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#6d91ff"/>
-      <stop offset="1" stop-color="#2348ff"/>
-    </linearGradient>
-    <linearGradient id="accentText" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#7da2ff"/>
-      <stop offset="0.55" stop-color="#4f7cff"/>
-      <stop offset="1" stop-color="#36d0ff"/>
-    </linearGradient>
-    <linearGradient id="shot" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#3b6bff"/>
-      <stop offset="0.5" stop-color="#27c6e6"/>
-      <stop offset="1" stop-color="#b65cff"/>
-    </linearGradient>
-    <linearGradient id="winbar" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#161d33"/>
-      <stop offset="1" stop-color="#11182b"/>
-    </linearGradient>
   </defs>
 
-  <!-- base -->
-  <rect width="${W}" height="${H}" fill="url(#bg)"/>
-  <ellipse cx="730" cy="250" rx="620" ry="460" fill="url(#glowA)"/>
-  <ellipse cx="180" cy="540" rx="420" ry="320" fill="url(#glowB)"/>
-  <rect width="${W}" height="${H}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2"/>
+  <rect width="${W}" height="${H}" fill="#0d0d0f"/>
+  <ellipse cx="930" cy="300" rx="420" ry="360" fill="url(#leak)"/>
 
   <!-- brand -->
-  <g>
-    <path d="${rr(64, 54, 46, 46, 13)}" fill="url(#mark)"/>
-    <circle cx="87" cy="77" r="13" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-opacity="0.95"/>
-    <circle cx="87" cy="77" r="4.4" fill="#ffffff"/>
-    <text x="124" y="86" font-family="Geist" font-weight="600" font-size="27" fill="#eef1f8">SnapShotPro</text>
-  </g>
-
-  <!-- eyebrow pill -->
-  <g>
-    <path d="${rr(64, 150, 418, 38, 19)}" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
-    <circle cx="88" cy="169" r="4.5" fill="#4f7cff"/>
-    <text x="104" y="174" font-family="Geist" font-weight="500" font-size="15.5" fill="#aab2c8">Free screenshot studio — runs in your browser</text>
-  </g>
+  ${mark(64, 56, 48, 'tile')}
+  <text x="128" y="90" font-family="Geist" font-weight="600" font-size="28" fill="#f2f2f0">Glint</text>
 
   <!-- headline -->
-  <text x="62" y="296" font-family="Geist" font-weight="700" font-size="78" letter-spacing="-2.4" fill="#f3f5fc">Screenshots that</text>
-  <text x="62" y="382" font-family="Geist" font-weight="700" font-size="78" letter-spacing="-2.4" fill="#f3f5fc">carry <tspan fill="url(#accentText)">weight</tspan>.</text>
+  <text x="62" y="282" font-family="Geist" font-weight="700" font-size="76" letter-spacing="-2.4" fill="#f2f2f0">SnapShotPro</text>
+  <text x="62" y="366" font-family="Geist" font-weight="700" font-size="76" letter-spacing="-2.4" fill="#f2f2f0">is now <tspan fill="#f2a93b">Glint</tspan>.</text>
 
   <!-- sub -->
-  <text x="64" y="438" font-family="Geist" font-weight="400" font-size="22" fill="#aab2c8">Backgrounds, device frames, App Store sets,</text>
-  <text x="64" y="470" font-family="Geist" font-weight="400" font-size="22" fill="#aab2c8">generative AI edits, even video.</text>
-
-  <!-- feature chips -->
-  ${chip(64, 506, 'Liquid glass')}
-  ${chip(212, 506, 'Device frames')}
-  ${chip(380, 506, 'AI edits')}
-  ${chip(498, 506, 'Video to MP4')}
+  <text x="64" y="428" font-family="Geist" font-weight="400" font-size="24" fill="#b4b4b0">Turn raw screenshots into finished, on-brand images.</text>
+  <text x="64" y="462" font-family="Geist" font-weight="400" font-size="24" fill="#b4b4b0">Free, in your browser, no account.</text>
 
   <!-- footer url -->
-  <circle cx="70" cy="585" r="5" fill="#4f7cff"/>
-  <text x="84" y="591" font-family="Geist Mono" font-weight="500" font-size="17" fill="#eef1f8">snapshotpro.xyz</text>
-  <text x="262" y="591" font-family="Geist Mono" font-weight="400" font-size="17" fill="#6f7794">Free, no account</text>
+  <text x="64" y="572" font-family="Geist Mono" font-weight="400" font-size="18" fill="#8d8d89">${SITE}</text>
 
-  <!-- browser mockup -->
-  <g transform="rotate(-3.2 1000 320)">
-    <ellipse cx="1000" cy="330" rx="300" ry="240" fill="url(#glowA)" opacity="0.5"/>
-    <path d="${rr(742, 150, 540, 348, 18)}" fill="#0d1426" stroke="rgba(255,255,255,0.10)" stroke-width="1.5"/>
-    <!-- title bar -->
-    <path d="M760,150 h504 a18,18 0 0 1 18,18 v30 h-540 v-30 a18,18 0 0 1 18,-18 z" fill="url(#winbar)"/>
-    <circle cx="766" cy="172" r="6" fill="#ff5f57"/>
-    <circle cx="788" cy="172" r="6" fill="#febc2e"/>
-    <circle cx="810" cy="172" r="6" fill="#28c840"/>
-    <path d="${rr(850, 162, 360, 20, 10)}" fill="#0a0f1c"/>
-    <text x="868" y="176" font-family="Geist Mono" font-weight="400" font-size="11" fill="#6f7794">snapshotpro.xyz/studio</text>
-    <!-- screenshot -->
-    <path d="M742,198 h540 v282 a18,18 0 0 1 -18,18 h-504 a18,18 0 0 1 -18,-18 z" fill="url(#shot)"/>
-    <!-- inner device card -->
-    <path d="${rr(820, 244, 384, 210, 16)}" fill="rgba(8,12,24,0.30)" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>
-    <path d="${rr(848, 274, 150, 150, 26)}" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.40)" stroke-width="2"/>
-    <path d="${rr(1024, 274, 152, 26, 13)}" fill="rgba(255,255,255,0.30)"/>
-    <path d="${rr(1024, 314, 152, 18, 9)}" fill="rgba(255,255,255,0.20)"/>
-    <path d="${rr(1024, 344, 110, 18, 9)}" fill="rgba(255,255,255,0.20)"/>
-    <path d="${rr(1024, 396, 100, 28, 14)}" fill="#0e1426" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
-  </g>
-
-  <!-- floating glass chip over the mockup -->
-  <g transform="rotate(-3.2 1000 320)">
-    <path d="${rr(700, 430, 196, 52, 14)}" fill="rgba(14,18,32,0.78)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
-    <circle cx="726" cy="456" r="9" fill="none" stroke="#4f7cff" stroke-width="2.4"/>
-    <path d="M722,456 l3,3 l5,-6" fill="none" stroke="#4f7cff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="746" y="461" font-family="Geist" font-weight="600" font-size="15" fill="#eef1f8">1200 × 630 export</text>
-  </g>
+  <!-- the mark, large -->
+  ${mark(780, 150, 330, 'tileBig')}
 </svg>`;
 
 const resvg = new Resvg(svg, {

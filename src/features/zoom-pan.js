@@ -9,11 +9,11 @@ function clampZoom(z) { return Math.max(0.1, Math.min(4, z)); }
 // User preference: show the minimap at all. When off, it never appears (even
 // zoomed in). When on (default), it appears only when the canvas overflows.
 let minimapEnabled = (() => {
-  try { return localStorage.getItem('snapshotpro_minimap') !== 'off'; } catch (e) { return true; }
+  try { return localStorage.getItem('glint_minimap') !== 'off'; } catch (e) { return true; }
 })();
 function setMinimapEnabled(on) {
   minimapEnabled = on;
-  try { localStorage.setItem('snapshotpro_minimap', on ? 'on' : 'off'); } catch (e) {}
+  try { localStorage.setItem('glint_minimap', on ? 'on' : 'off'); } catch (e) {}
   const btn = document.getElementById('minimap-toggle');
   if (btn) btn.classList.toggle('active', on);
   renderMinimap();

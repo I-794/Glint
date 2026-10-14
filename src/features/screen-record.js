@@ -7,7 +7,7 @@
 // state.recording.events; auto-zoom.js turns clicks into zoom keyframes.
 //
 // Limitation (documented in the UI): the display stream carries no cursor data,
-// so only the SnapShotPro tab's pointer is tracked. That's ideal for demos
+// so only the Glint tab's pointer is tracked. That's ideal for demos
 // driven inside the app; for other captures, leave auto-zoom off.
 
 import { state } from '../state/state.js';

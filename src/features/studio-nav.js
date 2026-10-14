@@ -15,8 +15,8 @@
 
 const NARROW = 860;
 const PHONE = 767;   // v23 — at/below this the Mobile Studio dock+sheet take over
-const ACTIVE_KEY = 'snapshotpro_studio_group';
-const COLLAPSE_KEY = 'snapshotpro_section_collapsed';
+const ACTIVE_KEY = 'glint_studio_group';
+const COLLAPSE_KEY = 'glint_section_collapsed';
 
 const TABS = [
   { id: 'import', label: 'Import' },

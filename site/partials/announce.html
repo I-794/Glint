@@ -1,0 +1,12 @@
+<!-- v36 rename notice. Shared partial injected before the nav on every marketing
+     page (html-partials plugin in vite.config.js). Hidden on /glint/ and once
+     dismissed (localStorage glint_rename_notice_v36, handled in site.js). The
+     inline script hides it before first paint so a dismissed bar never flashes.
+     Remove in v37. -->
+<script>try{if(location.pathname.indexOf('/glint/')===0||localStorage.getItem('glint_rename_notice_v36')==='dismissed')document.documentElement.classList.add('no-announce');}catch(e){}</script>
+<div class="announce" id="announce" role="region" aria-label="Announcement">
+    <div class="wrap announce-inner">
+        <p><img src="/favicon.svg" alt="" width="16" height="16"><span><b>SnapShotPro is now Glint.</b> Same studio, new name. <a href="/glint/">Read why</a></span></p>
+        <button type="button" class="announce-x" aria-label="Dismiss announcement">✕</button>
+    </div>
+</div>

@@ -13,8 +13,8 @@ import { render } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
 import { clearSelection, setSelection } from './selection.js';
 
-const LS_KEY = 'snapshotpro_export_presets';
-const LAST_KEY = 'snapshotpro_last_export_preset';   // v33 — quick export
+const LS_KEY = 'glint_export_presets';
+const LAST_KEY = 'glint_last_export_preset';   // v33 — quick export
 
 const BUILTINS = [
   { id: 'png-1x',  name: 'PNG · 1×',           format: 'png',  quality: 100, scale: 1 },

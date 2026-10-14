@@ -63,7 +63,7 @@ function buildPage({ beforeUrl, afterUrl, w, h, rect, c }) {
     : `left: 0; right: 0; height: ${lineW}px; transform: translateY(-50%);`} }
   .knob { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: ${color}; box-shadow: 0 2px 10px rgba(0,0,0,.35); transform: translate(-50%, -50%); display: ${c.divider.handle ? 'flex' : 'none'}; align-items: center; justify-content: center; }
   .knob svg { width: 22px; height: 22px; stroke: #16171d; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; ${vertical ? '' : 'transform: rotate(90deg);'} }
-  .zone:focus-visible .knob { outline: 3px solid #7d92ff; outline-offset: 3px; }
+  .zone:focus-visible .knob { outline: 3px solid #f2a93b; outline-offset: 3px; }
   .tag { position: absolute; padding: 6px 11px; border-radius: 999px; background: rgba(12,13,18,.62); color: #fff; font-size: 14px; font-weight: 600; pointer-events: none; transition: opacity .15s; }
 </style>
 </head>

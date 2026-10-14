@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <meta name="description" content="SnapShotPro is now Glint. A new name and a new look for the browser screenshot studio. Every feature and every project you made stays.">
+    <title>Meet Glint · formerly SnapShotPro</title>
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Glint">
+    <meta property="og:url" content="__OG_BASE__/glint/">
+    <meta property="og:title" content="Meet Glint. SnapShotPro has a new name.">
+    <meta property="og:description" content="A new name and a new look for the browser screenshot studio. Every feature and every project you made stays.">
+    <meta property="og:image" content="__OG_BASE__/og.png?v=3">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="__OG_BASE__/og.png?v=3">
+    <meta name="theme-color" content="#0d0d0f">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/site.css">
+    <style>
+        /* v36 launch page. Design read: launch announcement for existing users and
+           new visitors, premium-consumer "flash of light" language, native CSS on
+           the shared /site.css system. Dials: variance 7, motion 6, density 3.
+           Centered manifesto hero is the launch-announcement exception. One accent
+           (amber), one theme (dark graphite), one eyebrow. No em-dashes. */
+
+        .mg-hero { padding: clamp(64px, 9vw, 96px) 0 clamp(48px, 7vw, 88px); text-align: center; }
+        .mg-hero .eyebrow { margin-bottom: 22px; }
+        .mg-hero .mark { width: clamp(84px, 10vw, 120px); height: auto; display: block; margin: 0 auto 30px; border-radius: 26%; box-shadow: 0 24px 60px rgba(232, 97, 58, 0.22); }
+        .mg-hero h1 { font-size: clamp(48px, 7.6vw, 104px); font-weight: 750; letter-spacing: -0.05em; line-height: 0.98; color: var(--ink); margin-bottom: 22px; }
+        .mg-hero p { font-size: clamp(17px, 1.6vw, 20px); line-height: 1.55; color: var(--ink-2); max-width: 40ch; margin: 0 auto 34px; }
+        .mg-hero .actions { display: flex; justify-content: center; align-items: center; gap: 22px; flex-wrap: wrap; }
+        .text-link { font-weight: 600; font-size: 15px; color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+        .text-link:hover { color: var(--accent); }
+
+        .mg-sec { padding: clamp(48px, 7vw, 96px) 0; }
+        .mg-sec h2 { font-size: clamp(28px, 3.6vw, 46px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.05; color: var(--ink); margin-bottom: 18px; }
+        .mg-sec .body p { font-size: 17px; line-height: 1.65; color: var(--ink-2); max-width: 60ch; }
+        .mg-sec .body p + p { margin-top: 14px; }
+
+        /* Why: narrow reading column, offset to the right of a big statement. */
+        .why { display: grid; grid-template-columns: 1fr 1.25fr; gap: clamp(28px, 6vw, 96px); align-items: start; }
+        .why h2 { margin-bottom: 0; }
+
+        /* What changed: old mark to new mark, real assets. */
+        .swap { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: clamp(16px, 3vw, 40px); max-width: 760px; margin: clamp(28px, 4vw, 44px) auto 0; }
+        .swap figure { margin: 0; text-align: center; }
+        .swap img { width: clamp(88px, 14vw, 150px); height: auto; display: block; margin: 0 auto 14px; border-radius: 24%; }
+        .swap .old img { filter: grayscale(0.4); opacity: 0.75; }
+        .swap figcaption { font-size: 15px; color: var(--ink-2); }
+        .swap figcaption b { display: block; color: var(--ink); font-size: 18px; font-weight: 650; margin-bottom: 2px; }
+        .swap .to { font-size: 28px; color: var(--accent); }
+        .changed-list { text-align: left; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 40px; max-width: 760px; margin: clamp(36px, 5vw, 56px) auto 0; }
+        .changed-list p { font-size: 16px; line-height: 1.55; color: var(--ink-2); padding-top: 14px; border-top: 1px solid var(--glass-line); }
+        .changed-list b { color: var(--ink); font-weight: 600; }
+        .center { text-align: center; }
+        .center h2 { margin-inline: auto; max-width: 20ch; }
+
+        /* What stayed: real output, two rows of differing sizes, captions below. */
+        .stayed { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: start; margin-top: clamp(28px, 4vw, 44px); }
+        .stayed figure { margin: 0; }
+        .stayed img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 16px; border: 1px solid var(--glass-line); }
+        .stayed figcaption { margin-top: 10px; font-size: 14.5px; color: var(--ink-2); }
+        .stayed .col { display: grid; gap: 16px; }
+
+        /* FAQ: native disclosure, one divider between rows. */
+        .faq { max-width: 760px; margin: clamp(24px, 3vw, 36px) auto 0; }
+        .faq details { border-bottom: 1px solid var(--glass-line); }
+        .faq details:first-child { border-top: 1px solid var(--glass-line); }
+        .faq summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 22px 0; font-size: 18px; font-weight: 600; color: var(--ink); }
+        .faq summary::-webkit-details-marker { display: none; }
+        .faq summary::after { content: '+'; color: var(--accent); font-size: 24px; font-weight: 400; line-height: 1; transition: transform .2s var(--ease); }
+        .faq details[open] summary::after { transform: rotate(45deg); }
+        .faq summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+        .faq .a { padding: 0 0 22px; font-size: 16px; line-height: 1.65; color: var(--ink-2); max-width: 62ch; }
+
+        .closing { padding: clamp(24px, 4vw, 48px) 0 clamp(72px, 9vw, 120px); }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .mg-hero > .wrap > * { animation: rise .8s var(--ease) both; }
+            .mg-hero > .wrap > :nth-child(2) { animation-delay: .08s; }
+            .mg-hero > .wrap > :nth-child(3) { animation-delay: .16s; }
+            .mg-hero > .wrap > :nth-child(4) { animation-delay: .24s; }
+            .mg-hero > .wrap > :nth-child(5) { animation-delay: .32s; }
+            @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+        }
+
+        @media (max-width: 820px) {
+            .why { grid-template-columns: 1fr; }
+            .stayed { grid-template-columns: 1fr; }
+            .changed-list { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!--PARTIAL:mark-->
+<!--PARTIAL:nav-->
+
+<header class="mg-hero">
+    <div class="wrap">
+        <img class="mark" src="/favicon.svg" alt="" width="120" height="120">
+        <span class="eyebrow">v36 · Darkroom</span>
+        <h1>Meet Glint.</h1>
+        <p>SnapShotPro grew into a full studio. It deserved a name and a look of its own.</p>
+        <div class="actions">
+            <a href="/editor/" class="btn btn-primary btn-lg">Open the studio <span class="ar">→</span></a>
+            <a href="#faq" class="text-link">Questions about the change</a>
+        </div>
+    </div>
+</header>
+
+<section class="mg-sec">
+    <div class="wrap why">
+        <h2 class="reveal">Why a new name.</h2>
+        <div class="body reveal">
+            <p>SnapShotPro started as a single HTML file that put a background behind a screenshot. Thirty-five releases later it frames devices, animates timelines, builds App Store sets, runs an AI design agent and lays out whole boards of pages.</p>
+            <p>The old name described the first version. Glint describes what the studio does now: it takes a plain capture and gives it the small flash of polish that makes people look twice.</p>
+        </div>
+    </div>
+</section>
+
+<section class="mg-sec">
+    <div class="wrap center">
+        <h2 class="reveal">What changed: the name and the look.</h2>
+        <div class="swap reveal">
+            <figure class="old"><img src="/brand/snapshotpro-mark.svg" alt="The old SnapShotPro camera mark" width="150" height="150"><figcaption><b>SnapShotPro</b>through v35</figcaption></figure>
+            <span class="to" aria-hidden="true">→</span>
+            <figure><img src="/favicon.svg" alt="The new Glint sparkle mark" width="150" height="150"><figcaption><b>Glint</b>from v36</figcaption></figure>
+        </div>
+        <div class="changed-list">
+            <p class="reveal"><b>A new mark.</b> A four-point sparkle on an amber tile, the glint on a polished surface.</p>
+            <p class="reveal"><b>A quieter interface.</b> Graphite and off-white panels with one amber accent, in light and dark.</p>
+            <p class="reveal"><b>A new extension name.</b> The capture extension is now Glint Capture.</p>
+            <p class="reveal"><b>A new homepage.</b> Everything shown on it is real output from the editor.</p>
+        </div>
+    </div>
+</section>
+
+<section class="mg-sec">
+    <div class="wrap">
+        <h2 class="reveal">What stayed: everything you use.</h2>
+        <div class="body reveal"><p>Every tool, shortcut and export is where you left it. Your projects, templates, brand kits, saved colors and API keys move over to Glint automatically the first time you open the studio.</p></div>
+        <div class="stayed">
+            <figure class="tall reveal"><img src="/shots/hero-editor.webp" alt="The Glint editor with a dashboard screenshot on a graphite and amber background" loading="lazy" width="1280" height="800"><figcaption>The same editor, in its new colors.</figcaption></figure>
+            <div class="col">
+                <figure class="reveal"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout and an arrow" loading="lazy" width="1000" height="600"><figcaption>Annotations, spotlight and glass.</figcaption></figure>
+                <figure class="reveal"><img src="/shots/device-mockup.webp" alt="A phone app screen inside a device frame" loading="lazy" width="1000" height="600"><figcaption>Device frames and mockups.</figcaption></figure>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mg-sec" id="faq">
+    <div class="wrap">
+        <h2 class="center reveal">Questions about the change</h2>
+        <div class="faq">
+            <details>
+                <summary>Will I lose my projects?</summary>
+                <div class="a">No. The first time you open the studio, Glint copies your projects, templates, brand kits and settings from SnapShotPro. The old copy stays in your browser as a backup, so nothing is deleted.</div>
+            </details>
+            <details>
+                <summary>Do I need a new extension?</summary>
+                <div class="a">Update to Glint Capture when it reaches your browser. Until then, the SnapShotPro Capture extension you already have keeps working with the studio.</div>
+            </details>
+            <details>
+                <summary>Is the web address changing?</summary>
+                <div class="a">Not today. snapshotpro.xyz keeps working, and links you have shared still open the studio.</div>
+            </details>
+            <details>
+                <summary>Does anything cost more?</summary>
+                <div class="a">No. Glint is free and open source, with no account needed, exactly as before.</div>
+            </details>
+        </div>
+    </div>
+</section>
+
+<section class="closing">
+    <div class="wrap">
+        <div class="cta-band reveal">
+            <h2>Same studio. New light.</h2>
+            <p>Open it and pick up where you left off.</p>
+            <a href="/editor/" class="btn btn-primary btn-lg">Open the studio <span class="ar">→</span></a>
+        </div>
+    </div>
+</section>
+
+<!--PARTIAL:footer-->
+
+<script src="/site.js"></script>
+</body>
+</html>

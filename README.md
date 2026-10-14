@@ -1,8 +1,8 @@
 <p align="center">
-  <a href="https://snapshotpro.xyz"><img src="public/og.png" alt="SnapShotPro" width="720"></a>
+  <a href="https://snapshotpro.xyz"><img src="public/og.png" alt="Glint" width="720"></a>
 </p>
 
-<h1 align="center">SnapShotPro</h1>
+<h1 align="center">Glint</h1>
 
 <p align="center">
   The browser screenshot studio. Turn a raw screen grab into a polished, on-brand shot in seconds.
@@ -30,7 +30,7 @@
 
 ## What it is
 
-SnapShotPro is a full screenshot and mockup studio that runs entirely in your browser.
+Glint is a full screenshot and mockup studio that runs entirely in your browser. (It was called SnapShotPro through v35.)
 Drop in a screen, and it is already framed and padded. From there you can add device
 mockups, backgrounds, annotations, color grading, motion, and AI, then export anywhere it
 needs to go. Everything renders locally on your machine and bakes into the export, so what
@@ -80,7 +80,7 @@ is optional via Supabase. Architecture notes are in [`CLAUDE.md`](CLAUDE.md); de
 
 Issues and pull requests are welcome. If you are adding a feature, a good place to start is the
 `bind*` pattern in `src/features/` and the single `render()` pipeline described in `CLAUDE.md`.
-Found a bug or have an idea? [Open an issue](https://github.com/I-794/SnapShotPro/issues).
+Found a bug or have an idea? [Open an issue](https://github.com/I-794/Glint/issues).
 
 ## License
 

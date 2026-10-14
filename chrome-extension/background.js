@@ -1,4 +1,4 @@
-// SnapShotPro Capture — MV3 background service worker.
+// Glint Capture — MV3 background service worker.
 //
 // Owns the capture flow. Visible-area capture is done here with
 // chrome.tabs.captureVisibleTab. Full-page and region capture inject
@@ -9,6 +9,9 @@
 // there "Open in full studio" hands the (edited) image to snapshotpro.xyz via
 // the bridge content script.
 
+// Domain: when Glint moves to its own domain, update DEFAULT_EDITOR and add the new
+// origin to manifest.json host_permissions + content_scripts.matches (keep
+// snapshotpro.xyz while it still serves).
 const DEFAULT_EDITOR = 'https://snapshotpro.xyz/editor/';
 
 async function editorBase() {

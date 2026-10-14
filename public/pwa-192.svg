@@ -1,14 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#667eea"/>
-      <stop offset="100%" stop-color="#764ba2"/>
-    </linearGradient>
-  </defs>
-  <rect width="192" height="192" rx="42" fill="url(#g)"/>
-  <rect x="30" y="60" width="132" height="96" rx="15" fill="#1a1a2e"/>
-  <rect x="66" y="42" width="60" height="30" rx="6" fill="#1a1a2e"/>
-  <circle cx="96" cy="108" r="30" fill="none" stroke="#fff" stroke-width="7.5"/>
-  <circle cx="96" cy="108" r="15" fill="#fff"/>
-  <circle cx="138" cy="78" r="4.8" fill="#ff3b30"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="192" height="192">
+  <!-- Glint mark (v36): a four-point sparkle on an amber-to-coral tile. -->
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f6bb5e"/><stop offset="100%" stop-color="#e8613a"/></linearGradient></defs>
+  <rect width="64" height="64" rx="15" fill="url(#g)"/>
+  <path d="M32 11 C34 25 39 30 53 32 C39 34 34 39 32 53 C30 39 25 34 11 32 C25 30 30 25 32 11 Z" fill="#141416"/>
+  <circle cx="46.5" cy="17.5" r="3" fill="#141416"/>
 </svg>
