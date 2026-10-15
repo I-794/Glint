@@ -1,4 +1,4 @@
-// Glint (formerly SnapShotPro) v7+ — app entry.
+// Glint v7+ — app entry.
 // Initialize DOM refs, bind every module, then render.
 
 import './state/brand-migrate.js';   // v36: must run before any module reads localStorage

@@ -30,7 +30,7 @@
 
 ## What it is
 
-Glint is a full screenshot and mockup studio that runs entirely in your browser. (It was called SnapShotPro through v35.)
+Glint is a full screenshot and mockup studio that runs entirely in your browser.
 Drop in a screen, and it is already framed and padded. From there you can add device
 mockups, backgrounds, annotations, color grading, motion, and AI, then export anywhere it
 needs to go. Everything renders locally on your machine and bakes into the export, so what

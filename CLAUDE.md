@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-The product is **Glint**, a browser screenshot and mockup studio. It was called SnapShotPro through v35; v36 (Darkroom) renamed it. Past changelog entries, old docs under `docs/`, the domain (`snapshotpro.xyz`) and the legacy `SnapShot-Pro-main/` folder keep the old name on purpose. Everything else, including new copy and code, says Glint. The GitHub repo is `I-794/Glint` (renamed from `I-794/SnapShotPro`; GitHub redirects the old URL).
+The product is **Glint**, a browser screenshot and mockup studio. It was called SnapShotPro through v35; v36 (Darkroom) renamed it. The old name now appears only on the `/glint/` page (which explains the rename), in the storage-migration code (`brand-migrate.js`, `project-db.js`, `ext-receiver.js` and their tests), the domain (`snapshotpro.xyz`), old docs under `docs/`, and the legacy `SnapShot-Pro-main/` folder. Everything else, including the changelog, site copy and code, says Glint; do not add new mentions of the old name. The GitHub repo is `I-794/Glint` (renamed from `I-794/SnapShotPro`; GitHub redirects the old URL).
 
 ## Models / Preferences
 
@@ -151,7 +151,7 @@ Current `SCHEMA_VERSION` is 21 (v35 Before / After Compare). The board is docume
 
 ## Build details worth knowing
 
-- **HTML partials**: `vite.config.js` injects shared markup from `site/partials/` into pages that contain `<!--PARTIAL:...-->` placeholders (the editor has none, so it is untouched). `{{VERSION}}` in the footer is filled from `package.json`. Since v36 the `<!--PARTIAL:nav-->` replacement also inserts `site/partials/announce.html` (the "SnapShotPro is now Glint." bar) between the skip link and the `<nav>`, so every marketing page gets it; it hides itself on `/glint/` and once dismissed (`glint_rename_notice_v36` in localStorage, an inline script hides it before first paint, `public/site.js` handles the click). The editor header carries a matching "formerly SnapShotPro" link to `/glint/` (hidden under 1100px). Remove both in v37.
+- **HTML partials**: `vite.config.js` injects shared markup from `site/partials/` into pages that contain `<!--PARTIAL:...-->` placeholders (the editor has none, so it is untouched). `{{VERSION}}` in the footer is filled from `package.json`.
 - **Versioning**: `package.json` `version` is the single version source; it drives the footer and the returning-user "what's new" toast (`src/features/whats-new.js`). Bump it for a release.
 - **Release codenames (from v33)**: every major gets a photography codename in A to Z order (v33 Aperture, v34 Bokeh, v35 Contrast, v36 Darkroom (the Glint relaunch), v37 Exposure, v38 Focus, ...). The number stays semver in `package.json`; the codename shows in the editor header (`Glint v36 · Darkroom`), the what's-new heading, and as the changelog entry `<h2>`. `whats-new.js` `CURRENT_VERSION` is compared by string equality, so any label works.
 - **OG/social**: `__OG_BASE__` in HTML is replaced with the absolute site URL at build (from Vercel env, or `OG_BASE_URL` locally).

@@ -23,8 +23,7 @@ function htmlPartials() {
         const wrapMain = !/<main[\s>]/.test(html) && html.includes('<!--PARTIAL:nav-->') && html.includes('<!--PARTIAL:footer-->');
         return html
           .split('<!--PARTIAL:mark-->').join(read('mark.html'))
-          // v36: the rename notice sits after the skip link, before the <nav>.
-          .split('<!--PARTIAL:nav-->').join(read('nav.html').replace('<nav id="nav"', read('announce.html') + '<nav id="nav"') + (wrapMain ? '\n<main id="main">' : ''))
+          .split('<!--PARTIAL:nav-->').join(read('nav.html') + (wrapMain ? '\n<main id="main">' : ''))
           .split('<!--PARTIAL:footer-->').join((wrapMain ? '</main>\n' : '') + read('footer.html').split('{{VERSION}}').join(version));
       }
     }
