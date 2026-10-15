@@ -48,8 +48,8 @@ const svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http
   <text x="128" y="90" font-family="Geist" font-weight="600" font-size="28" fill="#f2f2f0">Glint</text>
 
   <!-- headline -->
-  <text x="62" y="282" font-family="Geist" font-weight="700" font-size="76" letter-spacing="-2.4" fill="#f2f2f0">SnapShotPro</text>
-  <text x="62" y="366" font-family="Geist" font-weight="700" font-size="76" letter-spacing="-2.4" fill="#f2f2f0">is now <tspan fill="#f2a93b">Glint</tspan>.</text>
+  <text x="62" y="282" font-family="Geist" font-weight="700" font-size="76" letter-spacing="-2.4" fill="#f2f2f0">Screenshots,</text>
+  <text x="62" y="366" font-family="Geist" font-weight="700" font-size="76" letter-spacing="-2.4" fill="#f2f2f0"><tspan fill="#f2a93b">finished</tspan>.</text>
 
   <!-- sub -->
   <text x="64" y="428" font-family="Geist" font-weight="400" font-size="24" fill="#b4b4b0">Turn raw screenshots into finished, on-brand images.</text>

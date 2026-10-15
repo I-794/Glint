@@ -16,7 +16,7 @@ const WELCOME_KEY  = 'glint_welcome_v1';   // set by welcome.js on dismissal
 
 // Latest release only — the newest version’s highlights, not an accumulation.
 const WHATS_NEW = {
-  heading: "✨ v36 · Darkroom: SnapShotPro is now Glint",
+  heading: "✨ v36 · Darkroom: Meet Glint",
   items: [
     { title: 'Same studio, new name',
       desc: 'Every tool is where you left it. Your projects, templates and brand kits moved over automatically.' },
