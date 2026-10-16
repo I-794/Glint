@@ -195,7 +195,16 @@ Moved from v36 to v37 when v36 Darkroom became the Glint relaunch; codename Expo
 - **Develop (export).** Reuse `export-presets.js` (format, quality, 1x/2x/3x) and `renderAtSize` for multiple output sizes per shot; name files from a pattern (`{n}-{name}-{size}`); progress + cancel; ZIP via `downloadZip`. Optionally one PDF contact sheet.
 - **Save the roll with the project.** New state key (e.g. `darkroom`: shot ids, order, per-shot overrides, naming pattern) -> add to `history.js` `snapshot()`, `PROJECT_FIELDS` (shots carry dataURLs, so not lean `SERIALIZED_FIELDS`), bump `SCHEMA_VERSION` 21 -> 22 with an `ensureDarkroomDefaults()` migration, and update the State registry table. Watch project size: cap/encode shots with `imageToDataUrl` like Compare's Before image.
 - **Where it lives.** Sidebar section in the Export group (Pro only, no `data-simple`), plus Cmd-K commands (`darkroom-add`, `darkroom-develop`). Consider whether the existing batch UI is replaced by it.
-- **Alternatives considered for this slot:** pro color tools (curves, levels, shareable film looks); AI light-to-dark-mode screenshot converter (pairs with Compare, needs the AI backend). Either can be a later release.
+- **Alternatives considered for this slot:** pro color tools (now planned for v38 Focus, below); AI light-to-dark-mode screenshot converter (pairs with Compare, needs the AI backend), which can be a later release.
+
+### Planned: v38 Focus (pro color tools) — not started
+
+Reserved for v38 (codename Focus). Goal: give screenshots real photo-style color control.
+
+- **Curves and levels:** per-channel (RGB + R/G/B) curves and black/white/gamma levels. `ctx.filter` cannot express these, so they need a per-pixel pass; hook it into `color-grade.js` `getGradedImage` (like Bokeh and Compare) so all four composition paths and every export get it.
+- **Shareable film looks:** save a grade (curves + levels + the existing `imageFilters`) as a named look, export/import it as a small file or code, and apply it in one click.
+- **State:** new undoable key (e.g. `colorTools`) -> `history.js` `snapshot()`, `SERIALIZED_FIELDS`, bump `SCHEMA_VERSION` with an `ensureColorToolsDefaults()` migration, and update the State registry table.
+- **Where it lives:** sidebar section in the Adjust group (Pro only, no `data-simple`), plus Cmd-K commands.
 
 
 - **New creative outputs:** Tour branching + hosted `/tour/:id` URLs (deferred v25 stretch); AI Storyboard / multi-panel generator.
