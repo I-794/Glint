@@ -79,7 +79,11 @@ function snapshot() {
     // v34 — Subject Bokeh (Detect subject / sliders are undoable).
     bokeh: state.bokeh,
     // v35 — Before / After Compare (carries the Before dataURL).
-    compare: state.compare
+    compare: state.compare,
+    // v37 — the Roll (shot list, order, overrides, develop settings). Shot
+    // image data lives in roll-core rollSources, so this clone stays small;
+    // activeShot is runtime-only (features/roll.js puts it back after restore).
+    roll: { ...state.roll, activeShot: null }
   }));
 }
 

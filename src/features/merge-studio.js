@@ -23,6 +23,7 @@ import { saveStateToHistory } from '../state/history.js';
 import { downloadZip } from './batch-export.js';
 import { loadImageEl } from './url-load.js';
 import { revealSection } from './studio-nav.js';
+import { getByPath, setByPath, sanitize } from '../state/paths.js';
 
 // The fields a {{token}} may live in. `type` drives the panel affordance:
 // text fields are edited in their normal sidebar controls; color fields can't
@@ -40,17 +41,6 @@ const MERGE_FIELDS = [
 const TOKEN_RE = /\{\{\s*([\w.-]+)\s*\}\}/g;
 // Column names with a special meaning (never treated as an "unused" column).
 const RESERVED = ['image', 'filename'];
-
-// --- path helpers -----------------------------------------------------------
-function getByPath(obj, path) {
-  return path.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
-}
-function setByPath(obj, path, val) {
-  const keys = path.split('.');
-  const last = keys.pop();
-  const target = keys.reduce((o, k) => (o == null ? o : o[k]), obj);
-  if (target) target[last] = val;
-}
 
 // --- token scan + substitution ---------------------------------------------
 export function scanTokens() {
@@ -169,9 +159,6 @@ function stopPreview() {
 }
 
 // --- filenames --------------------------------------------------------------
-function sanitize(name) {
-  return String(name).replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'row';
-}
 function fileNameFor(row, i, pad) {
   const raw = matchColumn(row, 'filename') || matchColumn(row, 'name') || 'row';
   // Always prefix the index so filenames stay unique even on duplicate values.

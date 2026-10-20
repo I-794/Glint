@@ -5,6 +5,7 @@
 import { spotlightDefaults } from '../render/spotlight-geom.js';   // v34 (DOM-free, no imports)
 import { bokehDefaults } from '../render/bokeh-core.js';           // v34 (DOM-free, no imports)
 import { compareDefaults } from '../render/compare-core.js';       // v35 (DOM-free, no imports)
+import { rollDefaults } from '../render/roll-core.js';              // v37 (DOM-free)
 
 export const state = {
   image: null,
@@ -223,6 +224,11 @@ export const state = {
     locales: ['en']
   },
   batch: { images: [] },   // [{ id, name }] — Image objects live in imageRegistry
+  // v37 — Exposure: the Roll. One shared design styles every shot; each shot
+  // carries a small `overrides` diff (render/roll-core.js ROLL_OVERRIDE_FIELDS).
+  // Shot images: decoded in imageRegistry, dataURLs in roll-core rollSources.
+  // activeShot is runtime-only (the shot open on the canvas).
+  roll: rollDefaults(),
 
   // v9.2 — video/clip support. The <video> element + frame canvas live in
   // video.js (not JSON-serializable); this just holds trim + playback params.

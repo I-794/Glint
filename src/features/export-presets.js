@@ -38,6 +38,32 @@ function write(list) {
 
 export function listExportPresets() { return read(); }
 
+// v37 — shared encoder (also used by the Roll's Develop): format → mime +
+// extension; PNG takes no quality argument. Resolves to { blob, ext }.
+export function encodeCanvas(canvas, format, quality) {
+  let mime = 'image/png', ext = 'png';
+  if (format === 'jpeg') { mime = 'image/jpeg'; ext = 'jpg'; }
+  else if (format === 'webp') { mime = 'image/webp'; ext = 'webp'; }
+  return new Promise((resolve) => {
+    const done = (blob) => resolve({ blob, ext });
+    if (mime === 'image/png') canvas.toBlob(done, mime);
+    else canvas.toBlob(done, mime, (quality || 92) / 100);
+  });
+}
+
+// v37 — `canvas` drawn onto a new canvas `scale`× its size (returns `canvas`
+// itself at 1×).
+export function upscaleCanvas(canvas, scale) {
+  if (!scale || scale === 1) return canvas;
+  const out = document.createElement('canvas');
+  out.width = Math.max(1, Math.round(canvas.width * scale));
+  out.height = Math.max(1, Math.round(canvas.height * scale));
+  const octx = out.getContext('2d');
+  octx.imageSmoothingQuality = 'high';
+  octx.drawImage(canvas, 0, 0, out.width, out.height);
+  return out;
+}
+
 // Clean export of the composed canvas at `scale`×, with selection chrome
 // suppressed for the export and restored afterward.
 function exportScaled(scale, format, quality) {
@@ -46,19 +72,7 @@ function exportScaled(scale, format, quality) {
   if (savedSel.length) clearSelection();
   render();
 
-  const src = el.previewCanvas;
-  const out = document.createElement('canvas');
-  out.width = Math.max(1, Math.round(src.width * scale));
-  out.height = Math.max(1, Math.round(src.height * scale));
-  const octx = out.getContext('2d');
-  octx.imageSmoothingQuality = 'high';
-  octx.drawImage(src, 0, 0, out.width, out.height);
-
-  let mime = 'image/png', ext = 'png';
-  if (format === 'jpeg') { mime = 'image/jpeg'; ext = 'jpg'; }
-  else if (format === 'webp') { mime = 'image/webp'; ext = 'webp'; }
-
-  const done = (blob) => {
+  encodeCanvas(upscaleCanvas(el.previewCanvas, scale), format, quality).then(({ blob, ext }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `screenshot-${Date.now()}.${ext}`;
@@ -66,9 +80,7 @@ function exportScaled(scale, format, quality) {
     URL.revokeObjectURL(url);
     showNotification(`Exported ${ext.toUpperCase()} @${scale}×`, 'success');
     if (savedSel.length) { setSelection(savedSel); render(); }
-  };
-  if (mime === 'image/png') out.toBlob(done, mime);
-  else out.toBlob(done, mime, (quality || 92) / 100);
+  });
 }
 
 export function applyExportPreset(id) {

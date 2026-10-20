@@ -12,12 +12,16 @@ import { render } from '../render/render.js';
 import { normalizeProject } from '../state/serialize.js';
 import { releaseMaskOwner, ensureBokehMask } from '../render/bokeh.js';
 import { ensureCompareImage } from '../render/compare.js';
+import { ensureRollImages } from '../render/roll-images.js';
+import { rollRuntime } from '../render/roll-core.js';
 
 // Assign a page payload's design + image into global state WITHOUT touching the
 // DOM or re-rendering. Returns a promise that resolves once the image (if any)
 // has decoded. Used by the deck render loop, which renders to offscreen canvases.
 export function applyDesignToState(payload) {
   const norm = normalizeProject(payload);
+  // v37 — a new design replaces the live state, so any open Roll shot is gone.
+  if (rollRuntime.onDesignApplied) rollRuntime.onDesignApplied();
   Object.assign(state, norm.design);
   state.svgCode = norm.svgCode || null;
   // v34 — once this page's own image is in place, it may claim its Bokeh mask
@@ -28,6 +32,8 @@ export function applyDesignToState(payload) {
     ensureBokehMask(norm.design && norm.design.bokeh && norm.design.bokeh.maskDataUrl),
     // v35 — and its Before image, so an offscreen render draws the comparison.
     ensureCompareImage(norm.design && norm.design.compare && norm.design.compare.beforeSrc),
+    // v37 — and its Roll shots.
+    ensureRollImages(norm.design && norm.design.roll),
   ]);
   return new Promise((resolve) => {
     const done = () => { maskReady.then(() => resolve()); };

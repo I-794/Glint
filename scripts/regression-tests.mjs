@@ -7,6 +7,7 @@ import { serializeFull, normalizeProject } from '../src/state/serialize.js';
 import { normalizeCompare, wipeSplit, splitFromPoint, hitDivider, fitRect } from '../src/render/compare-core.js';
 import { applyDesignToState } from '../src/features/document.js';
 import { migrateLocalStorage, MIGRATED_FLAG } from '../src/state/brand-migrate.js';
+import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
 
 function mockRes() {
   return {
@@ -129,7 +130,7 @@ function testCompareMigratesAndPersists() {
     assert.equal(back.beforeSrc, 'data:image/png;base64,AAAA');
     assert.equal(back.split, 0.3);
     assert.equal(back.orientation, 'horizontal');
-    assert.equal(payload.schemaVersion, 21);
+    assert.equal(payload.schemaVersion, 22);
   } finally {
     state.compare = saved;
   }
@@ -199,6 +200,69 @@ function testBrandMigrateMovesWhenQuotaIsFull() {
   assert.equal(s.getItem('glint_projects_v12'), 'BIG', 'falls back to a move when a copy does not fit');
 }
 
+// v37 — Exposure: Roll logic.
+function testRollAspectAndSmartFit() {
+  assert.equal(classifyAspect(1170, 2532), 'phone');
+  assert.equal(classifyAspect(2048, 2732), 'tablet');
+  assert.equal(classifyAspect(1920, 1080), 'wide');
+  assert.equal(classifyAspect(0, 0), 'wide');
+  const fit = { enabled: true, phone: 'iphone16pro', tablet: 'ipadpro', wide: 'chrome' };
+  assert.equal(smartFrameFor({ w: 1170, h: 2532 }, fit), 'iphone16pro');
+  assert.equal(smartFrameFor({ w: 1920, h: 1080 }, fit), 'chrome');
+  assert.equal(smartFrameFor({ w: 1920, h: 1080 }, { ...fit, enabled: false }), undefined);
+  assert.equal(smartFrameFor({ w: 1920, h: 1080 }, fit, { mockup3d: true }), undefined, '3D owns the frame');
+  assert.equal(smartFrameFor({ w: 1920, h: 1080, overrides: { 'deviceFrame.type': 'safari' } }, fit), undefined,
+    'a shot that picks its own frame wins');
+}
+
+function testRollFileNamesAndSizes() {
+  assert.equal(fileName('{n}-{name}-{size}', { n: 3, name: 'Home Screen.png', size: { label: 'canvas' } }), '03-Home-Screen-canvas.png');
+  assert.equal(fileName('{name}_{size}', { n: 1, name: 'a', size: { width: 1080, height: 1920 }, ext: 'webp' }), 'a_1080x1920.webp');
+  assert.equal(fileName('', { n: 12, name: '', size: null, pad: 3 }), '012-shot-canvas.png');
+  assert.deepEqual(parseSizes('1080x1920, canvas, junk'), [
+    { label: '1080x1920', width: 1080, height: 1920 }, { label: 'canvas' }]);
+  assert.deepEqual(parseSizes(''), [{ label: 'canvas' }]);
+}
+
+function testRollOverrides() {
+  const roll = { textOverlay: { enabled: true, content: 'Roll caption', size: 48 }, annotations: [], redactions: [],
+    imageTransform: { rotation: 0 }, compare: { enabled: false, beforeSrc: null }, deviceFrame: { type: 'chrome' } };
+  const base = captureOverrideFields(roll);
+  const edited = JSON.parse(JSON.stringify(roll));
+  edited.textOverlay.content = 'Shot caption';
+  edited.textOverlay.size = 99; // not an override field: ignored
+  const diff = diffOverrides(base, captureOverrideFields(edited));
+  assert.deepEqual(diff, { 'textOverlay.content': 'Shot caption' });
+  const target = JSON.parse(JSON.stringify(roll));
+  applyOverrides(target, { ...diff, 'not.a.field': 1 });
+  assert.equal(target.textOverlay.content, 'Shot caption');
+  assert.equal(target.textOverlay.size, 48);
+  assert.equal(target.not, undefined);
+}
+
+function testRollMigratesAndPersists() {
+  const old = normalizeProject({ schemaVersion: 21, design: { bgColor: '#000000' }, image: null });
+  assert.deepEqual(old.design.roll.shots, [], 'a v36 design gets an empty roll');
+  const fixed = normalizeRoll({ shots: [{ id: 'a', src: 'data:image/jpeg;base64,AA', w: 10, h: 20 }, { id: 'b' }, null],
+    smartFit: { phone: 'not-a-frame' }, activeShot: 'a' });
+  assert.equal(fixed.shots.length, 1, 'shots without image data are dropped');
+  assert.equal(fixed.smartFit.phone, 'iphone16pro');
+  assert.equal(fixed.activeShot, null);
+  const saved = state.roll;
+  try {
+    state.roll = normalizeRoll({ shots: [{ id: 's1', name: 'x.png', src: 'data:image/jpeg;base64,AA', w: 1, h: 2,
+      overrides: { 'textOverlay.content': 'hi' } }], naming: '{name}', activeShot: 's1' });
+    const payload = serializeFull();
+    assert.equal(payload.schemaVersion, 22);
+    const back = normalizeProject(payload).design.roll;
+    assert.equal(back.shots[0].overrides['textOverlay.content'], 'hi');
+    assert.equal(back.naming, '{name}');
+    assert.equal(back.activeShot, null);
+  } finally {
+    state.roll = saved;
+  }
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -208,7 +272,11 @@ const tests = [
   testCompareMigratesAndPersists,
   testCompareGeometry,
   testBrandMigrateCopiesOnce,
-  testBrandMigrateMovesWhenQuotaIsFull
+  testBrandMigrateMovesWhenQuotaIsFull,
+  testRollAspectAndSmartFit,
+  testRollFileNamesAndSizes,
+  testRollOverrides,
+  testRollMigratesAndPersists
 ];
 
 for (const test of tests) {

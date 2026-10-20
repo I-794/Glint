@@ -10,6 +10,7 @@ import { state } from './state.js';
 import { upgradeSpotlight } from '../render/spotlight-geom.js';
 import { bokehDefaults } from '../render/bokeh-core.js';
 import { normalizeCompare } from '../render/compare-core.js';
+import { normalizeRoll, serializeRoll, rollRuntime, applyOverrides } from '../render/roll-core.js';
 
 export const SERIALIZED_FIELDS = [
   'imageTransform', 'imageFilters', 'imageLayer', 'textOverlay', 'watermark', 'gradient',
@@ -79,7 +80,7 @@ export function snapshotProject() {
 // restores the artwork — unlike snapshotProject(), which stays deliberately
 // lean for realtime collab/gallery payloads. Bump SCHEMA_VERSION whenever the
 // field set changes so normalizeProject() can migrate older saves.
-export const SCHEMA_VERSION = 21;
+export const SCHEMA_VERSION = 22;
 
 // SERIALIZED_FIELDS + the rest of the design-defining state. Kept separate from
 // SERIALIZED_FIELDS so collab/gallery stay small; projects want full fidelity.
@@ -102,7 +103,9 @@ export const PROJECT_FIELDS = [
   // v34 — Subject Bokeh (carries a mask dataURL, so project-only like `brand`).
   'bokeh',
   // v35 — Before / After Compare (carries the Before dataURL, so project-only).
-  'compare'
+  'compare',
+  // v37 — the Roll (carries every shot's dataURL, so project-only).
+  'roll'
 ];
 
 // v25 — guarantee every applied design carries a `tour` block. Because
@@ -141,11 +144,21 @@ export function getImageDataURL() {
 
 export function serializeFull() {
   const design = {};
-  for (const k of PROJECT_FIELDS) design[k] = state[k];
+  for (const k of PROJECT_FIELDS) if (k !== 'roll') design[k] = state[k];
+  const out = sanitizeMotionRuntime(JSON.parse(JSON.stringify(design)));
+  out.roll = serializeRoll(state.roll);
+  let image = getImageDataURL();
+  // v37 — a single Roll shot is open on the canvas: save the roll's own values
+  // and image, not the shot's.
+  const view = rollRuntime.view && rollRuntime.view();
+  if (view) {
+    applyOverrides(out, view.fields);
+    if (view.imageSrc !== undefined) image = view.imageSrc;
+  }
   return {
     schemaVersion: SCHEMA_VERSION,
-    design: sanitizeMotionRuntime(JSON.parse(JSON.stringify(design))),
-    image: getImageDataURL(),
+    design: out,
+    image,
     svgCode: state.svgCode || null
   };
 }
@@ -217,6 +230,14 @@ export function ensureCompareDefaults(design) {
   return design;
 }
 
+// v37 — schema 22 migration: every applied design carries a valid `roll`, so
+// a page that predates v37 never inherits the previous page's roll via
+// Object.assign. Mutates + returns the design.
+export function ensureRollDefaults(design) {
+  if (design) design.roll = normalizeRoll(design.roll);
+  return design;
+}
+
 // v34 — schema 20 migration: v1's single spotlight rect becomes regions[0] of
 // Spotlight 2.0 (blur/feather/tint default to the v1 look). Mutates + returns.
 export function migrateSpotlightV20(design) {
@@ -231,7 +252,7 @@ export function normalizeProject(payload) {
   if (!payload || typeof payload !== 'object') {
     return { schemaVersion: SCHEMA_VERSION, design: {}, image: null, svgCode: null };
   }
-  const migrate = (d) => ensureCompareDefaults(ensureBokehDefaults(migrateSpotlightV20(ensureBrandDefaults(migrateTimelineV18(ensureTourDefaults(sanitizeMotionRuntime(d)))))));
+  const migrate = (d) => ensureRollDefaults(ensureCompareDefaults(ensureBokehDefaults(migrateSpotlightV20(ensureBrandDefaults(migrateTimelineV18(ensureTourDefaults(sanitizeMotionRuntime(d))))))));
   if (payload.design) {
     return {
       schemaVersion: payload.schemaVersion || SCHEMA_VERSION,
