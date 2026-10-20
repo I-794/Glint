@@ -10,20 +10,20 @@
 // release's highlights — same checklist step as the editor version badge and
 // the changelog page.
 
-const CURRENT_VERSION = '36.0';
+const CURRENT_VERSION = '37.0';
 const LASTSEEN_KEY = 'glint_lastseen_version';
 const WELCOME_KEY  = 'glint_welcome_v1';   // set by welcome.js on dismissal
 
 // Latest release only — the newest version’s highlights, not an accumulation.
 const WHATS_NEW = {
-  heading: "✨ v36 · Darkroom: Meet Glint",
+  heading: "v37 · Exposure",
   items: [
-    { title: 'Same studio, new name',
-      desc: 'Every tool is where you left it. Your projects, templates and brand kits moved over automatically.' },
-    { title: 'A new look',
-      desc: 'A calmer graphite interface with a single amber accent, in light and dark.' },
-    { title: 'Update the extension',
-      desc: 'The capture extension is now Glint Capture. The old version keeps working until you update.' }
+    { title: 'One design, every shot',
+      desc: 'The new Roll in Export styles a whole folder of screenshots with the design on your canvas.' },
+    { title: 'Change just one',
+      desc: 'Open any shot to give it its own caption, annotations or frame. Smart frames pick a phone or a browser for you.' },
+    { title: 'Develop in one pass',
+      desc: 'Every shot at every size in one ZIP, with an optional PDF contact sheet.' }
   ]
 };
 

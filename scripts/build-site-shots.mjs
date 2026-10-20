@@ -206,6 +206,23 @@ const SET = {
   backdrop: ['#2bd4c4', '#2348ff']
 };
 
+// v37 Exposure: one roll developed with one design. Each shot goes through the
+// Roll's own logic (roll-core smart frame + overrides, then renderInto), and the
+// developed images are laid out side by side like a contact sheet.
+const ROLL = {
+  file: 'roll-develop',
+  shots: [
+    { source: 'mobileToday' },
+    { source: 'dashboard' },
+    { source: 'landing' }
+  ],
+  state: {
+    ...RECIPES.find(r => r.file === 'amber-flare').state,
+    canvas: { width: 900, height: 900 }, padding: 90
+  },
+  backdrop: ['#1c1c20', '#0f0f11']
+};
+
 // Homepage hero: the editor itself, mid-design.
 const HERO = {
   file: 'hero-editor', source: 'dashboard', viewport: { width: 1280, height: 800 },
@@ -341,6 +358,53 @@ for (const r of RECIPES) {
     return c.toDataURL('image/webp', q).split(',')[1];
   }, { set: SET, panelSrcs: SET.panels.map((p) => sources[p.source]), W, H, q: QUALITY });
   save(SET.file, b64);
+}
+
+// Roll: develop three shots with one design, then lay them out as a sheet.
+{
+  await upload(ROLL.shots[0].source);
+  await applyState(ROLL.state);
+  const b64 = await page.evaluate(async ({ roll, srcs, W, H, q }) => {
+    const { state } = await window.__shotImport('/src/state/state.js');
+    const { renderInto } = await window.__shotImport('/src/render/render.js');
+    const core = await window.__shotImport('/src/render/roll-core.js');
+    const fit = core.rollDefaults().smartFit;
+    const base = core.captureOverrideFields(state);
+    const outs = [];
+    for (const [i, src] of srcs.entries()) {
+      const img = new Image();
+      img.src = 'data:image/png;base64,' + src;
+      await img.decode();
+      const shot = { w: img.naturalWidth, h: img.naturalHeight, overrides: {} };
+      core.applyOverrides(state, base);
+      const frame = core.smartFrameFor(shot, fit);
+      if (frame !== undefined) state.deviceFrame.type = frame;
+      state.image = img;
+      const off = document.createElement('canvas');
+      renderInto(off, true);
+      outs.push(off);
+    }
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, roll.backdrop[0]); g.addColorStop(1, roll.backdrop[1]);
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    // The middle shot is the largest; the outer two sit a little lower.
+    const sizes = [W * 0.28, W * 0.34, W * 0.28], gap = W * 0.022;
+    let tx = (W - sizes.reduce((a, b) => a + b, 0) - gap * 2) / 2;
+    outs.forEach((im, i) => {
+      const side = sizes[i], ty = (H - side) / 2 + (i === 1 ? 0 : H * 0.05);
+      x.save();
+      x.shadowColor = 'rgba(0,0,0,0.45)'; x.shadowBlur = 36; x.shadowOffsetY = 16;
+      x.beginPath(); x.roundRect(tx, ty, side, side, 14); x.fillStyle = '#121214'; x.fill();
+      x.shadowColor = 'transparent'; x.clip();
+      x.drawImage(im, tx, ty, side, side);
+      x.restore();
+      tx += side + gap;
+    });
+    return c.toDataURL('image/webp', q).split(',')[1];
+  }, { roll: ROLL, srcs: ROLL.shots.map((s) => sources[s.source]), W: 1280, H: 600, q: QUALITY });
+  save(ROLL.file, b64);
 }
 
 // Hero: the editor UI itself with a design on the canvas.
