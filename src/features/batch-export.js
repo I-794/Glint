@@ -1,12 +1,12 @@
-// v9.0 — ZIP export for screenshot sets and batch image processing.
+// v9.0 — ZIP export for screenshot sets, plus the shared downloadZip().
 //
-// Set export: renders every panel of the active set (via screenshot-set.js).
-// Batch export: applies the current design template to each uploaded image
-// (via the full render pipeline, renderInto). Both bundle PNGs into a ZIP using
-// fflate (tiny, no worker), rendered sequentially to keep memory bounded.
+// Set export: renders every panel of the active set (via screenshot-set.js)
+// and bundles the PNGs into a ZIP using fflate (tiny, no worker), rendered
+// sequentially to keep memory bounded. (v37 — the old Batch export became the
+// Roll's Develop, features/roll.js.)
 
-import { state, imageRegistry } from '../state/state.js';
-import { render, renderInto } from '../render/render.js';
+import { state } from '../state/state.js';
+import { render } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
 import { renderSetPanels } from './screenshot-set.js';
 import { runTextPrompt, parseJsonLoose } from './ai-cloud.js';
@@ -116,39 +116,6 @@ export async function exportSet() {
     setProgress('set-progress', 'Failed.');
     showNotification(`Set export failed: ${e.message || e}`, 'error');
   } finally {
-    render();
-  }
-}
-
-export async function exportBatch() {
-  const imgs = state.batch.images;
-  if (!imgs.length) { showNotification('Add images to the batch first.', 'error'); return; }
-  setProgress('batch-progress', 'Rendering…');
-  const off = document.createElement('canvas');
-  const savedImg = state.image;
-  try {
-    const files = {};
-    for (let i = 0; i < imgs.length; i++) {
-      const entry = imgs[i];
-      const img = imageRegistry[entry.id];
-      if (!img) continue;
-      state.image = img;
-      renderInto(off, true);
-      const blob = await new Promise((res) => off.toBlob(res, 'image/png'));
-      const base = (entry.name || `image-${i + 1}`).replace(/\.[^.]+$/, '');
-      files[`${String(i + 1).padStart(2, '0')}-${base}.png`] = await blobToU8(blob);
-      setProgress('batch-progress', `Rendering ${i + 1}/${imgs.length}…`);
-      await new Promise((r) => setTimeout(r, 0));
-    }
-    await downloadZip(files, `batch-${Date.now()}.zip`);
-    setProgress('batch-progress', `Exported ${imgs.length} image${imgs.length === 1 ? '' : 's'}.`);
-    showNotification(`Batch exported ${imgs.length} image${imgs.length === 1 ? '' : 's'} as ZIP.`, 'success');
-  } catch (e) {
-    console.error(e);
-    setProgress('batch-progress', 'Failed.');
-    showNotification(`Batch export failed: ${e.message || e}`, 'error');
-  } finally {
-    state.image = savedImg;
     render();
   }
 }

@@ -133,6 +133,13 @@ const IDS = [
   'merge-csv-drop', 'merge-csv-input', 'merge-sample-btn', 'merge-summary',
   'merge-preview-prev', 'merge-preview-next', 'merge-preview-stop', 'merge-preview-label',
   'merge-export-btn', 'merge-progress',
+  // v37 — Exposure: the Roll
+  'roll-section', 'roll-count', 'roll-drop', 'roll-file-input', 'roll-folder-input',
+  'roll-add-folder-btn', 'roll-clear-btn', 'roll-sheet', 'roll-shot-bar', 'roll-shot-name',
+  'roll-scope-hint', 'roll-prev-btn', 'roll-next-btn', 'roll-reset-shot-btn', 'roll-done-btn',
+  'roll-smart-fit', 'roll-smart-frames', 'roll-frame-phone', 'roll-frame-tablet', 'roll-frame-wide',
+  'roll-sizes', 'roll-naming', 'roll-preset', 'roll-pdf', 'roll-develop-btn', 'roll-cancel-btn',
+  'roll-progress',
 
   // Templates
   'template-name', 'save-template-btn', 'clear-templates-btn', 'template-list',

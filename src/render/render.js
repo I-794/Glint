@@ -52,6 +52,8 @@ export function render(forExport) {
   if (!forExport) drawSpotlightChrome(el.previewCanvas.getContext('2d'), el.previewCanvas);
   // v35 — the floating selection toolbar follows the selection (HTML, preview-only).
   if (!forExport) window.__syncFloatingToolbar?.();
+  // v37 — the Roll's contact sheet re-renders after design changes.
+  if (!forExport) window.__rollRefresh?.();
 }
 
 // Render the current global state into an arbitrary canvas. `render()` targets

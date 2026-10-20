@@ -63,7 +63,8 @@ export function smartFrameFor(shot, smartFit, { mockup3d = false, surface = fals
   if (shot.overrides && 'deviceFrame.type' in shot.overrides) return undefined;
   const kind = classifyAspect(shot.w, shot.h);
   const type = smartFit[kind];
-  return type === undefined ? undefined : type;
+  // 'keep' leaves the design's own frame on that kind of shot.
+  return type === undefined || type === 'keep' ? undefined : type;
 }
 
 export function sizeLabel(size) {
@@ -99,7 +100,7 @@ export function serializeRoll(roll) {
   return JSON.parse(JSON.stringify(r));
 }
 
-export const ROLL_FRAME_TYPES = [null, 'iphone', 'iphone16pro', 'pixel', 'ipadpro', 'macbookpro', 'winlaptop',
+export const ROLL_FRAME_TYPES = ['keep', null, 'iphone', 'iphone16pro', 'pixel', 'ipadpro', 'macbookpro', 'winlaptop',
   'studiodisplay', 'chrome', 'safari', 'firefox', 'macos', 'windows'];
 
 export function rollDefaults() {

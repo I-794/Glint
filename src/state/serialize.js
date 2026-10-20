@@ -145,12 +145,12 @@ export function getImageDataURL() {
 export function serializeFull() {
   const design = {};
   for (const k of PROJECT_FIELDS) if (k !== 'roll') design[k] = state[k];
+  // v37 — a single Roll shot is open on the canvas: save the roll's own values
+  // and image, not the shot's. view() first files the shot's pending edits.
+  const view = rollRuntime.view && rollRuntime.view();
   const out = sanitizeMotionRuntime(JSON.parse(JSON.stringify(design)));
   out.roll = serializeRoll(state.roll);
   let image = getImageDataURL();
-  // v37 — a single Roll shot is open on the canvas: save the roll's own values
-  // and image, not the shot's.
-  const view = rollRuntime.view && rollRuntime.view();
   if (view) {
     applyOverrides(out, view.fields);
     if (view.imageSrc !== undefined) image = view.imageSrc;

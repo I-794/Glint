@@ -26,6 +26,7 @@ function inTourMode() { return state.mode === 'tour'; }
 
 export function enterTourMode() {
   if (inTourMode()) return;
+  window.__closeRollShot?.();   // v37 — a tour step saves the roll's design
   state.mode = 'tour';
   showTourOverlay();
   refreshTourUI();

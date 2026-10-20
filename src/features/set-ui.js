@@ -1,23 +1,24 @@
-// v9.0 — App Store Sets + Batch sidebar UI.
+// v9.0 — App Store Sets sidebar UI.
 //
-// Owns the Single | Set | Batch mode toggle and the dynamic UI for each mode:
-// the set filmstrip + per-panel caption editor, and the batch image tray.
+// Owns the Single | Set mode toggle and the dynamic UI for Set mode: the set
+// filmstrip + per-panel caption editor. (v37 — the Batch tray moved to the
+// Roll, features/roll.js.)
 // Bound from main.js (following the mockup-ui.js precedent — keeps the large
 // bindings.js untouched). Static controls live in editor/index.html; the
-// filmstrip, caption editor, and batch list are rendered here.
+// filmstrip and caption editor are rendered here.
 
 import { state, imageRegistry } from '../state/state.js';
 import { render } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
 import { fitZoom } from './zoom-pan.js';
 import { STORE_PRESETS, STORE_PRESET_ORDER, getStorePreset } from '../state/store-presets.js';
-import { exportSet, exportBatch } from './batch-export.js';
+import { exportSet } from './batch-export.js';
 import { escapeHTML } from '../utils/dom.js';
 
 let idCounter = 0;
 const nextId = (prefix) => `${prefix}-${Date.now().toString(36)}-${idCounter++}`;
 
-function loadImageFile(file) {
+export function loadImageFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -39,10 +40,12 @@ let savedCanvas = null;
 
 export function setMode(mode) {
   const prev = state.mode;
-  // v25 — leaving an active Tour for Set/Batch must tear down the hotspot overlay
+  // v37 — leaving Single closes an open Roll shot (it borrows the live state).
+  if (mode !== 'single') window.__closeRollShot?.();
+  // v25 — leaving an active Tour for Set must tear down the hotspot overlay
   // (it covers the whole canvas), or it would strand and intercept every click.
   if (prev === 'tour' && mode !== 'tour' && typeof window.__exitTourMode === 'function') window.__exitTourMode();
-  // v32 — leaving the Board for Single/Set/Batch must tear down the board surface
+  // v32 — leaving the Board for Single/Set must tear down the board surface
   // + toolbar and un-hide #canvas-wrapper (which enterBoardMode hid), or the board
   // cards would strand over a hidden set preview. Mirrors the v25 tour guard.
   if (prev === 'board' && mode !== 'board' && typeof window.__teardownBoardChrome === 'function') window.__teardownBoardChrome();
@@ -51,9 +54,7 @@ export function setMode(mode) {
   document.querySelectorAll('[data-app-mode]').forEach((b) =>
     b.classList.toggle('active', b.dataset.appMode === mode));
   const setBox = document.getElementById('set-controls');
-  const batchBox = document.getElementById('batch-controls');
   if (setBox) setBox.style.display = mode === 'set' ? 'block' : 'none';
-  if (batchBox) batchBox.style.display = mode === 'batch' ? 'block' : 'none';
   if (mode === 'set') {
     const p = getStorePreset(state.screenshotSet.preset);
     state.canvas = { width: p.w, height: p.h };
@@ -171,50 +172,6 @@ function addPanel() {
   render();
 }
 
-// ---- batch tray -----------------------------------------------------------
-
-function renderBatchList() {
-  const list = document.getElementById('batch-list');
-  if (!list) return;
-  const imgs = state.batch.images;
-  if (!imgs.length) {
-    list.innerHTML = '<p class="info-text">No images added yet. Drop or select multiple images above.</p>';
-    return;
-  }
-  list.innerHTML = imgs.map((entry, i) => {
-    const img = imageRegistry[entry.id];
-    const thumb = img ? img.src : '';
-    return `<div class="batch-row" data-i="${i}">
-        <div class="batch-thumb">${thumb ? `<img src="${thumb}" alt="">` : ''}</div>
-        <span class="batch-name">${escapeHTML(entry.name || 'image')}</span>
-        <button class="batch-del" data-del="${i}" title="Remove">✕</button>
-      </div>`;
-  }).join('');
-  list.querySelectorAll('button[data-del]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const i = parseInt(btn.dataset.del, 10);
-      const entry = imgs[i];
-      if (entry) delete imageRegistry[entry.id];
-      imgs.splice(i, 1);
-      renderBatchList();
-    });
-  });
-}
-
-async function addBatchFiles(fileList) {
-  const files = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
-  for (const file of files) {
-    try {
-      const { img } = await loadImageFile(file);
-      const id = nextId('batch');
-      imageRegistry[id] = img;
-      state.batch.images.push({ id, name: file.name });
-    } catch (e) { /* skip unreadable */ }
-  }
-  renderBatchList();
-  if (files.length) showNotification(`Added ${files.length} image${files.length === 1 ? '' : 's'} to batch.`, 'success');
-}
-
 // ---- binding --------------------------------------------------------------
 
 export function bindSetUi() {
@@ -260,31 +217,6 @@ export function bindSetUi() {
 
   const exportSetBtn = document.getElementById('set-export-btn');
   if (exportSetBtn) exportSetBtn.addEventListener('click', exportSet);
-
-  // Batch
-  const batchInput = document.getElementById('batch-file-input');
-  if (batchInput) batchInput.addEventListener('change', (e) => { if (e.target.files) addBatchFiles(e.target.files); batchInput.value = ''; });
-  const batchDrop = document.getElementById('batch-drop');
-  if (batchDrop) {
-    batchDrop.addEventListener('click', () => batchInput && batchInput.click());
-    batchDrop.addEventListener('dragover', (e) => { e.preventDefault(); batchDrop.classList.add('dragover'); });
-    batchDrop.addEventListener('dragleave', () => batchDrop.classList.remove('dragover'));
-    batchDrop.addEventListener('drop', (e) => {
-      e.preventDefault();
-      batchDrop.classList.remove('dragover');
-      if (e.dataTransfer && e.dataTransfer.files) addBatchFiles(e.dataTransfer.files);
-    });
-  }
-  const batchClear = document.getElementById('batch-clear-btn');
-  if (batchClear) batchClear.addEventListener('click', () => {
-    state.batch.images.forEach((e) => delete imageRegistry[e.id]);
-    state.batch.images = [];
-    renderBatchList();
-  });
-  const batchExportBtn = document.getElementById('batch-export-btn');
-  if (batchExportBtn) batchExportBtn.addEventListener('click', exportBatch);
-
-  renderBatchList();
 
   // Let other modules (e.g. Brand Kit) refresh the set preview + filmstrip.
   window.__refreshSetUi = () => { renderFilmstrip(); renderPanelEditor(); };

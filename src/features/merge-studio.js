@@ -10,7 +10,7 @@
 // - state.mergeStudio is RUNTIME-ONLY (columns/rows re-uploaded each session):
 //   not snapshotted, not serialized. The template lives in the already-
 //   serialized text/color fields, so it travels with the project for free.
-// - The batch loop mirrors exportBatch() (batch-export.js): mutate the live
+// - The batch loop (like the Roll's Develop, roll.js): mutate the live
 //   state per row, renderInto() an offscreen canvas, collect the PNG, restore.
 // - Per-row images load through the pure loadImageEl() helper (url-load.js),
 //   which routes remote URLs via /api/fetch-url so the export stays untainted.

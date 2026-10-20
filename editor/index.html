@@ -936,7 +936,6 @@
             <div class="app-mode-toggle">
                 <button class="app-mode-btn active" data-app-mode="single">Single</button>
                 <button class="app-mode-btn" data-app-mode="set">Set</button>
-                <button class="app-mode-btn" data-app-mode="batch">Batch</button>
             </div>
 
             <div id="set-controls" style="display:none;margin-top:14px;">
@@ -962,18 +961,69 @@
                 <button class="btn btn-primary" style="width:100%;margin-top:8px;" id="set-export-btn">📦 Export set (ZIP)</button>
                 <p class="info-text" id="set-progress" style="margin-top:8px;"></p>
             </div>
+        </div>
 
-            <div id="batch-controls" style="display:none;margin-top:14px;">
-                <p class="info-text" style="margin-bottom:10px;">Apply the current design to many screenshots at once and download them as a ZIP.</p>
-                <div id="batch-drop" class="batch-drop">Drop images here or click to select</div>
-                <input type="file" id="batch-file-input" accept="image/*" multiple style="display:none;">
-                <div id="batch-list" style="margin:12px 0;"></div>
-                <div style="display:flex;gap:8px;">
-                    <button class="btn btn-primary" style="flex:2;" id="batch-export-btn">📦 Export all (ZIP)</button>
-                    <button class="btn btn-secondary" style="flex:1;" id="batch-clear-btn">Clear</button>
-                </div>
-                <p class="info-text" id="batch-progress" style="margin-top:8px;"></p>
+        <div class="sidebar-section" data-group="export" id="roll-section">
+            <h3 class="section-title">🎞 Roll <span class="roll-count" id="roll-count"></span></h3>
+            <p class="info-text" style="margin-bottom:10px;">Style a whole roll of screenshots with this design, change single shots where you need to, then develop them all into one ZIP.</p>
+            <div id="roll-drop" class="batch-drop" role="button" tabindex="0">Drop screenshots here or click to add</div>
+            <input type="file" id="roll-file-input" accept="image/*" multiple style="display:none;">
+            <input type="file" id="roll-folder-input" accept="image/*" multiple webkitdirectory style="display:none;">
+            <div style="display:flex;gap:8px;margin-top:8px;">
+                <button class="btn btn-secondary" style="flex:1;" id="roll-add-folder-btn">📁 Add a folder</button>
+                <button class="btn btn-secondary" style="flex:1;" id="roll-clear-btn">Clear roll</button>
             </div>
+
+            <label class="control-label" style="margin-top:14px;">Contact sheet</label>
+            <div id="roll-sheet" class="roll-sheet"></div>
+            <p class="info-text" style="margin-top:6px;">Click a shot to edit it on the canvas. Drag to reorder.</p>
+
+            <div id="roll-shot-bar" class="roll-shot-bar" hidden>
+                <div class="roll-shot-head">
+                    <button class="btn btn-secondary merge-step" id="roll-prev-btn" title="Previous shot">‹</button>
+                    <span class="roll-shot-name" id="roll-shot-name"></span>
+                    <button class="btn btn-secondary merge-step" id="roll-next-btn" title="Next shot">›</button>
+                </div>
+                <div class="app-mode-toggle" style="margin-top:8px;">
+                    <button class="app-mode-btn active" data-roll-scope="shot">This shot</button>
+                    <button class="app-mode-btn" data-roll-scope="roll">Whole roll</button>
+                </div>
+                <p class="info-text" id="roll-scope-hint" style="margin-top:6px;"></p>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button class="btn btn-secondary" style="flex:1;" id="roll-reset-shot-btn">Reset shot</button>
+                    <button class="btn btn-primary" style="flex:1;" id="roll-done-btn">Done</button>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="toggle-switch"><span class="toggle-label">Smart frames</span><label class="switch"><input type="checkbox" id="roll-smart-fit" checked><span class="slider"></span></label></div>
+            <div id="roll-smart-frames" style="margin-top:10px;">
+                <div class="control-group"><label class="control-label">Phone shots</label><select class="control-input" id="roll-frame-phone"></select></div>
+                <div class="control-group"><label class="control-label">Tablet shots</label><select class="control-input" id="roll-frame-tablet"></select></div>
+                <div class="control-group"><label class="control-label">Wide shots</label><select class="control-input" id="roll-frame-wide"></select></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="control-group">
+                <label class="control-label">Sizes</label>
+                <input type="text" class="control-input" id="roll-sizes" placeholder="canvas, 1080x1920">
+                <p class="info-text" style="margin-top:4px;">Comma-separated. <code>canvas</code> is the design's own size.</p>
+            </div>
+            <div class="control-group">
+                <label class="control-label">File names</label>
+                <input type="text" class="control-input" id="roll-naming" placeholder="{n}-{name}-{size}">
+                <p class="info-text" style="margin-top:4px;"><code>{n}</code> shot number, <code>{name}</code> file name, <code>{size}</code> size.</p>
+            </div>
+            <div class="control-group"><label class="control-label">Format</label><select class="control-input" id="roll-preset"></select></div>
+            <div class="toggle-switch"><span class="toggle-label">Add a PDF contact sheet</span><label class="switch"><input type="checkbox" id="roll-pdf"><span class="slider"></span></label></div>
+
+            <div style="display:flex;gap:8px;margin-top:12px;">
+                <button class="btn btn-primary" style="flex:2;" id="roll-develop-btn">🎞 Develop roll (ZIP)</button>
+                <button class="btn btn-secondary" id="roll-cancel-btn" style="flex:1;display:none;">Cancel</button>
+            </div>
+            <p class="info-text" id="roll-progress" style="margin-top:8px;" aria-live="polite"></p>
         </div>
 
         <div class="sidebar-section" data-group="export" id="merge-studio-section">

@@ -19,7 +19,7 @@ import { addSticker } from './stickers.js';
 import { saveStateToHistory } from '../state/history.js';
 import { showStatus } from '../ui/notification.js';
 import { setMode } from './set-ui.js';
-import { exportSet, exportBatch } from './batch-export.js';
+import { exportSet } from './batch-export.js';
 import { openMergeStudio, exportMerge } from './merge-studio.js';
 import { replaceBackground, extendCanvas, openEraser } from './ai-image-edit.js';
 import { togglePlay } from './video.js';
@@ -66,7 +66,7 @@ function groupFor(id) {
       id === 'screen-record' || id === 'auto-zoom-toggle') return 'Motion';
   if (id.startsWith('export') || id === 'copy-clipboard' || id === 'load-url' ||
       id.startsWith('share') || id === 'generate-qr' || id.startsWith('mode-') ||
-      id.startsWith('tour-') || id === 'code-studio' || id.startsWith('merge-') || id === 'compare-export-html') return 'File';
+      id.startsWith('tour-') || id === 'code-studio' || id.startsWith('merge-') || id.startsWith('roll-') || id === 'compare-export-html') return 'File';
   if (id === 'undo' || id === 'redo' || id === 'duplicate-selection' || id === 'select-all-objects' ||
       id.startsWith('distribute-') || id.startsWith('match-') || id === 'hide-selection' ||
       id === 'lock-selection' || id === 'unlock-all') return 'Edit';
@@ -220,9 +220,19 @@ export function registerCommands() {
     { id: 'anim-play',        label: 'Play/Pause Animation', icon: '▶',  run: () => document.getElementById('animation-play-btn')?.click() },
     { id: 'mode-single',      label: 'Mode: Single',         icon: '🖼', run: () => setMode('single') },
     { id: 'mode-set',         label: 'Mode: App Store Set',  icon: '📱', run: () => setMode('set') },
-    { id: 'mode-batch',       label: 'Mode: Batch',          icon: '🗂', run: () => setMode('batch') },
     { id: 'export-set',       label: 'Export App Store set (ZIP)', icon: '📦', run: exportSet },
-    { id: 'export-batch',     label: 'Batch export (ZIP)',   icon: '📦', run: exportBatch },
+    // v37 — Exposure: the Roll (replaces Batch mode).
+    { id: 'roll-add',         label: 'Roll: add screenshots', icon: '🎞', run: () => window.__rollCommands?.add() },
+    { id: 'roll-develop',     label: 'Roll: develop (ZIP)',  icon: '📦', run: () => window.__rollCommands?.develop(),
+      when: () => !!window.__rollCommands?.hasShots() },
+    { id: 'roll-next-shot',   label: 'Roll: next shot',      icon: '›',  run: () => window.__rollCommands?.next(),
+      when: () => !!window.__rollCommands?.hasShots() },
+    { id: 'roll-prev-shot',   label: 'Roll: previous shot',  icon: '‹',  run: () => window.__rollCommands?.prev(),
+      when: () => !!window.__rollCommands?.hasShots() },
+    { id: 'roll-scope-toggle', label: 'Roll: switch between this shot and whole roll', icon: '⇄',
+      run: () => window.__rollCommands?.toggleScope(), when: () => !!window.__rollCommands?.isOpen() },
+    { id: 'roll-close-shot',  label: 'Roll: done editing shot', icon: '✓', run: () => window.__rollCommands?.close(),
+      when: () => !!window.__rollCommands?.isOpen() },
     { id: 'merge-studio',     label: 'Merge Studio: open (CSV → N designs)', icon: '🗂', run: openMergeStudio },
     { id: 'merge-export',     label: 'Merge Studio: export from CSV', icon: '📦', run: exportMerge, when: () => state.mergeStudio.rows.length > 0 },
     { id: 'tour-toggle',      label: 'Interactive Tour: Toggle mode', icon: '🎬', run: toggleTourMode, when: () => !!state.image },
@@ -280,7 +290,6 @@ export function registerCommands() {
     'video-gif':         () => state.video.loaded,
     'anim-play':         () => state.animation.enabled,
     'export-set':        () => state.mode === 'set',
-    'export-batch':      () => state.mode === 'batch',
     'clear-annotations': () => state.annotations.length > 0,
     'clear-redactions':  () => state.redactions.length > 0,
   };

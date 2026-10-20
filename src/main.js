@@ -20,6 +20,7 @@ import { bindAssetLibrary } from './features/asset-library.js';
 import { bindExportPresets } from './features/export-presets.js';
 import { bindColorTools } from './features/color-tools.js';
 import { bindMergeStudio } from './features/merge-studio.js';
+import { bindRoll } from './features/roll.js';
 import { bindLayersEvents, renderLayersPanel } from './features/layers.js';
 import { bindHistoryTimeline, renderHistoryTimeline } from './features/history-timeline.js';
 import { bindZoomPan, applyTransform } from './features/zoom-pan.js';
@@ -132,6 +133,7 @@ function init() {
   bindExportPresets();  // v28 — export presets (Export group)
   bindColorTools();     // v33 — eyedropper + brand/recent swatches on color pickers
   bindMergeStudio();    // v31 — Merge Studio (data-driven batch: CSV → N designs)
+  bindRoll();           // v37 — Exposure: the Roll (batch develop)
   bindLayersEvents();
   bindHistoryTimeline();
   bindZoomPan();

@@ -1607,6 +1607,57 @@ kbd {
 }
 .batch-del:hover { color: var(--error); background: var(--bg-primary); }
 
+/* v37 — Exposure: the Roll */
+.roll-count {
+    font-size: 11px; font-weight: 500; color: var(--text-secondary); margin-left: 6px;
+}
+.roll-sheet {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 8px; margin-top: 6px;
+}
+.roll-empty { grid-column: 1 / -1; }
+.roll-tile {
+    position: relative; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color); background: var(--bg-tertiary);
+    transition: border-color 0.15s ease;
+}
+.roll-tile:hover { border-color: var(--accent-line); }
+.roll-tile.active { border-color: var(--accent-primary); box-shadow: 0 0 0 1px var(--accent-primary); }
+.roll-tile.dragging { opacity: 0.4; }
+.roll-tile-open {
+    display: flex; flex-direction: column; gap: 4px; width: 100%;
+    padding: 6px; border: none; background: transparent; cursor: pointer;
+    color: var(--text-primary); text-align: left; font: inherit;
+}
+.roll-tile-open:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 2px; border-radius: var(--radius-sm); }
+.roll-thumb {
+    width: 100%; height: 84px; object-fit: contain;
+    background: var(--bg-primary); border-radius: 4px;
+}
+.roll-tile-label {
+    font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.roll-tile-label b { color: var(--accent-text); margin-right: 2px; }
+.roll-tile-kind { font-size: 10px; color: var(--text-secondary); text-transform: capitalize; }
+.roll-tile-del {
+    position: absolute; top: 2px; right: 2px;
+    border: none; background: var(--bg-secondary); cursor: pointer;
+    color: var(--text-tertiary); font-size: 11px; padding: 2px 5px;
+    border-radius: var(--radius-sm); opacity: 0; transition: opacity 0.15s ease;
+}
+.roll-tile:hover .roll-tile-del, .roll-tile-del:focus-visible { opacity: 1; }
+.roll-tile-del:hover { color: var(--error); }
+.roll-shot-bar {
+    margin-top: 12px; padding: 10px; border-radius: var(--radius-md);
+    border: 1px solid var(--accent-line); background: var(--accent-light);
+}
+.roll-shot-head { display: flex; align-items: center; gap: 8px; }
+.roll-shot-name {
+    flex: 1; font-size: 12px; font-weight: 600; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (hover: none) { .roll-tile-del { opacity: 1; } }
+
 /* ─── v9.1 — Magic Eraser modal ─── */
 .eraser-overlay {
     position: fixed; inset: 0; z-index: 1000;

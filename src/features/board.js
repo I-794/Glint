@@ -120,6 +120,8 @@ function ensureCards() {
 export function enterBoardMode() {
   // Refresh the active page's thumb if entering from single mode (where edits
   // happen), so the card isn't stale. Skipped for set/batch origins.
+  // v37 — close an open Roll shot first, so the page saves the roll's design.
+  window.__closeRollShot?.();
   if (state.mode === 'single') syncActivePage();
   state.mode = 'board';
   ensureSurface();
@@ -169,6 +171,7 @@ export function returnToBoard() {
   // (the onHistoryChange->renderFilmstrip->makeThumb chain is debounced 600ms,
   // so without this a fast edit-then-return would show a stale card thumb).
   if (state.mode === 'board') return;
+  window.__closeRollShot?.();   // v37
   syncActivePage();
   state.mode = 'board';
   ensureCards();

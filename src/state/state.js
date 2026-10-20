@@ -198,9 +198,9 @@ export const state = {
   },
   boardSelection: [],   // runtime-only array of { kind:'boardObject', id }
 
-  // v9 — App Store screenshot sets + batch.
+  // v9 — App Store screenshot sets (v37 — Batch mode became the Roll, `roll` below).
   // mode: 'single' (normal editor) | 'set' (one design → N captioned store
-  // panels) | 'batch' (one template → N uploaded images → ZIP) | 'tour' (v25 —
+  // panels) | 'tour' (v25 —
   // Interactive Tour authoring: the page sequence becomes clickable steps and a
   // hotspot-authoring overlay appears on the canvas; 'tour' is a transient UI
   // mode, not serialized; the per-step hotspots live in `tour` below) | 'board'
@@ -223,7 +223,6 @@ export const state = {
     // locale gets AI-translated captions in its own ZIP subfolder.
     locales: ['en']
   },
-  batch: { images: [] },   // [{ id, name }] — Image objects live in imageRegistry
   // v37 — Exposure: the Roll. One shared design styles every shot; each shot
   // carries a small `overrides` diff (render/roll-core.js ROLL_OVERRIDE_FIELDS).
   // Shot images: decoded in imageRegistry, dataURLs in roll-core rollSources.
