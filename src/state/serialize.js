@@ -11,9 +11,10 @@ import { upgradeSpotlight } from '../render/spotlight-geom.js';
 import { bokehDefaults } from '../render/bokeh-core.js';
 import { normalizeCompare } from '../render/compare-core.js';
 import { normalizeRoll, serializeRoll, rollRuntime, applyOverrides } from '../render/roll-core.js';
+import { cropSource, ensureCropDefaults } from '../render/crop-core.js';
 
 export const SERIALIZED_FIELDS = [
-  'imageTransform', 'imageFilters', 'imageLayer', 'textOverlay', 'watermark', 'gradient',
+  'imageTransform', 'imageCrop', 'imageFilters', 'imageLayer', 'textOverlay', 'watermark', 'gradient',
   'padding', 'scale', 'borderRadius', 'showBorder', 'borderWidth', 'borderColor',
   'shadow', 'reflection', 'canvas', 'bgMode', 'bgColor', 'deviceFrame', 'annotations',
   'redactions', 'spotlight', 'meshGradient', 'tilt3d', 'scene', 'autoLayout',
@@ -139,7 +140,8 @@ export function imageToDataUrl(img, maxEdge, mime = 'image/jpeg', quality = 0.9)
 // payloads sane. Returns null if there's no image or the canvas is tainted
 // (cross-origin source) — the project still saves, just without baked artwork.
 export function getImageDataURL() {
-  return imageToDataUrl(state.image, 2000, 'image/jpeg', 0.9);
+  // v37 — save the uncropped original; imageCrop is saved alongside it.
+  return imageToDataUrl(cropSource(state.image), 2000, 'image/jpeg', 0.9);
 }
 
 export function serializeFull() {
@@ -252,7 +254,7 @@ export function normalizeProject(payload) {
   if (!payload || typeof payload !== 'object') {
     return { schemaVersion: SCHEMA_VERSION, design: {}, image: null, svgCode: null };
   }
-  const migrate = (d) => ensureRollDefaults(ensureCompareDefaults(ensureBokehDefaults(migrateSpotlightV20(ensureBrandDefaults(migrateTimelineV18(ensureTourDefaults(sanitizeMotionRuntime(d))))))));
+  const migrate = (d) => ensureCropDefaults(ensureRollDefaults(ensureCompareDefaults(ensureBokehDefaults(migrateSpotlightV20(ensureBrandDefaults(migrateTimelineV18(ensureTourDefaults(sanitizeMotionRuntime(d)))))))));
   if (payload.design) {
     return {
       schemaVersion: payload.schemaVersion || SCHEMA_VERSION,

@@ -13,6 +13,7 @@ import { normalizeProject } from '../state/serialize.js';
 import { releaseMaskOwner, ensureBokehMask } from '../render/bokeh.js';
 import { ensureCompareImage } from '../render/compare.js';
 import { ensureRollImages } from '../render/roll-images.js';
+import { syncCroppedImage } from '../render/crop-image.js';
 import { rollRuntime } from '../render/roll-core.js';
 
 // Assign a page payload's design + image into global state WITHOUT touching the
@@ -39,7 +40,9 @@ export function applyDesignToState(payload) {
     const done = () => { maskReady.then(() => resolve()); };
     if (norm.image) {
       const img = new Image();
-      img.onload = () => { state.image = img; releaseMaskOwner(); done(); };
+      // v37 — re-apply this page's crop to its freshly decoded original.
+      const crop = norm.design ? norm.design.imageCrop : null;
+      img.onload = () => { state.image = img; state.imageCrop = crop; syncCroppedImage(); releaseMaskOwner(); done(); };
       img.onerror = () => { state.image = null; releaseMaskOwner(); done(); };
       img.src = norm.image;
     } else {

@@ -221,6 +221,9 @@ export function registerCommands() {
     { id: 'mode-single',      label: 'Mode: Single',         icon: '🖼', run: () => setMode('single') },
     { id: 'mode-set',         label: 'Mode: App Store Set',  icon: '📱', run: () => setMode('set') },
     { id: 'export-set',       label: 'Export App Store set (ZIP)', icon: '📦', run: exportSet },
+    // v37 — non-destructive crop.
+    { id: 'tool-crop',        label: 'Crop & Straighten',    icon: '✂', run: () => window.__startCrop?.(), when: () => !!state.image },
+    { id: 'tool-remove-crop', label: 'Remove crop',          icon: '⤢', run: () => window.__removeCrop?.(), when: () => !!state.imageCrop },
     // v37 — Exposure: the Roll (replaces Batch mode).
     { id: 'roll-add',         label: 'Roll: add screenshots', icon: '🎞', run: () => window.__rollCommands?.add() },
     { id: 'roll-develop',     label: 'Roll: develop (ZIP)',  icon: '📦', run: () => window.__rollCommands?.develop(),

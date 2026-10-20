@@ -24,6 +24,8 @@ import { saveStateToHistory, onHistoryChange } from '../state/history.js';
 import { showNotification, showUndoToast } from '../ui/notification.js';
 import { imageToDataUrl } from '../state/serialize.js';
 import { ensureCompareImage } from '../render/compare.js';
+import { syncCroppedImage } from '../render/crop-image.js';
+import { cropSource } from '../render/crop-core.js';
 import {
   rollSources, rollRuntime, captureOverrideFields, diffOverrides, applyOverrides,
   smartFrameFor, classifyAspect, fileName, parseSizes, sizeLabel,
@@ -61,9 +63,10 @@ function frameContext() {
   return { mockup3d: !!(state.mockup3d && state.mockup3d.enabled), surface: !!(state.surface && state.surface.enabled) };
 }
 
-// The roll's values for the override fields with this shot's smart frame.
+// The roll's values for the override fields with this shot's smart frame. A
+// crop always belongs to one image, so shots start uncropped.
 function shotBase(shot, base) {
-  const out = { ...base };
+  const out = { ...base, imageCrop: null };
   const frame = smartFrameFor(shot, state.roll.smartFit, frameContext());
   if (frame !== undefined) out['deviceFrame.type'] = frame;
   return out;
@@ -74,6 +77,7 @@ function applyShot(shot, base) {
   applyOverrides(state, shotBase(shot, base));
   applyOverrides(state, shot.overrides);
   state.image = imageRegistry[shot.id] || state.image;
+  syncCroppedImage();
 }
 
 // File the open shot's edits since the last flush, by the current scope.
@@ -87,6 +91,11 @@ function flush() {
     } else {
       const changes = diffOverrides(active.view, cur);
       for (const [path, value] of Object.entries(changes)) {
+        // A crop belongs to one image, so it stays with the shot in either scope.
+        if (path === 'imageCrop') {
+          if (value) shot.overrides.imageCrop = value; else delete shot.overrides.imageCrop;
+          continue;
+        }
         active.base[path] = value;
         delete shot.overrides[path];
       }
@@ -96,7 +105,7 @@ function flush() {
 }
 
 function baseImageSrc() {
-  if (active.imageSrc === undefined) active.imageSrc = imageToDataUrl(active.image, 2000, 'image/jpeg', 0.9);
+  if (active.imageSrc === undefined) active.imageSrc = imageToDataUrl(cropSource(active.image), 2000, 'image/jpeg', 0.9);
   return active.imageSrc;
 }
 
@@ -320,7 +329,7 @@ function syncShotBar() {
     b.classList.toggle('active', b.dataset.rollScope === scope));
   if (el.rollScopeHint) {
     el.rollScopeHint.textContent = scope === 'shot'
-      ? 'Caption, annotations, redactions, rotation, Before image and frame changes apply to this shot only. Every other change styles the whole roll.'
+      ? 'Crop, caption, annotations, redactions, rotation, Before image and frame changes apply to this shot only. Every other change styles the whole roll.'
       : 'Every change styles the whole roll.';
   }
 }

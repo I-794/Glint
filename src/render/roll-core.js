@@ -7,6 +7,7 @@ import { getByPath, setByPath, sanitize } from '../state/paths.js';
 // The fields one shot may change on top of the roll's shared design. Every
 // other edit always applies to the whole roll.
 export const ROLL_OVERRIDE_FIELDS = [
+  'imageCrop',
   'imageTransform',
   'textOverlay.enabled',
   'textOverlay.content',

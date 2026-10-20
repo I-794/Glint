@@ -25,6 +25,7 @@ import { drawGuides } from '../features/snapping.js';
 import { drawReflection } from './reflection.js';
 import { withLayer } from './blend.js';
 import { getGradedImage } from './color-grade.js';
+import { ensureCrop } from './crop-image.js';
 
 function getFrameInsets() {
   const t = state.deviceFrame.type;
@@ -62,6 +63,8 @@ export function render(forExport) {
 // are live-UI only).
 export function renderInto(canvas, forExport) {
   if (!state.image) return;
+  // v37 — keep the cropped picture in step with state.imageCrop (undo, Roll).
+  ensureCrop();
   const ctx = canvas.getContext('2d');
   canvas.width = state.canvas.width;
   canvas.height = state.canvas.height;

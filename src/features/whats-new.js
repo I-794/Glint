@@ -21,7 +21,7 @@ const WHATS_NEW = {
     { title: 'One design, every shot',
       desc: 'The new Roll in Export styles a whole folder of screenshots with the design on your canvas.' },
     { title: 'Change just one',
-      desc: 'Open any shot to give it its own caption, annotations or frame. Smart frames pick a phone or a browser for you.' },
+      desc: 'Open any shot to give it its own crop, caption or frame. Smart frames pick a phone or a browser for you.' },
     { title: 'Develop in one pass',
       desc: 'Every shot at every size in one ZIP, with an optional PDF contact sheet.' }
   ]

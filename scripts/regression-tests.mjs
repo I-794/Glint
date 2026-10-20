@@ -7,6 +7,7 @@ import { serializeFull, normalizeProject } from '../src/state/serialize.js';
 import { normalizeCompare, wipeSplit, splitFromPoint, hitDivider, fitRect } from '../src/render/compare-core.js';
 import { applyDesignToState } from '../src/features/document.js';
 import { migrateLocalStorage, MIGRATED_FLAG } from '../src/state/brand-migrate.js';
+import { normalizeCrop, cropRect, cropKey } from '../src/render/crop-core.js';
 import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
 
 function mockRes() {
@@ -263,6 +264,29 @@ function testRollMigratesAndPersists() {
   }
 }
 
+// v37 — non-destructive crop.
+function testCropNormalizeAndPersist() {
+  assert.equal(normalizeCrop(null), null);
+  assert.equal(normalizeCrop({ x: 0, y: 0, w: 1, h: 1, angle: 0 }), null, 'a full-frame crop is no crop');
+  const c = normalizeCrop({ x: 0.9, y: -1, w: 5, h: 0.5, angle: 90 });
+  assert.equal(c.x, 0.9);
+  assert.equal(c.y, 0);
+  assert.equal(Math.round(c.w * 100), 10, 'width is clamped to the image');
+  assert.equal(c.angle, 45);
+  assert.deepEqual(cropRect({ x: 0.25, y: 0.5, w: 0.5, h: 0.25, angle: 0 }, 800, 400), { sx: 200, sy: 200, sw: 400, sh: 100, angle: 0 });
+  assert.equal(cropKey({ x: 0, y: 0, w: 1, h: 1 }), '');
+  const old = normalizeProject({ schemaVersion: 21, design: { bgColor: '#000000' }, image: null });
+  assert.equal(old.design.imageCrop, null, 'a pre-v37 design gets no crop');
+  const saved = state.imageCrop;
+  try {
+    state.imageCrop = { x: 0.1, y: 0.2, w: 0.5, h: 0.5, angle: 2 };
+    const back = normalizeProject(serializeFull()).design.imageCrop;
+    assert.deepEqual(back, { x: 0.1, y: 0.2, w: 0.5, h: 0.5, angle: 2 });
+  } finally {
+    state.imageCrop = saved;
+  }
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -276,7 +300,8 @@ const tests = [
   testRollAspectAndSmartFit,
   testRollFileNamesAndSizes,
   testRollOverrides,
-  testRollMigratesAndPersists
+  testRollMigratesAndPersists,
+  testCropNormalizeAndPersist
 ];
 
 for (const test of tests) {

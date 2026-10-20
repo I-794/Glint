@@ -22,6 +22,10 @@ export const state = {
     windowChrome: 'macos', windowTitle: 'untitled'
   },
   imageTransform: { rotation: 0, flipH: false, flipV: false },
+  // v37 — non-destructive crop { x, y, w, h, angle } in fractions of the original
+  // image, or null (render/crop-core.js). The original stays in
+  // state.image.__cropOriginal; render/crop-image.js rebuilds the cropped picture.
+  imageCrop: null,
   // v17 — temperature/tint extend the filter set. They can't be expressed by
   // ctx.filter, so render/color-grade.js bakes them per-pixel (see colorMap).
   // 0 = neutral for both; pre-v17 saves backfill via ensureColorDefaults().

@@ -10,6 +10,7 @@ function emit() { listeners.forEach(fn => fn()); }
 function snapshot() {
   return JSON.parse(JSON.stringify({
     imageTransform: state.imageTransform,
+    imageCrop: state.imageCrop,   // v37 — non-destructive crop
     imageFilters: state.imageFilters,
     imageLayer: state.imageLayer,
     textOverlay: state.textOverlay,
