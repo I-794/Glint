@@ -371,7 +371,7 @@ for (const r of RECIPES) {
     const fit = core.rollDefaults().smartFit;
     const base = core.captureOverrideFields(state);
     const outs = [];
-    for (const [i, src] of srcs.entries()) {
+    for (const src of srcs) {
       const img = new Image();
       img.src = 'data:image/png;base64,' + src;
       await img.decode();
