@@ -51,6 +51,7 @@ function signature(img) {
   const cm = state.colorMap || {};
   return JSON.stringify({
     id: img.__gradeId,
+    fr: img.__frame || 0,   // v38: a playing video's frame canvas changes in place
     t: f.temperature || 0,
     n: f.tint || 0,
     m: cm.mode || 'off',
@@ -205,6 +206,20 @@ function imageId(img) {
   return img.__gradeId;
 }
 
+// v38 — the cheap ctx.filter half of the image filters (brightness, contrast,
+// saturation, blur, grayscale, sepia), for draw sites outside the flat and
+// device paths. Returns 'none' when nothing is set.
+export function cssFilterFor(f = state.imageFilters || {}) {
+  const out = [];
+  if (f.brightness != null && f.brightness !== 100) out.push(`brightness(${f.brightness}%)`);
+  if (f.contrast != null && f.contrast !== 100) out.push(`contrast(${f.contrast}%)`);
+  if (f.saturation != null && f.saturation !== 100) out.push(`saturate(${f.saturation}%)`);
+  if (f.blur > 0) out.push(`blur(${f.blur}px)`);
+  if (f.grayscale > 0) out.push(`grayscale(${f.grayscale}%)`);
+  if (f.sepia > 0) out.push(`sepia(${f.sepia}%)`);
+  return out.length ? out.join(' ') : 'none';
+}
+
 // v34 — every caller gets Bokeh on top of the grade for free: this one seam
 // feeds the flat, 2D mockup, 3D screen, and Surface paths.
 export function getGradedImage(srcImage) {
@@ -218,7 +233,7 @@ function gradeAndBlur(srcImage) {
   if (!graded || !graded.width) return graded;
   // v38 — curves + levels sit between the grade and Bokeh; the key they hand
   // back includes the curves, so Bokeh re-blurs when they change.
-  const gradeKey = graded === srcImage ? 'src:' + imageId(srcImage) : 'grade:' + cache.sig;
+  const gradeKey = graded === srcImage ? 'src:' + imageId(srcImage) + ':' + (srcImage.__frame || 0) : 'grade:' + cache.sig;
   const { image: toned, key: baseKey } = applyColorTools(graded, gradeKey);
   // maskFits first (even with Bokeh off) so the one-shot claim after a page
   // load goes to that page's own image, not one rendered later.

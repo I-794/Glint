@@ -17,6 +17,7 @@ import { drawBackground } from '../render/background.js';
 import { isDeviceMockup, drawDeviceMockup, drawScreenImage } from '../render/mockups.js';
 import { drawLogo } from '../render/overlays.js';
 import { getStorePreset } from '../state/store-presets.js';
+import { getGradedImage, cssFilterFor } from '../render/color-grade.js';
 
 // Resolve the device used to frame set panels: prefer the globally-selected
 // device mockup; otherwise fall back to the preset's natural device.
@@ -109,7 +110,9 @@ function drawPlainScreenshot(ctx, regionY, regionW, regionH) {
   ctx.fill();
   ctx.clip();
   ctx.shadowColor = 'transparent';
-  ctx.drawImage(img, x, y, w, h);
+  // v38 — same look as the device path: filters, grade, curves and Bokeh.
+  ctx.filter = cssFilterFor();
+  ctx.drawImage(getGradedImage(img), x, y, w, h);
   ctx.restore();
 }
 

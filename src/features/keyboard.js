@@ -7,7 +7,7 @@ import { openPalette, closePalette } from './palette.js';
 import { closeStickerDrawer } from './stickers.js';
 import { setTool, deleteSelected, nudgeSelected } from './canvas-tools.js';
 import { clearSelection, selectAll, duplicateSelection } from './selection.js';
-import { isTypingTarget } from '../utils/dom.js';
+import { isTypingTarget, isTextEntry } from '../utils/dom.js';
 import { timelineActive, timelineStepFrame, timelineSetIn, timelineSetOut } from './timeline.js';
 import { matchEvent } from './shortcuts.js';
 import { quickExport } from './export-presets.js';
@@ -40,10 +40,12 @@ export function bindKeyboard() {
       return;
     }
 
-    if (isTypingTarget(e.target)) return;
-
     // Declarative global shortcuts — single source of truth is shortcuts.js.
     const sc = matchEvent(e);
+    // v38 — undo/redo still work from a focused slider, checkbox or color
+    // picker; only real text fields keep the browser's own undo.
+    if (isTypingTarget(e.target) && !((sc === 'undo' || sc === 'redo') && !isTextEntry(e.target))) return;
+
     if (sc) {
       e.preventDefault();
       // v32.1 — on the board these act on the board, not the hidden active page.

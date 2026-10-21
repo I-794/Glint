@@ -1,5 +1,6 @@
 import { state, imageRegistry } from '../state/state.js';
 import { drawShadow, drawBorder } from './shadow.js';
+import { getGradedImage, cssFilterFor } from './color-grade.js';
 
 function drawImageCell(ctx, img, x, y, w, h, isMain, canvas) {
   if (!img || w <= 0 || h <= 0) return;
@@ -22,18 +23,11 @@ function drawImageCell(ctx, img, x, y, w, h, isMain, canvas) {
     ctx.translate(x + w / 2, y + h / 2);
     if (state.imageTransform.rotation !== 0) ctx.rotate((state.imageTransform.rotation * Math.PI) / 180);
     ctx.scale(state.imageTransform.flipH ? -1 : 1, state.imageTransform.flipV ? -1 : 1);
-    const filters = [];
-    const f = state.imageFilters;
-    if (f.brightness !== 100) filters.push(`brightness(${f.brightness}%)`);
-    if (f.contrast !== 100) filters.push(`contrast(${f.contrast}%)`);
-    if (f.saturation !== 100) filters.push(`saturate(${f.saturation}%)`);
-    if (f.blur > 0) filters.push(`blur(${f.blur}px)`);
-    if (f.grayscale > 0) filters.push(`grayscale(${f.grayscale}%)`);
-    if (f.sepia > 0) filters.push(`sepia(${f.sepia}%)`);
-    if (filters.length > 0) ctx.filter = filters.join(' ');
+    ctx.filter = cssFilterFor();
     let dw = w, dh = h;
     if (state.imageTransform.rotation === 90 || state.imageTransform.rotation === 270) { dw = h; dh = w; }
-    ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+    // v38 — the main image gets the per-pixel grade, curves, Bokeh and Compare too.
+    ctx.drawImage(getGradedImage(img), -dw / 2, -dh / 2, dw, dh);
   } else {
     ctx.drawImage(img, x, y, w, h);
   }

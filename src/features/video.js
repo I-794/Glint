@@ -61,6 +61,9 @@ export function drawFrame() {
   } else {
     frameCtx.drawImage(videoEl, 0, 0, W, H);
   }
+  // v38 — the frame canvas is redrawn in place, so per-pixel passes key their
+  // caches off this counter instead of the (unchanging) canvas object.
+  frameCanvas.__frame = (frameCanvas.__frame || 0) + 1;
 }
 
 export function seekTo(t) {

@@ -10,10 +10,10 @@ const base = { key: null, data: null, w: 0, h: 0 };
 const out = { key: null, canvas: null };
 let taintWarned = false;
 
-// Off while a video is loaded (like Bokeh and Compare): one frame canvas is
-// repainted every frame, so a cached grade would freeze the clip.
+// Works on video too: the base key carries the frame counter video.js bumps on
+// every drawFrame, so each new frame is regraded.
 export function colorToolsActive() {
-  return !!state.colorTools && !isIdentity(state.colorTools) && !(state.video && state.video.loaded);
+  return !!state.colorTools && !isIdentity(state.colorTools);
 }
 
 function baseData(src, baseKey) {
