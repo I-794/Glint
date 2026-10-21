@@ -3,6 +3,7 @@ import { el } from '../ui/elements.js';
 import { showNotification } from '../ui/notification.js';
 import { render } from '../render/render.js';
 import { saveStateToHistory } from '../state/history.js';
+import { normalizeColorTools } from '../render/color-tools-core.js';
 
 const KEY = 'glint_templates';
 
@@ -34,7 +35,8 @@ function snapshotState() {
     deviceFrame: state.deviceFrame,
     meshGradient: state.meshGradient,
     tilt3d: state.tilt3d,
-    scene: state.scene
+    scene: state.scene,
+    colorTools: state.colorTools   // v38
   }));
 }
 
@@ -57,6 +59,8 @@ export function loadTemplate() {
   if (!snap) { showNotification('Template not found.', 'error'); return; }
   saveStateToHistory();   // so Undo restores the design the template replaced
   Object.assign(state, snap);
+  // v38 — a template saved before v38 has no curves: it gets none, not the current ones.
+  state.colorTools = normalizeColorTools(snap.colorTools);
   render();
   showNotification(`Loaded "${name}"`, 'success');
   if (typeof window.__updateUIFromState === 'function') window.__updateUIFromState();

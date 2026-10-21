@@ -8,6 +8,7 @@ import { normalizeCompare, wipeSplit, splitFromPoint, hitDivider, fitRect } from
 import { applyDesignToState } from '../src/features/document.js';
 import { migrateLocalStorage, MIGRATED_FLAG } from '../src/state/brand-migrate.js';
 import { normalizeCrop, cropRect, cropKey } from '../src/render/crop-core.js';
+import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS } from '../src/render/color-tools-core.js';
 import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
 
 function mockRes() {
@@ -131,7 +132,7 @@ function testCompareMigratesAndPersists() {
     assert.equal(back.beforeSrc, 'data:image/png;base64,AAAA');
     assert.equal(back.split, 0.3);
     assert.equal(back.orientation, 'horizontal');
-    assert.equal(payload.schemaVersion, 22);
+    assert.equal(payload.schemaVersion, 23);
   } finally {
     state.compare = saved;
   }
@@ -254,7 +255,7 @@ function testRollMigratesAndPersists() {
     state.roll = normalizeRoll({ shots: [{ id: 's1', name: 'x.png', src: 'data:image/jpeg;base64,AA', w: 1, h: 2,
       overrides: { 'textOverlay.content': 'hi' } }], naming: '{name}', activeShot: 's1' });
     const payload = serializeFull();
-    assert.equal(payload.schemaVersion, 22);
+    assert.equal(payload.schemaVersion, 23);
     const back = normalizeProject(payload).design.roll;
     assert.equal(back.shots[0].overrides['textOverlay.content'], 'hi');
     assert.equal(back.naming, '{name}');
@@ -287,6 +288,61 @@ function testCropNormalizeAndPersist() {
   }
 }
 
+// v38 — curves + levels.
+function testColorToolsLuts() {
+  const id = curveLut([[0, 0], [255, 255]]);
+  for (let x = 0; x < 256; x++) assert.equal(id[x], x, 'identity curve is an identity table');
+  assert.ok(isIdentity(colorToolsDefaults()));
+  const s = curveLut([[0, 0], [64, 40], [192, 220], [255, 255]]);
+  for (let x = 1; x < 256; x++) assert.ok(s[x] >= s[x - 1], 'an S-curve never goes down');
+  assert.equal(s[0], 0);
+  assert.equal(s[255], 255);
+  assert.equal(s[64], 40, 'the curve passes through its points');
+  const lv = levelsLut({ black: 20, white: 200, gamma: 1 });
+  assert.equal(lv[20], 0);
+  assert.equal(lv[10], 0, 'below the black point clips to black');
+  assert.equal(lv[200], 255);
+  assert.equal(lv[230], 255);
+  const bright = levelsLut({ black: 0, white: 255, gamma: 2 });
+  assert.ok(bright[128] > 128, 'gamma above 1 brightens the midtones');
+  const ct = colorToolsDefaults();
+  ct.curves.r = [[0, 0], [255, 128]];
+  const [lr, lg, lb] = channelLuts(ct);
+  const px = new Uint8ClampedArray([255, 255, 255, 77]);
+  applyLuts(px, lr, lg, lb);
+  assert.deepEqual([...px], [128, 255, 255, 77], 'only red changes and alpha is untouched');
+  const fixed = normalizeColorTools({ curves: { rgb: [[300, -5], [128, 'x'], [128, 100], [128, 140]] }, levels: { g: { black: 250, white: 10, gamma: 99 } } });
+  assert.deepEqual(fixed.curves.rgb, [[0, 0], [128, 140], [255, 0]], 'points are clamped, de-duplicated and the end points pinned');
+  assert.deepEqual(fixed.levels.g, { black: 250, white: 252, gamma: 5 });
+}
+
+function testLooksAndColorToolsPersist() {
+  const look = { name: 'Night été', imageFilters: { saturation: 80 }, colorTools: { curves: { b: [[0, 30], [255, 255]] } } };
+  const back = decodeLook(encodeLook(look));
+  assert.equal(back.name, 'Night été');
+  assert.equal(back.imageFilters.saturation, 80);
+  assert.equal(back.imageFilters.brightness, 100, 'missing filters get defaults');
+  assert.deepEqual(back.colorTools.curves.b, [[0, 30], [255, 255]]);
+  assert.deepEqual(decodeLook(lookToJson(look)), back, 'the file form decodes the same');
+  assert.equal(decodeLook('glint-look:not base64!!'), null);
+  assert.equal(decodeLook('{"type":"other"}'), null);
+  assert.equal(decodeLook(''), null);
+  assert.ok(STARTER_LOOKS.every(l => !isIdentity(l.colorTools)), 'every starter look changes the image');
+  const old = normalizeProject({ schemaVersion: 22, design: { bgColor: '#000000' }, image: null });
+  assert.ok(isIdentity(old.design.colorTools), 'a pre-v38 design gets identity curves');
+  const saved = state.colorTools;
+  try {
+    state.colorTools = normalizeColorTools({ curves: { rgb: [[0, 10], [255, 245]] }, levels: { r: { gamma: 1.5 } } });
+    const payload = serializeFull();
+    assert.equal(payload.schemaVersion, 23);
+    const design = normalizeProject(payload).design;
+    assert.deepEqual(design.colorTools.curves.rgb, [[0, 10], [255, 245]]);
+    assert.equal(design.colorTools.levels.r.gamma, 1.5);
+  } finally {
+    state.colorTools = saved;
+  }
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -301,7 +357,9 @@ const tests = [
   testRollFileNamesAndSizes,
   testRollOverrides,
   testRollMigratesAndPersists,
-  testCropNormalizeAndPersist
+  testCropNormalizeAndPersist,
+  testColorToolsLuts,
+  testLooksAndColorToolsPersist
 ];
 
 for (const test of tests) {

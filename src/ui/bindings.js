@@ -18,6 +18,7 @@ import { refreshBokehUI } from '../features/bokeh-ui.js';
 import { refreshCompareUI } from '../features/compare-ui.js';
 import { setSelection } from '../features/selection.js';
 import { clearAllRedactions } from '../features/canvas-tools.js';
+import { normalizeColorTools } from '../render/color-tools-core.js';
 
 // Helper: link a slider+display to a state value with optional onChange (for history).
 function linkSlider(input, display, getStr, setVal, opts = {}) {
@@ -152,6 +153,8 @@ function ensureColorDefaults() {
   if (!state.colorPalettes || typeof state.colorPalettes !== 'object') state.colorPalettes = { active: null, library: {} };
   if (!state.colorPalettes.library) state.colorPalettes.library = {};
   if (!state.colorMap || typeof state.colorMap !== 'object') state.colorMap = { mode: 'off', intensity: 100, steps: 6 };
+  // v38 — templates and gallery designs Object.assign without normalizeProject.
+  state.colorTools = normalizeColorTools(state.colorTools);
 }
 function refreshPatternUI() {
   const p = state.pattern;

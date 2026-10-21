@@ -79,6 +79,8 @@ function snapshot() {
     brand: state.brand,
     // v34 — Subject Bokeh (Detect subject / sliders are undoable).
     bokeh: state.bokeh,
+    // v38 — curves + levels (a curve drag or a Look is one undo step).
+    colorTools: state.colorTools,
     // v35 — Before / After Compare (carries the Before dataURL).
     compare: state.compare,
     // v37 — the Roll (shot list, order, overrides, develop settings). Shot

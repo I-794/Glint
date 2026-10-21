@@ -12,6 +12,7 @@ import { bokehDefaults } from '../render/bokeh-core.js';
 import { normalizeCompare } from '../render/compare-core.js';
 import { normalizeRoll, serializeRoll, rollRuntime, applyOverrides } from '../render/roll-core.js';
 import { cropSource, ensureCropDefaults } from '../render/crop-core.js';
+import { ensureColorToolsDefaults } from '../render/color-tools-core.js';
 
 export const SERIALIZED_FIELDS = [
   'imageTransform', 'imageCrop', 'imageFilters', 'imageLayer', 'textOverlay', 'watermark', 'gradient',
@@ -33,7 +34,9 @@ export const SERIALIZED_FIELDS = [
   'surface',
   // v29 — Motion Studio unified timeline (lane/clip layout). Lightweight + design-
   // defining, so shared/gallery designs carry their timeline arrangement too.
-  'timeline'
+  'timeline',
+  // v38 — curves + levels (small: control points + three level triples per channel).
+  'colorTools'
 ];
 
 // v21 — strip the runtime-only orbitProgress so a saved/shared/restored design
@@ -81,7 +84,7 @@ export function snapshotProject() {
 // restores the artwork — unlike snapshotProject(), which stays deliberately
 // lean for realtime collab/gallery payloads. Bump SCHEMA_VERSION whenever the
 // field set changes so normalizeProject() can migrate older saves.
-export const SCHEMA_VERSION = 22;
+export const SCHEMA_VERSION = 23;
 
 // SERIALIZED_FIELDS + the rest of the design-defining state. Kept separate from
 // SERIALIZED_FIELDS so collab/gallery stay small; projects want full fidelity.
@@ -254,7 +257,7 @@ export function normalizeProject(payload) {
   if (!payload || typeof payload !== 'object') {
     return { schemaVersion: SCHEMA_VERSION, design: {}, image: null, svgCode: null };
   }
-  const migrate = (d) => ensureCropDefaults(ensureRollDefaults(ensureCompareDefaults(ensureBokehDefaults(migrateSpotlightV20(ensureBrandDefaults(migrateTimelineV18(ensureTourDefaults(sanitizeMotionRuntime(d)))))))));
+  const migrate = (d) => ensureColorToolsDefaults(ensureCropDefaults(ensureRollDefaults(ensureCompareDefaults(ensureBokehDefaults(migrateSpotlightV20(ensureBrandDefaults(migrateTimelineV18(ensureTourDefaults(sanitizeMotionRuntime(d))))))))));
   if (payload.design) {
     return {
       schemaVersion: payload.schemaVersion || SCHEMA_VERSION,

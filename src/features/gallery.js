@@ -22,6 +22,7 @@ import { snapshotProject } from '../state/serialize.js';
 import { applyKitObject, captureKitObject } from './brand-kit.js';
 import { escapeHTML } from '../utils/dom.js';
 import { revealSection } from './studio-nav.js';
+import { normalizeColorTools } from '../render/color-tools-core.js';
 
 const GALLERY_BUCKET = 'gallery';
 
@@ -130,6 +131,7 @@ async function applyItem(id) {
   } else {
     saveStateToHistory();
     Object.assign(state, data.payload);
+    state.colorTools = normalizeColorTools(data.payload && data.payload.colorTools);   // v38: older items carry no curves
     render();
     if (typeof window.__updateUIFromState === 'function') window.__updateUIFromState();
   }
