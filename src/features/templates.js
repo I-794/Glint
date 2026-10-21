@@ -3,7 +3,7 @@ import { el } from '../ui/elements.js';
 import { showNotification } from '../ui/notification.js';
 import { render } from '../render/render.js';
 import { saveStateToHistory } from '../state/history.js';
-import { normalizeColorTools } from '../render/color-tools-core.js';
+import { normalizeColorTools } from '../render/curves-core.js';
 
 const KEY = 'glint_templates';
 

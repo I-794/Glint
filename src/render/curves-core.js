@@ -2,7 +2,7 @@
 // (control points, x/y 0..255, end points pinned at x=0 and x=255) and levels
 // (black/white input points + gamma) for the master channel and for R, G and B.
 // Everything bakes down to three 256-entry LUTs, so the per-pixel pass is one
-// table lookup per channel (see render/color-tools.js). Looks (a saved grade)
+// table lookup per channel (see render/curves.js). Looks (a saved grade)
 // and their share codes live here too, so tests and the site-shot script can
 // use them without a DOM.
 

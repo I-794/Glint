@@ -12,7 +12,7 @@ import { bokehDefaults } from '../render/bokeh-core.js';
 import { normalizeCompare } from '../render/compare-core.js';
 import { normalizeRoll, serializeRoll, rollRuntime, applyOverrides } from '../render/roll-core.js';
 import { cropSource, ensureCropDefaults } from '../render/crop-core.js';
-import { ensureColorToolsDefaults } from '../render/color-tools-core.js';
+import { ensureColorToolsDefaults } from '../render/curves-core.js';
 
 export const SERIALIZED_FIELDS = [
   'imageTransform', 'imageCrop', 'imageFilters', 'imageLayer', 'textOverlay', 'watermark', 'gradient',

@@ -1,0 +1,142 @@
+// v38 — Focus: Looks. A look is a named grade (the filter sliders plus curves
+// and levels) kept in a small library (glint_looks), applied in one click, and
+// shared as a .glintlook file or a one-line code. The starter looks and the
+// file/code formats live in render/curves-core.js.
+import { state } from '../state/state.js';
+import { el } from '../ui/elements.js';
+import { saveStateToHistory } from '../state/history.js';
+import { render } from '../render/render.js';
+import { showNotification } from '../ui/notification.js';
+import { escapeHTML } from '../utils/dom.js';
+import { download } from './motion-export.js';
+import { STARTER_LOOKS, normalizeLook, normalizeFilters, normalizeColorTools, encodeLook, decodeLook, lookToJson } from '../render/curves-core.js';
+import { openCurves } from './curves-ui.js';
+
+const KEY = 'glint_looks';
+const MAX = 60;
+let seq = 0;
+
+function loadAll() {
+  try {
+    const list = JSON.parse(localStorage.getItem(KEY));
+    return Array.isArray(list) ? list.map(l => l && { ...normalizeLook(l), id: String(l.id) }).filter(l => l && l.name) : [];
+  } catch (e) { return []; }
+}
+function persist(list) {
+  try { localStorage.setItem(KEY, JSON.stringify(list)); return true; }
+  catch (e) { showNotification('Could not save the look (storage full).', 'error'); return false; }
+}
+function genId() { return 'look_' + Date.now().toString(36) + '_' + (seq++); }
+
+function allLooks() { return [...STARTER_LOOKS, ...loadAll()]; }
+
+function currentLook(name) {
+  return normalizeLook({ name, imageFilters: state.imageFilters, colorTools: state.colorTools });
+}
+
+export function applyLook(look) {
+  const n = normalizeLook(look);
+  if (!n) return;
+  saveStateToHistory();
+  state.imageFilters = normalizeFilters(n.imageFilters);
+  state.colorTools = normalizeColorTools(n.colorTools);
+  window.__updateUIFromState?.();
+  render();
+  showNotification(`Applied "${n.name}". Undo if needed.`, 'success');
+}
+
+function renderList() {
+  if (!el.looksList) return;
+  el.looksList.innerHTML = allLooks().map(l => `
+    <span class="look-chip">
+      <button type="button" class="look-apply" data-look="${escapeHTML(l.id)}" title="Apply ${escapeHTML(l.name)}">${escapeHTML(l.name)}</button>${l.builtIn ? '' : `<button type="button" class="look-delete" data-look-delete="${escapeHTML(l.id)}" title="Delete ${escapeHTML(l.name)}" aria-label="Delete ${escapeHTML(l.name)}">✕</button>`}
+    </span>`).join('');
+}
+
+export function saveLook() {
+  const list = loadAll();
+  if (list.length >= MAX) { showNotification(`You can keep up to ${MAX} looks. Delete one first.`, 'error'); return; }
+  const name = window.prompt('Name this look', 'My look');
+  if (name === null) return;
+  const look = { ...currentLook(name), id: genId() };
+  list.push(look);
+  if (persist(list)) { renderList(); showNotification(`Saved "${look.name}".`, 'success'); }
+}
+
+function deleteLook(id) {
+  const list = loadAll();
+  const look = list.find(l => l.id === id);
+  if (!look || !confirm(`Delete the look "${look.name}"?`)) return;
+  if (persist(list.filter(l => l.id !== id))) renderList();
+}
+
+function addImported(look) {
+  const list = loadAll();
+  if (list.length >= MAX) { applyLook(look); return; }
+  list.push({ ...look, id: genId() });
+  if (persist(list)) renderList();
+  applyLook(look);
+}
+
+export async function copyLookCode() {
+  const code = encodeLook(currentLook('Shared look'));
+  try {
+    await navigator.clipboard.writeText(code);
+    showNotification('Look code copied. Paste it into Import on any Glint.', 'success');
+  } catch (e) {
+    window.prompt('Copy this look code', code);
+  }
+}
+
+export function exportLookFile() {
+  const name = window.prompt('Name this look', 'My look');
+  if (name === null) return;
+  const look = currentLook(name);
+  const file = (look.name.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'look') + '.glintlook';
+  download(new Blob([lookToJson(look)], { type: 'application/json' }), file);
+}
+
+export function importLookFile() {
+  el.looksFileInput?.click();
+}
+
+export function pasteLookCode() {
+  openCurves();
+  const code = window.prompt('Paste a look code', '');
+  if (code === null || !code.trim()) return;
+  const look = decodeLook(code);
+  if (!look) { showNotification('That is not a Glint look code.', 'error'); return; }
+  addImported(look);
+}
+
+function onFile(e) {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (file.size > 64 * 1024) { showNotification('That file is too big to be a look.', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const look = decodeLook(String(reader.result || ''));
+    if (!look) { showNotification('That file is not a Glint look.', 'error'); return; }
+    addImported(look);
+  };
+  reader.readAsText(file);
+}
+
+export function bindLooks() {
+  if (el.looksList) el.looksList.addEventListener('click', (e) => {
+    const del = e.target.closest('[data-look-delete]');
+    if (del) { deleteLook(del.dataset.lookDelete); return; }
+    const btn = e.target.closest('[data-look]');
+    if (!btn) return;
+    const look = allLooks().find(l => l.id === btn.dataset.look);
+    if (look) applyLook(look);
+  });
+  if (el.looksSaveBtn) el.looksSaveBtn.addEventListener('click', saveLook);
+  if (el.looksCopyBtn) el.looksCopyBtn.addEventListener('click', copyLookCode);
+  if (el.looksExportBtn) el.looksExportBtn.addEventListener('click', exportLookFile);
+  if (el.looksImportBtn) el.looksImportBtn.addEventListener('click', importLookFile);
+  if (el.looksPasteBtn) el.looksPasteBtn.addEventListener('click', pasteLookCode);
+  if (el.looksFileInput) el.looksFileInput.addEventListener('change', onFile);
+  renderList();
+}

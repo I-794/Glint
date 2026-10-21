@@ -4,7 +4,7 @@
 // cached by the input's key, so dragging a curve point only reruns the LUT loop.
 import { state } from '../state/state.js';
 import { showNotification } from '../ui/notification.js';
-import { isIdentity, colorToolsKey, channelLuts, applyLuts } from './color-tools-core.js';
+import { isIdentity, colorToolsKey, channelLuts, applyLuts } from './curves-core.js';
 
 const base = { key: null, data: null, w: 0, h: 0 };
 const out = { key: null, canvas: null };

@@ -39,6 +39,8 @@ import { formatKeys } from './shortcuts.js';
 import { getFrequencyBoost, getRecent, recordUse } from './command-usage.js';
 import { getUiMode, setUiMode } from './ui-mode.js';
 import { pickBeforeImage, useCurrentAsBefore, swapBeforeAfter, toggleCompare } from './compare-ui.js';
+import { openCurves, resetCurves } from './curves-ui.js';
+import { saveLook, copyLookCode, pasteLookCode, importLookFile } from './looks.js';
 import { toggleFloatingToolbar, isFloatingToolbarEnabled } from './floating-toolbar.js';
 
 let commands = [];
@@ -74,7 +76,7 @@ function groupFor(id) {
       id.startsWith('tilt-') || id === 'reset-tilt' || id.startsWith('style-') ||
       id === 'toggle-layers' || id.startsWith('zoom') || id.startsWith('theme') ||
       id.startsWith('ui-') || id === 'toggle-float-toolbar' || id.startsWith('compare-') ||
-      id === 'toggle-spotlight' || id.startsWith('spotlight-') || id.startsWith('bokeh-') || id === 'toggleBoard' || id.startsWith('board') || id === 'seedFromUrl' || id === 'askAgentBoard') return 'View';
+      id === 'toggle-spotlight' || id.startsWith('spotlight-') || id.startsWith('bokeh-') || id.startsWith('color-tools-') || id.startsWith('look-') || id === 'toggleBoard' || id.startsWith('board') || id === 'seedFromUrl' || id === 'askAgentBoard') return 'View';
   return 'More';
 }
 
@@ -205,6 +207,13 @@ export function registerCommands() {
     } },
     { id: 'spotlight-add-region', label: 'Spotlight: Add focus area',   icon: '◎', run: () => setTool('spotlight') },
     { id: 'spotlight-clear',      label: 'Spotlight: Clear focus areas', icon: '🗑', run: () => { saveStateToHistory(); state.spotlight.regions = []; pruneSelection(); render(); window.__updateUIFromState?.(); showStatus('Focus areas cleared'); } },
+    // v38 — Focus: Curves & Levels + Looks.
+    { id: 'color-tools-open', label: 'Curves & Levels: Open', icon: '◐', run: openCurves },
+    { id: 'color-tools-reset', label: 'Curves & Levels: Reset all', icon: '◐', run: resetCurves },
+    { id: 'look-save', label: 'Looks: Save current look', icon: '◐', run: saveLook },
+    { id: 'look-copy-code', label: 'Looks: Copy look code', icon: '◐', run: copyLookCode },
+    { id: 'look-paste-code', label: 'Looks: Apply a look code', icon: '◐', run: pasteLookCode },
+    { id: 'look-import', label: 'Looks: Import a .glintlook file', icon: '◐', run: importLookFile },
     { id: 'bokeh-detect', label: 'Bokeh: Detect subject', icon: '◉', run: () => import('./bokeh-ui.js').then((m) => m.detectSubject()), when: () => !!state.image },
     { id: 'bokeh-toggle', label: 'Bokeh: Toggle background blur', icon: '◉', run: () => { if (!state.bokeh?.maskDataUrl) { showStatus('Detect the subject first'); return; } saveStateToHistory(); state.bokeh.enabled = !state.bokeh.enabled; render(); window.__updateUIFromState?.(); } },
     { id: 'ai-enhance',       label: 'AI Auto-Enhance',      icon: '✨', run: () => document.getElementById('ai-enhance-btn')?.click() },

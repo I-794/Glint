@@ -240,6 +240,37 @@
             </div>
         </div>
 
+        <!-- v38 — Focus: curves + levels (render/color-tools.js) and Looks (features/looks.js). Pro only. -->
+        <div class="sidebar-section" data-group="adjust" id="color-tools-section">
+            <h3 class="section-title">Curves &amp; Levels</h3>
+            <p class="info-text" style="margin-bottom:10px;">Click the curve to add a point, drag to move it, double-click or drag it off to remove it.</p>
+            <div class="tab-row" id="ct-tabs" role="group" aria-label="Channel">
+                <button type="button" class="tab-btn active" data-ct-channel="rgb" title="All channels" aria-pressed="true">RGB</button>
+                <button type="button" class="tab-btn" data-ct-channel="r" title="Red channel" aria-pressed="false">R</button>
+                <button type="button" class="tab-btn" data-ct-channel="g" title="Green channel" aria-pressed="false">G</button>
+                <button type="button" class="tab-btn" data-ct-channel="b" title="Blue channel" aria-pressed="false">B</button>
+            </div>
+            <canvas id="ct-curve" class="ct-curve" width="512" height="512" role="img" aria-label="Tone curve editor"></canvas>
+            <div class="control-group"><label class="control-label">Black Point</label><div class="range-group"><input type="range" class="range-input" id="ct-black" min="0" max="253" value="0"><span class="range-value" id="ct-black-value">0</span></div></div>
+            <div class="control-group"><label class="control-label">Midtones (Gamma)</label><div class="range-group"><input type="range" class="range-input" id="ct-gamma" min="-100" max="100" value="0"><span class="range-value" id="ct-gamma-value">1.00</span></div></div>
+            <div class="control-group"><label class="control-label">White Point</label><div class="range-group"><input type="range" class="range-input" id="ct-white" min="2" max="255" value="255"><span class="range-value" id="ct-white-value">255</span></div></div>
+            <div class="ct-actions">
+                <button type="button" class="btn btn-secondary" id="ct-reset-channel">Reset channel</button>
+                <button type="button" class="btn btn-secondary" id="ct-reset-all">Reset all</button>
+            </div>
+            <div class="divider"></div>
+            <label class="control-label">Looks</label>
+            <div class="looks-list" id="looks-list"></div>
+            <div class="ct-actions">
+                <button type="button" class="btn btn-primary" id="looks-save-btn" title="Save the current filters, curves and levels as a look">Save look</button>
+                <button type="button" class="btn btn-secondary" id="looks-copy-btn" title="Copy the current look as a code">Copy code</button>
+                <button type="button" class="btn btn-secondary" id="looks-paste-btn" title="Apply a look from a code">Paste code</button>
+                <button type="button" class="btn btn-secondary" id="looks-export-btn" title="Download the current look as a .glintlook file">Export</button>
+                <button type="button" class="btn btn-secondary" id="looks-import-btn" title="Open a .glintlook file">Import</button>
+            </div>
+            <input type="file" id="looks-file-input" accept=".glintlook,.json,application/json" hidden>
+        </div>
+
         <!-- v18 — Design Variations: one-click styled looks for the screenshot.
              Foundation of the AI arc (v19 adds prompts, v20 the agent). -->
         <div class="sidebar-section" data-group="adjust">

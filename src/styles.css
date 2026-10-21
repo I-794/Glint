@@ -489,6 +489,27 @@ input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-i
     box-shadow: var(--shadow-sm);
 }
 
+/* v38 — Curves & Levels editor + Looks chips */
+.ct-curve {
+    display: block; width: 100%; aspect-ratio: 1; margin-bottom: 14px;
+    background: var(--bg-tertiary); border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm); cursor: crosshair; touch-action: none;
+}
+.ct-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.ct-actions .btn { flex: 1 1 auto; padding: 7px 10px; font-size: 12px; }
+.looks-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }
+.look-chip {
+    display: inline-flex; align-items: center; border-radius: var(--radius-pill);
+    background: var(--bg-tertiary); border: 1px solid var(--border-color); overflow: hidden;
+}
+.look-chip button {
+    border: none; background: transparent; color: var(--text-primary);
+    font: 500 12px var(--font-sans); padding: 6px 11px; cursor: pointer;
+}
+.look-chip .look-delete { padding: 6px 9px 6px 2px; color: var(--text-tertiary); }
+.look-chip button:hover { color: var(--accent-text); }
+.look-chip:focus-within { border-color: var(--accent-line); }
+
 /* ─── Annotation Toolbar ─── */
 /* v13.5 — slimmer, flatter toolbar (was a heavy glass slab with a glow ring) */
 .annotation-toolbar {

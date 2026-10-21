@@ -6,7 +6,7 @@ import { spotlightDefaults } from '../render/spotlight-geom.js';   // v34 (DOM-f
 import { bokehDefaults } from '../render/bokeh-core.js';           // v34 (DOM-free, no imports)
 import { compareDefaults } from '../render/compare-core.js';       // v35 (DOM-free, no imports)
 import { rollDefaults } from '../render/roll-core.js';              // v37 (DOM-free)
-import { colorToolsDefaults } from '../render/color-tools-core.js'; // v38 (DOM-free)
+import { colorToolsDefaults } from '../render/curves-core.js'; // v38 (DOM-free)
 
 export const state = {
   image: null,

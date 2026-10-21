@@ -80,6 +80,10 @@ const IDS = [
   // v34 — Subject Bokeh
   'bokeh-detect-btn', 'bokeh-status', 'bokeh-enabled', 'bokeh-controls',
   'bokeh-amount', 'bokeh-amount-value', 'bokeh-highlights', 'bokeh-highlights-value', 'bokeh-shape',
+  // v38 — Curves & Levels + Looks
+  'ct-tabs', 'ct-curve', 'ct-black', 'ct-black-value', 'ct-gamma', 'ct-gamma-value', 'ct-white', 'ct-white-value',
+  'ct-reset-channel', 'ct-reset-all', 'looks-list', 'looks-save-btn', 'looks-copy-btn', 'looks-paste-btn',
+  'looks-export-btn', 'looks-import-btn', 'looks-file-input',
 
   // v35 — Before / After Compare
   'compare-upload-btn', 'compare-use-current-btn', 'compare-file-input', 'compare-thumb-row', 'compare-thumb',

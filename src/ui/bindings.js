@@ -15,10 +15,11 @@ import { refreshColorMapUI } from '../features/color-map.js';
 import { refreshMockup3dUI } from '../features/mockup-3d-ui.js';
 import { upgradeSpotlight } from '../render/spotlight-geom.js';
 import { refreshBokehUI } from '../features/bokeh-ui.js';
+import { refreshCurvesUI } from '../features/curves-ui.js';
 import { refreshCompareUI } from '../features/compare-ui.js';
 import { setSelection } from '../features/selection.js';
 import { clearAllRedactions } from '../features/canvas-tools.js';
-import { normalizeColorTools } from '../render/color-tools-core.js';
+import { normalizeColorTools } from '../render/curves-core.js';
 
 // Helper: link a slider+display to a state value with optional onChange (for history).
 function linkSlider(input, display, getStr, setVal, opts = {}) {
@@ -699,6 +700,7 @@ export function updateUIFromState() {
 
   refreshSpotlightUI();   // v34
   refreshBokehUI();   // v34
+  refreshCurvesUI();   // v38
   refreshCompareUI(); // v35
 
   if (el.reflectionEnabled) {

@@ -55,6 +55,7 @@ export function render(forExport) {
   if (!forExport) window.__syncFloatingToolbar?.();
   // v37 — the Roll's contact sheet re-renders after design changes.
   if (!forExport) window.__rollRefresh?.();
+  if (!forExport) window.__colorToolsImageCheck?.();   // v38: redraw the histogram for a new image
 }
 
 // Render the current global state into an arbitrary canvas. `render()` targets

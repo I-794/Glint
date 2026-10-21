@@ -6,7 +6,7 @@ import { render } from '../render/render.js';
 import { spotlightDefaults } from '../render/spotlight-geom.js';
 import { bokehDefaults } from '../render/bokeh-core.js';
 import { compareDefaults } from '../render/compare-core.js';
-import { colorToolsDefaults } from '../render/color-tools-core.js';
+import { colorToolsDefaults } from '../render/curves-core.js';
 
 export function resetToDefaults() {
   saveStateToHistory();

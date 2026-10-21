@@ -17,7 +17,7 @@ import {
   luminance, rgbToLab, labToRgb, buildGradientRamp, nearestSwatch, paletteLabStats
 } from '../utils/color.js';
 import { applyBokeh, bokehActive, maskFits } from './bokeh.js';
-import { applyColorTools } from './color-tools.js';
+import { applyColorTools } from './curves.js';
 import { applyCompare } from './compare.js';
 
 let idCounter = 0;

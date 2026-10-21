@@ -8,7 +8,7 @@ import { normalizeCompare, wipeSplit, splitFromPoint, hitDivider, fitRect } from
 import { applyDesignToState } from '../src/features/document.js';
 import { migrateLocalStorage, MIGRATED_FLAG } from '../src/state/brand-migrate.js';
 import { normalizeCrop, cropRect, cropKey } from '../src/render/crop-core.js';
-import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS } from '../src/render/color-tools-core.js';
+import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS } from '../src/render/curves-core.js';
 import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
 
 function mockRes() {

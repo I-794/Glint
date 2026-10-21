@@ -22,7 +22,7 @@ import { snapshotProject } from '../state/serialize.js';
 import { applyKitObject, captureKitObject } from './brand-kit.js';
 import { escapeHTML } from '../utils/dom.js';
 import { revealSection } from './studio-nav.js';
-import { normalizeColorTools } from '../render/color-tools-core.js';
+import { normalizeColorTools } from '../render/curves-core.js';
 
 const GALLERY_BUCKET = 'gallery';
 
