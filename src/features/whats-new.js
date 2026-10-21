@@ -19,7 +19,7 @@ const WHATS_NEW = {
   heading: "v38 · Focus",
   items: [
     { title: 'Curves and levels',
-      desc: 'Shape every tone, per channel, in Adjust, with the image\'s histogram behind the curve.' },
+      desc: 'Shape every tone, per channel, in Adjust (Pro mode), with the image\'s histogram behind the curve.' },
     { title: 'Save a look',
       desc: 'Keep any grade as a named look and use it on the next screenshot in one click.' },
     { title: 'Pass it on',

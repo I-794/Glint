@@ -88,6 +88,13 @@ function drawCurve() {
   }
 }
 
+function refreshLevelLabels() {
+  const lv = ct().levels[channel];
+  if (el.ctBlackValue) el.ctBlackValue.textContent = String(lv.black);
+  if (el.ctWhiteValue) el.ctWhiteValue.textContent = String(lv.white);
+  if (el.ctGammaValue) el.ctGammaValue.textContent = lv.gamma.toFixed(2);
+}
+
 export function refreshCurvesUI() {
   const t = ct();
   if (el.ctTabs) for (const b of el.ctTabs.querySelectorAll('[data-ct-channel]')) {
@@ -97,11 +104,9 @@ export function refreshCurvesUI() {
   }
   const lv = t.levels[channel];
   if (el.ctBlack) el.ctBlack.value = lv.black;
-  if (el.ctBlackValue) el.ctBlackValue.textContent = String(lv.black);
   if (el.ctWhite) el.ctWhite.value = lv.white;
-  if (el.ctWhiteValue) el.ctWhiteValue.textContent = String(lv.white);
   if (el.ctGamma) el.ctGamma.value = sliderFromGamma(lv.gamma);
-  if (el.ctGammaValue) el.ctGammaValue.textContent = lv.gamma.toFixed(2);
+  refreshLevelLabels();
   drawCurve();
 }
 
@@ -194,10 +199,10 @@ function levelSlider(input, apply) {
     const lv = { ...ct().levels[channel] };
     apply(lv, +input.value);
     ct().levels[channel] = normalizeLevels(lv);
-    refreshCurvesUI();
+    refreshLevelLabels();   // leave the slider being dragged alone, so its thumb never snaps
     scheduleRender();
   });
-  input.addEventListener('change', () => { saveStateToHistory(); render(); });
+  input.addEventListener('change', () => { saveStateToHistory(); refreshCurvesUI(); render(); });
 }
 
 export function resetChannel() {
