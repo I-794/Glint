@@ -17,6 +17,7 @@ import {
   luminance, rgbToLab, labToRgb, buildGradientRamp, nearestSwatch, paletteLabStats
 } from '../utils/color.js';
 import { applyBokeh, bokehActive, maskFits } from './bokeh.js';
+import { applyColorTools } from './color-tools.js';
 import { applyCompare } from './compare.js';
 
 let idCounter = 0;
@@ -75,8 +76,9 @@ function gradeImage(srcImage) {
   if (cache.sig === sig && cache.canvas) return cache.canvas;
 
   const w = srcImage.width, h = srcImage.height;
-  const canvas = (cache.canvas && cache.canvas.width === w && cache.canvas.height === h)
-    ? cache.canvas : document.createElement('canvas');
+  // v38 — a fresh canvas per new signature (not the cached one redrawn in
+  // place): the 3D screen texture and Compare key off image identity.
+  const canvas = document.createElement('canvas');
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.clearRect(0, 0, w, h);
@@ -214,9 +216,12 @@ export function getGradedImage(srcImage) {
 function gradeAndBlur(srcImage) {
   const graded = gradeImage(srcImage);
   if (!graded || !graded.width) return graded;
+  // v38 — curves + levels sit between the grade and Bokeh; the key they hand
+  // back includes the curves, so Bokeh re-blurs when they change.
+  const gradeKey = graded === srcImage ? 'src:' + imageId(srcImage) : 'grade:' + cache.sig;
+  const { image: toned, key: baseKey } = applyColorTools(graded, gradeKey);
   // maskFits first (even with Bokeh off) so the one-shot claim after a page
   // load goes to that page's own image, not one rendered later.
-  if (!maskFits(srcImage) || !bokehActive()) return graded;   // mask belongs to another image
-  const baseKey = graded === srcImage ? 'src:' + imageId(srcImage) : 'grade:' + cache.sig;
-  return applyBokeh(graded, baseKey);
+  if (!maskFits(srcImage) || !bokehActive()) return toned;   // mask belongs to another image
+  return applyBokeh(toned, baseKey);
 }
