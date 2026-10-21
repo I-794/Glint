@@ -223,6 +223,15 @@ const ROLL = {
   backdrop: ['#1c1c20', '#0f0f11']
 };
 
+// v38 Focus: the same design twice, as it comes and with a starter look's
+// curves + levels, side by side. Both go through renderInto, so the right-hand
+// one is the real curves pass, not an edit of the left.
+const FOCUS = {
+  file: 'focus-curves', source: 'dashboard', look: 'starter-cool-night',
+  state: { ...RECIPES.find(r => r.file === 'amber-flare').state, canvas: { width: 1200, height: 900 }, padding: 70 },
+  backdrop: ['#1c1c20', '#0f0f11']
+};
+
 // Homepage hero: the editor itself, mid-design.
 const HERO = {
   file: 'hero-editor', source: 'dashboard', viewport: { width: 1280, height: 800 },
@@ -405,6 +414,44 @@ for (const r of RECIPES) {
     return c.toDataURL('image/webp', q).split(',')[1];
   }, { roll: ROLL, srcs: ROLL.shots.map((s) => sources[s.source]), W: 1280, H: 600, q: QUALITY });
   save(ROLL.file, b64);
+}
+
+// Focus: as-shot on the left, graded with a look on the right.
+{
+  await upload(FOCUS.source);
+  await applyState(FOCUS.state);
+  const b64 = await page.evaluate(async ({ focus, W, H, q }) => {
+    const { state } = await window.__shotImport('/src/state/state.js');
+    const { renderInto } = await window.__shotImport('/src/render/render.js');
+    const core = await window.__shotImport('/src/render/curves-core.js');
+    const look = core.STARTER_LOOKS.find((l) => l.id === focus.look);
+    const outs = [];
+    for (const graded of [false, true]) {
+      state.colorTools = graded ? core.normalizeColorTools(look.colorTools) : core.colorToolsDefaults();
+      state.imageFilters = graded ? { ...look.imageFilters } : core.normalizeFilters({});
+      const off = document.createElement('canvas');
+      renderInto(off, true);
+      outs.push(off);
+    }
+    state.colorTools = core.colorToolsDefaults();
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, focus.backdrop[0]); g.addColorStop(1, focus.backdrop[1]);
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    const gap = W * 0.024, tw = (W - gap * 3) / 2, th = tw * 900 / 1200;
+    outs.forEach((im, i) => {
+      const tx = gap + i * (tw + gap), ty = (H - th) / 2;
+      x.save();
+      x.shadowColor = 'rgba(0,0,0,0.45)'; x.shadowBlur = 36; x.shadowOffsetY = 16;
+      x.beginPath(); x.roundRect(tx, ty, tw, th, 14); x.fillStyle = '#121214'; x.fill();
+      x.shadowColor = 'transparent'; x.clip();
+      x.drawImage(im, tx, ty, tw, th);
+      x.restore();
+    });
+    return c.toDataURL('image/webp', q).split(',')[1];
+  }, { focus: FOCUS, W: 1280, H: 600, q: QUALITY });
+  save(FOCUS.file, b64);
 }
 
 // Hero: the editor UI itself with a design on the canvas.
