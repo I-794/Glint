@@ -245,6 +245,8 @@ export function registerCommands() {
     { id: 'roll-add',         label: 'Roll: add screenshots', icon: '🎞', run: () => window.__rollCommands?.add() },
     { id: 'roll-develop',     label: 'Roll: develop (ZIP)',  icon: '📦', run: () => window.__rollCommands?.develop(),
       when: () => !!window.__rollCommands?.hasShots() },
+    { id: 'roll-modes-toggle', label: 'Roll: develop light and dark (on / off)', icon: '◑', run: () => window.__rollCommands?.toggleModes(),
+      when: () => !!window.__rollCommands?.hasShots() },
     { id: 'roll-next-shot',   label: 'Roll: next shot',      icon: '›',  run: () => window.__rollCommands?.next(),
       when: () => !!window.__rollCommands?.hasShots() },
     { id: 'roll-prev-shot',   label: 'Roll: previous shot',  icon: '‹',  run: () => window.__rollCommands?.prev(),

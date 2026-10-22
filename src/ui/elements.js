@@ -145,7 +145,7 @@ const IDS = [
   'roll-add-folder-btn', 'roll-clear-btn', 'roll-sheet', 'roll-shot-bar', 'roll-shot-name',
   'roll-scope-hint', 'roll-prev-btn', 'roll-next-btn', 'roll-reset-shot-btn', 'roll-done-btn',
   'roll-smart-fit', 'roll-smart-frames', 'roll-frame-phone', 'roll-frame-tablet', 'roll-frame-wide',
-  'roll-sizes', 'roll-naming', 'roll-preset', 'roll-pdf', 'roll-develop-btn', 'roll-cancel-btn',
+  'roll-sizes', 'roll-naming', 'roll-preset', 'roll-pdf', 'roll-modes', 'roll-develop-btn', 'roll-cancel-btn',
   'roll-progress',
 
   // Templates

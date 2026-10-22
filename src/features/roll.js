@@ -26,6 +26,7 @@ import { imageToDataUrl } from '../state/serialize.js';
 import { ensureCompareImage } from '../render/compare.js';
 import { syncCroppedImage } from '../render/crop-image.js';
 import { cropSource } from '../render/crop-core.js';
+import { normalizeModeFlip, sceneFlip } from '../render/mode-flip-core.js';
 import {
   rollSources, rollRuntime, captureOverrideFields, diffOverrides, applyOverrides,
   smartFrameFor, classifyAspect, fileName, parseSizes, sizeLabel,
@@ -181,6 +182,28 @@ async function withShot(shot, fn) {
   } finally {
     applyOverrides(state, saved);
     state.image = savedImage;
+  }
+}
+
+// v39 — run `fn` with the light / dark flip forced to `mode` ('light' | 'dark';
+// null leaves the design as set). A shot already in that mode comes out as it
+// is (the pass skips a matching target). With matchScene the scene follows the
+// mode. Everything touched is put back afterwards.
+const SCENE_KEYS = ['bgColor', 'gradient', 'meshGradient', 'pattern', 'deviceFrame', 'textOverlay'];
+function withMode(mode, matchScene, fn) {
+  if (!mode) return fn();
+  const savedFlip = state.modeFlip;
+  const savedScene = SCENE_KEYS.map((k) => state[k]);
+  try {
+    state.modeFlip = { ...normalizeModeFlip(state.modeFlip), enabled: true, target: mode };
+    if (matchScene) {
+      for (const k of SCENE_KEYS) state[k] = JSON.parse(JSON.stringify(state[k] ?? null));
+      sceneFlip(state, mode, state.modeFlip.surface);
+    }
+    return fn();
+  } finally {
+    state.modeFlip = savedFlip;
+    SCENE_KEYS.forEach((k, i) => { state[k] = savedScene[i]; });
   }
 }
 
@@ -371,6 +394,7 @@ function syncControls() {
     el.rollPreset.value = list.some((p) => p.id === r.presetId) ? r.presetId : (list[0] && list[0].id) || '';
   }
   if (el.rollPdf) el.rollPdf.checked = !!r.pdf;
+  if (el.rollModes) el.rollModes.checked = r.modes === 'both';   // v39
 }
 
 function bindSettings() {
@@ -413,6 +437,7 @@ function bindSettings() {
   // controls from state (onHistoryChange -> syncControls).
   el.rollPreset?.addEventListener('change', () => { const id = el.rollPreset.value; saveStateToHistory(); state.roll.presetId = id; syncControls(); });
   el.rollPdf?.addEventListener('change', () => { const on = el.rollPdf.checked; saveStateToHistory(); state.roll.pdf = on; syncControls(); });
+  el.rollModes?.addEventListener('change', () => { const on = el.rollModes.checked; saveStateToHistory(); state.roll.modes = on ? 'both' : 'as-set'; syncControls(); });
 }
 
 // A smart-fit setting changed while a shot is open: show its new frame.
@@ -449,7 +474,10 @@ export async function developRoll() {
   const preset = presets.find((p) => p.id === state.roll.presetId) || presets[0] || { format: 'png', quality: 100, scale: 1 };
   const sizes = state.roll.sizes.length ? state.roll.sizes : [{ label: 'canvas' }];
   const pad = Math.max(2, String(list.length).length);
-  const total = list.length * sizes.length;
+  // v39 — "Develop light and dark" renders every shot and size once per mode.
+  const modes = state.roll.modes === 'both' ? ['light', 'dark'] : [null];
+  const matchScene = document.getElementById('ld-scene') ? document.getElementById('ld-scene').checked : true;
+  const total = list.length * sizes.length * modes.length;
   const files = {};
   const sheet = [];
   const off = document.createElement('canvas');
@@ -463,15 +491,15 @@ export async function developRoll() {
   try {
     for (let i = 0; i < list.length; i++) {
       const shot = list[i];
-      for (const size of sizes) {
+      for (const size of sizes) for (const mode of modes) {
         if (ctrl.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
-        await withShot(shot, () => {
+        await withShot(shot, () => withMode(mode, matchScene, () => {
           if (size.width && size.height) renderAtSize(off, { width: size.width, height: size.height });
           else renderInto(off, true);
-        });
-        if (state.roll.pdf && size === sizes[0]) sheet.push({ name: shot.name, n: i + 1, dataUrl: thumbJpeg(off) });
+        }));
+        if (state.roll.pdf && size === sizes[0] && mode === modes[0]) sheet.push({ name: shot.name, n: i + 1, dataUrl: thumbJpeg(off) });
         const { blob, ext } = await encodeCanvas(upscaleCanvas(off, preset.scale || 1), preset.format, preset.quality);
-        let name = fileName(state.roll.naming, { n: i + 1, name: shot.name, size, pad, ext });
+        let name = fileName(state.roll.naming, { n: i + 1, name: shot.name, size, pad, ext, mode });
         for (let k = 2; files[name]; k++) name = name.replace(/(-\d+)?\.(\w+)$/, `-${k}.$2`);
         files[name] = new Uint8Array(await blob.arrayBuffer());
         done++;
@@ -640,6 +668,13 @@ export function bindRoll() {
     close: () => closeShot(),
     isOpen: () => !!active,
     hasShots: () => shots().length > 0,
+    // v39 — Develop light and dark on / off.
+    toggleModes: () => {
+      saveStateToHistory();
+      state.roll.modes = state.roll.modes === 'both' ? 'as-set' : 'both';
+      syncControls();
+      showNotification(state.roll.modes === 'both' ? 'Develop writes light and dark versions' : 'Develop writes the design as set', 'success');
+    },
   };
 
   if (el.rollSheet && typeof IntersectionObserver === 'function') {
