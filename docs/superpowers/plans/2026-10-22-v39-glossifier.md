@@ -151,3 +151,14 @@ Changed: `src/state/state.js`, `src/state/history.js`, `src/state/serialize.js`,
 - Save and reload a project: flip settings restored. Load a schema 23 project: defaults, no errors. Templates carry the flip.
 - Polish: an error toast shows !, an info toast shows i; Cmd-K jumps leave the section title visible; saving, pasting and copying a Look never opens a browser prompt.
 - Simple mode shows the Light / Dark section; returning users see the v39 card once; the changelog passes the §14 pre-flight and the dash check prints nothing.
+
+## Build notes (what changed from this plan)
+
+- **Surface default 20, range 12 to 36.** OKLab lightness 0.12 rendered white as near black; real dark themes sit around 0.18 to 0.24, so white now becomes about `#161616`.
+- **Photo guard works on regions, not tiles.** Tile-by-tile detection turned CSS gradients and dense small text into a checkerboard of kept and flipped squares. Busy or noisy tiles now group into regions, and only regions of at least 3x3 tiles with enough busy tiles count; a region that mostly fills its bounding box becomes that rectangle.
+- **Protect moves a threshold instead of blending.** A protected color is kept fully, the same as a photo, so a guarded area is never half flipped. Photos are fully kept from Protect 30 up.
+- **New: a panel guard (`surfaceMask`).** A plain lightness flip turned a dark navy sidebar light. Large flat panels already in the target mode now keep their pixels and text, with rectangles and small holes filled and panel-colored pixels kept in the tiles around them, so the edge is seamless.
+- **Scene restore is exact.** Flipping a scene back was lossy (a dark frame came back silver), so turning the flip off restores the scene it matched, unless it was edited since. `flipColorHex` never lightens a color on the way to dark.
+- **Not touched:** `compose.js` (its spec keys do not include the flip, and v38 never added `colorTools` there either), and the Looks delete `confirm()` (only the four prompts were in scope).
+- **Hold key group:** listed under Edit in the shortcuts overlay.
+- **Section jumps:** `scroll-margin-top` alone did not help because Curves and Light / Dark scrolled with `block: 'nearest'`; both now scroll to the start.
