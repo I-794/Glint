@@ -10,7 +10,7 @@ import { migrateLocalStorage, MIGRATED_FLAG } from '../src/state/brand-migrate.j
 import { normalizeCrop, cropRect, cropKey } from '../src/render/crop-core.js';
 import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS } from '../src/render/curves-core.js';
 import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
-import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
+import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, surfaceMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
 
 function mockRes() {
   return {
@@ -384,28 +384,54 @@ function testModeFlipCore() {
   assert.equal(resolveTarget('dark', 'dark'), null);
   assert.equal(resolveTarget('light', 'dark'), 'light');
   // Photo mask: a noisy tile is kept, a flat one is not.
-  // Tiles, left to right: a busy photo, a smooth photo (sky: few colors but
-  // noisy), flat white, and white with a dark glyph (an interface text tile).
-  const w = 64, h = 16, d = flat(w, h, [255, 255, 255]);
+  // A 64x64 photo (busy noise with a smooth, noisy sky strip inside), flat
+  // interface to its right, and a one-tile-high line of "text" (dense stripes),
+  // which is noisy but must not count as a photo.
+  const w = 160, h = 64, d = flat(w, h, [255, 255, 255]);
   let seed = 7;
   const rand = () => { seed = (seed * 16807) % 2147483647; return (seed >> 7) & 255; };
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < 16; x++) {
+  for (let y = 0; y < 64; y++) {
+    for (let x = 0; x < 64; x++) {
       const i = (y * w + x) * 4;
-      d[i] = rand(); d[i + 1] = rand(); d[i + 2] = rand();
-      const j = (y * w + x + 16) * 4;
-      d[j] = 120 + (rand() % 3); d[j + 1] = 170 + (rand() % 3); d[j + 2] = 230 + (rand() % 3);
+      if (x >= 32 && x < 48) { d[i] = 120 + (rand() % 3); d[i + 1] = 170 + (rand() % 3); d[i + 2] = 230 + (rand() % 3); }
+      else { d[i] = rand(); d[i + 1] = rand(); d[i + 2] = rand(); }
     }
-    for (let x = 52; x < 56; x++) { const k = (y * w + x) * 4; d[k] = d[k + 1] = d[k + 2] = 30; }
   }
+  for (let y = 36; y < 46; y++) for (let x = 112; x < 160; x += 2) { const k = (y * w + x) * 4; d[k] = d[k + 1] = d[k + 2] = 40; }
   const mask = photoMask(d, w, h);
   assert.equal(mask[8 * w + 8], 255, 'busy photo pixel is kept');
-  assert.equal(mask[8 * w + 24], 255, 'smooth photo pixel is kept');
-  assert.equal(mask[8 * w + 40], 0, 'flat interface pixel flips');
-  assert.equal(mask[8 * w + 53], 0, 'interface text pixel flips');
+  assert.equal(mask[24 * w + 40], 255, 'smooth sky pixel inside the photo is kept');
+  assert.equal(mask[24 * w + 100], 0, 'flat interface pixel flips');
+  assert.equal(mask[40 * w + 120], 0, 'a line of text is not a photo');
   const out = applyFlip(new Uint8ClampedArray(d), lut, mask, 100);
   assert.equal(out[(8 * w + 8) * 4], d[(8 * w + 8) * 4], 'photo pixel unchanged at protect 100');
-  assert.ok(out[(8 * w + 40) * 4] < 60, 'interface pixel flipped');
+  assert.ok(out[(24 * w + 100) * 4] < 60, 'interface pixel flipped');
+  // Surface mask: a dark sidebar (and the white text on it) stays when flipping
+  // to dark; the light page, a small black button and the page pixels at the
+  // sidebar's edge still flip.
+  {
+    const sw = 320, sh = 160, sd = new Uint8ClampedArray(sw * sh * 4);
+    for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+      let c = [250, 250, 250];
+      if (x < 96) c = [15, 20, 36];
+      if (x >= 10 && x < 80 && y >= 40 && y < 44) c = [255, 255, 255];
+      if (x >= 200 && x < 248 && y >= 20 && y < 52) c = [0, 0, 0];
+      sd.set([...c, 255], (y * sw + x) * 4);
+    }
+    const sm = surfaceMask(sd, sw, sh, 'dark');
+    assert.equal(sm[100 * sw + 40], 255, 'dark sidebar kept');
+    assert.equal(sm[42 * sw + 40], 255, 'text on the sidebar kept');
+    assert.equal(sm[100 * sw + 200], 0, 'light page flips');
+    assert.equal(sm[30 * sw + 220], 0, 'a small black button flips');
+    assert.equal(sm[100 * sw + 97], 0, 'page pixels on the sidebar edge flip');
+    assert.equal(surfaceMask(flat(64, 64, [250, 250, 250]), 64, 64, 'dark'), null, 'no dark panel, no mask');
+    // A panel edge mid-tile (sidebar to x=104): its last pixels are kept, dark page text beside it flips.
+    for (let y = 0; y < sh; y++) for (let x = 96; x < 104; x++) sd.set([15, 20, 36, 255], (y * sw + x) * 4);
+    for (let y = 120; y < 124; y++) for (let x = 106; x < 110; x++) sd.set([17, 17, 17, 255], (y * sw + x) * 4);
+    const sm2 = surfaceMask(sd, sw, sh, 'dark');
+    assert.equal(sm2[100 * sw + 101], 255, 'panel pixels in a mixed edge tile are kept');
+    assert.equal(sm2[121 * sw + 107], 0, 'dark page text beside the panel flips');
+  }
   // Scene colors keep hue; colors already on the target side stay.
   assert.equal(flipColorHex('#1a1a2e', 'dark'), '#1a1a2e');
   assert.equal(flipColorHex('not a color', 'dark'), 'not a color');

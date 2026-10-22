@@ -19,6 +19,7 @@ import {
 import { applyBokeh, bokehActive, maskFits } from './bokeh.js';
 import { applyColorTools } from './curves.js';
 import { applyCompare } from './compare.js';
+import { applyModeFlip } from './mode-flip.js';
 
 let idCounter = 0;
 const cache = { sig: null, canvas: null };
@@ -229,11 +230,16 @@ export function getGradedImage(srcImage) {
 }
 
 function gradeAndBlur(srcImage) {
-  const graded = gradeImage(srcImage);
+  // v39 — the light / dark flip runs first, so the grade, curves and Looks
+  // style the flipped image. It returns a fresh canvas per change, so the
+  // identity-based keys below pick the flip up. maskFits and Compare keep
+  // using the original srcImage (the flip never changes the size).
+  const { image: flipped } = applyModeFlip(srcImage);
+  const graded = gradeImage(flipped);
   if (!graded || !graded.width) return graded;
   // v38 — curves + levels sit between the grade and Bokeh; the key they hand
   // back includes the curves, so Bokeh re-blurs when they change.
-  const gradeKey = graded === srcImage ? 'src:' + imageId(srcImage) + ':' + (srcImage.__frame || 0) : 'grade:' + cache.sig;
+  const gradeKey = graded === flipped ? 'src:' + imageId(flipped) + ':' + (flipped.__frame || 0) : 'grade:' + cache.sig;
   const { image: toned, key: baseKey } = applyColorTools(graded, gradeKey);
   // maskFits first (even with Bokeh off) so the one-shot claim after a page
   // load goes to that page's own image, not one rendered later.
