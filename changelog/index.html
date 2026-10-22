@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <meta name="description" content="Glint changelog. What shipped in each release, up to v38 Focus (curves, levels and shareable looks), v37 Exposure (develop a whole roll of screenshots), v36 Darkroom (Meet Glint), v35 Contrast (Before / After), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (eyedropper, recent colors, distribute, undo from the toast, quick export), and v32 Open Canvas: lay every page on an infinite, pan-and-zoom board of cards you can arrange, connect, group, seed from a URL, drive by chat, and export as one image, on top of v31 Merge Studio (CSV to N designs), v30 Studio Intelligence, the AI Design Agent, AI Assets, Design Variations, color filters and palettes, vector shape tools, motion on stills, the timeline scrubber, layer blend modes, alignment guides, device reflections, richer text effects, multi-page decks, projects, version history, live collaboration, Brand Kit, App Store screenshot sets, generative AI edits, and video.">
+    <meta name="description" content="Glint changelog. What shipped in each release, up to v39 Glossifier (flip a screenshot between light and dark mode), v38 Focus (curves, levels and shareable looks), v37 Exposure (develop a whole roll of screenshots), v36 Darkroom (Meet Glint), v35 Contrast (Before / After), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (eyedropper, recent colors, distribute, undo from the toast, quick export), and v32 Open Canvas: lay every page on an infinite, pan-and-zoom board of cards you can arrange, connect, group, seed from a URL, drive by chat, and export as one image, on top of v31 Merge Studio (CSV to N designs), v30 Studio Intelligence, the AI Design Agent, AI Assets, Design Variations, color filters and palettes, vector shape tools, motion on stills, the timeline scrubber, layer blend modes, alignment guides, device reflections, richer text effects, multi-page decks, projects, version history, live collaboration, Brand Kit, App Store screenshot sets, generative AI edits, and video.">
     <title>Changelog · Glint</title>
     <meta property="og:type" content="website">
     <meta property="og:title" content="Glint Changelog">
-    <meta property="og:description" content="Every Glint release, up to v38 Focus (curves, levels and shareable looks), v37 Exposure (the Roll), v36 Darkroom (Meet Glint), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (quality of life), and v32 Open Canvas: an infinite board of cards for your whole project, seed it from a URL, drive it by chat, and export it as one image. Plus v31 Merge Studio (CSV to N on-brand designs) and the full trail back to a single HTML file.">
+    <meta property="og:description" content="Every Glint release, up to v39 Glossifier (light to dark mode in one click), v38 Focus (curves, levels and shareable looks), v37 Exposure (the Roll), v36 Darkroom (Meet Glint), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (quality of life), and v32 Open Canvas: an infinite board of cards for your whole project, seed it from a URL, drive it by chat, and export it as one image. Plus v31 Merge Studio (CSV to N on-brand designs) and the full trail back to a single HTML file.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
     <meta name="theme-color" content="#0d0d0f">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -857,10 +857,17 @@
         .gl-stage img.shot { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 30px 60px -18px rgba(0,0,0,0.6); }
         .gl-stage img.mk { position: absolute; left: -18px; bottom: -18px; width: 84px; height: 84px; border-radius: 22px; box-shadow: 0 18px 40px rgba(232,97,58,0.3); }
         @media (max-width: 860px) { .gl-stage img.mk { left: 10px; bottom: -14px; width: 64px; height: 64px; } }
-        /* v38 Focus spotlight: the shot pulls into focus as it scrolls in, like a lens. */
+        /* v39 Glossifier spotlight: one soft sheen sweeps across the shot as it
+           scrolls in, the codename's gloss. Transform only; off for reduced motion. */
+        .gl-gloss { position: relative; display: block; border-radius: 16px; }
+        .gl-sheen { position: absolute; inset: 0; border-radius: 16px; overflow: hidden; pointer-events: none; }
         @media (prefers-reduced-motion: no-preference) {
-            .spotlight-focus .gl-stage img.shot { filter: blur(9px); transform: scale(1.015); transition: filter 1.2s var(--ease), transform 1.2s var(--ease); }
-            .spotlight-focus.in .gl-stage img.shot { filter: none; transform: none; }
+            .spotlight-gloss .gl-sheen::before {
+                content: ""; position: absolute; top: -10%; bottom: -10%; left: 0; width: 34%;
+                background: linear-gradient(100deg, transparent, rgba(255,255,255,0.16) 50%, transparent);
+                transform: translateX(-130%) skewX(-12deg);
+            }
+            .spotlight-gloss.in .gl-sheen::before { transform: translateX(330%) skewX(-12deg); transition: transform 1.5s var(--ease) 0.35s; }
         }
         .spotlight-contrast {
             background:
@@ -989,25 +996,25 @@
      entry. Everything between the two SWAP markers is what changes. -->
 <section style="padding-bottom: clamp(48px, 7vw, 80px);">
     <div class="wrap">
-        <div class="spotlight spotlight-glint spotlight-focus reveal">
+        <div class="spotlight spotlight-glint spotlight-gloss reveal">
             <!-- SWAP-START -->
             <div class="spot-copy">
                 <span class="spot-tag">Latest release</span>
-                <div class="spot-ver">v38 · October 2026</div>
-                <h2>Focus.</h2>
-                <p class="spot-lede">Curves and levels for every screenshot, plus looks you can save, share and apply in one click.</p>
+                <div class="spot-ver">v39 · October 2026</div>
+                <h2>Glossifier.</h2>
+                <p class="spot-lede">Flip any screenshot between light and dark mode in one click, with the background and frame to match.</p>
                 <div class="spot-feats">
                     <div class="spot-feat">
-                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16h16"/><path d="M4 18c7 0 7-12 16-12"/></svg></span>
-                        <div><strong>Curves and levels</strong><span>Bend the tones for all colors, or just red, green or blue, with the histogram behind the curve.</span></div>
+                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"/></svg></span>
+                        <div><strong>Light to dark</strong><span>Brand colors, photos and dark panels stay as they are, so the result reads like a real dark theme.</span></div>
                     </div>
                     <div class="spot-feat">
-                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/></svg></span>
-                        <div><strong>Looks</strong><span>Save any grade as a named look, or start from Matte, Cool Night, Warm Film or Hard Contrast.</span></div>
+                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="13" height="13" rx="2"/><path d="M8 4h11a2 2 0 0 1 2 2v11"/></svg></span>
+                        <div><strong>Both modes at once</strong><span>Keep the original as Before for a slider page, or develop the whole Roll in light and dark.</span></div>
                     </div>
                     <div class="spot-feat">
-                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="m8 8 4-4 4 4"/><path d="M4 14v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></svg></span>
-                        <div><strong>Share a look</strong><span>Send a look as a small file or a one-line code. Paste one in and it applies.</span></div>
+                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="3"/><path d="m10 9 4 6"/></svg></span>
+                        <div><strong>Hold to compare</strong><span>Hold the backslash key to see your screenshot without its grade. Let go and it comes back.</span></div>
                     </div>
                 </div>
                 <div class="spot-actions">
@@ -1017,7 +1024,10 @@
             </div>
             <div class="spot-visual">
                 <div class="gl-stage">
-                    <img class="shot" src="/shots/focus-curves.webp" alt="The same dashboard screenshot twice: as captured on the left, and graded with the Cool Night look on the right" width="1280" height="600" loading="eager">
+                    <span class="gl-gloss">
+                        <img class="shot" src="/shots/glossifier-modes.webp" alt="A kanban board split down the middle: the light original on the left and the same screenshot flipped to dark on the right" width="1280" height="600" loading="eager">
+                        <span class="gl-sheen" aria-hidden="true"></span>
+                    </span>
                 </div>
             </div>
             <!-- SWAP-END -->
@@ -1030,6 +1040,25 @@
         <h2 class="log-head reveal">Every release</h2>
         <ul class="log">
             <li class="entry latest reveal">
+                <div class="entry-meta"><span class="ver">v39.0</span><span class="entry-date">October 2026</span></div>
+                <div>
+                    <h2>Glossifier</h2>
+                    <p class="entry-note">The first codename from outside photography. This one turns light screenshots dark, and dark ones light.</p>
+                    <ul class="changes">
+                        <li><b>Light / Dark.</b> A new section at the top of Adjust, in Simple and Pro mode. Press Flip to dark, or Flip to light for a dark screenshot, and Glint flips it in your browser. Colors keep their hue, and brand colors and photos stay as they are.</li>
+                        <li><b>Panels that already match.</b> A dark sidebar, header or code block stays dark when you flip a light screenshot, text and all.</li>
+                        <li><b>Match the scene.</b> The background, device frame and caption flip with the screenshot. One undo puts everything back.</li>
+                        <li><b>Darkness and Protect.</b> Set how dark the dark gets, and how much color and photography to keep. Protect at zero flips everything.</li>
+                        <li><b>AI engine.</b> Pick AI for a sharper flip that can also restyle cards and borders. It uses your key or the server, and always keeps the original as Before so you can check the text.</li>
+                        <li><b>Light and dark pair.</b> Tick Keep the original as Before to get a Before / After slider labeled Light and Dark, then export it as a slider page in one click.</li>
+                        <li><b>The Roll.</b> Turn on Develop light and dark to get both versions of every shot in one ZIP. A shot that is already dark comes out as it is. Add <code>{mode}</code> to file names, or Glint adds it for you.</li>
+                        <li><b>Hold to compare.</b> Hold the backslash key to see the screenshot without its flip, grade, curves or Bokeh. Let go to see it graded again. Exports are never affected.</li>
+                        <li><b>Polish.</b> Error messages now show an exclamation mark instead of a check. Jumping to a section from Cmd-K no longer hides its title under the header. Naming, pasting and copying looks happen right in the Looks row.</li>
+                        <li><b>Undo and saving.</b> Every flip and slider change is one undo step. The flip saves with your projects and templates. Search "Light" in Cmd-K to jump straight there.</li>
+                    </ul>
+                </div>
+            </li>
+            <li class="entry reveal">
                 <div class="entry-meta"><span class="ver">v38.0</span><span class="entry-date">October 2026</span></div>
                 <div>
                     <h2>Focus</h2>

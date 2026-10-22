@@ -232,6 +232,15 @@ const FOCUS = {
   backdrop: ['#1c1c20', '#0f0f11']
 };
 
+// v39 Glossifier: the light kanban as Before and the same screenshot flipped
+// to dark by the real Light / Dark pass as After, with the Compare divider in
+// the middle (what "Keep the original as Before" makes). The scene is already
+// dark, so it is not flipped.
+const GLOSS = {
+  file: 'glossifier-modes', source: 'kanban',
+  state: { ...RECIPES.find(r => r.file === 'amber-flare').state, canvas: { width: 1280, height: 600 }, padding: 46 }
+};
+
 // Homepage hero: the editor itself, mid-design.
 const HERO = {
   file: 'hero-editor', source: 'dashboard', viewport: { width: 1280, height: 800 },
@@ -282,7 +291,10 @@ await page.evaluate(async () => {
 async function upload(name) {
   await page.evaluate(async () => { (await window.__shotImport('/src/state/state.js')).state.image = null; });
   await page.setInputFiles('#file-input', { name: `${name}.png`, mimeType: 'image/png', buffer: Buffer.from(sources[name], 'base64') });
-  await page.waitForFunction(async () => !!(await window.__shotImport('/src/state/state.js')).state.image);
+  // waitForFunction treats an async predicate's Promise as truthy, so poll a
+  // synchronous check against the state module instead.
+  await page.evaluate(async () => { window.__shotState = (await window.__shotImport('/src/state/state.js')).state; });
+  await page.waitForFunction(() => !!(window.__shotState && window.__shotState.image && window.__shotState.image.width));
 }
 
 // Restore the baseline, then deep-merge a recipe patch onto the editor state.
@@ -452,6 +464,33 @@ for (const r of RECIPES) {
     return c.toDataURL('image/webp', q).split(',')[1];
   }, { focus: FOCUS, W: 1280, H: 600, q: QUALITY });
   save(FOCUS.file, b64);
+}
+
+// Glossifier: Before light, After dark, divider in the middle.
+{
+  await upload(GLOSS.source);
+  await applyState(GLOSS.state);
+  const b64 = await page.evaluate(async ({ q }) => {
+    const { state } = await window.__shotImport('/src/state/state.js');
+    const { renderInto } = await window.__shotImport('/src/render/render.js');
+    const { compareDefaults } = await window.__shotImport('/src/render/compare-core.js');
+    const { ensureCompareImage } = await window.__shotImport('/src/render/compare.js');
+    const flip = await window.__shotImport('/src/render/mode-flip-core.js');
+    const c0 = document.createElement('canvas');
+    c0.width = state.image.width; c0.height = state.image.height;
+    c0.getContext('2d').drawImage(state.image, 0, 0);
+    const beforeSrc = c0.toDataURL('image/png');
+    await ensureCompareImage(beforeSrc);
+    state.compare = { ...compareDefaults(), enabled: true, beforeSrc, split: 0.5,
+      labels: { enabled: true, before: 'Light', after: 'Dark', position: 'bottom' } };
+    state.modeFlip = { ...flip.modeFlipDefaults(), enabled: true, target: 'dark' };
+    const off = document.createElement('canvas');
+    renderInto(off, true);
+    state.compare = compareDefaults();
+    state.modeFlip = flip.modeFlipDefaults();
+    return off.toDataURL('image/webp', q).split(',')[1];
+  }, { q: QUALITY });
+  save(GLOSS.file, b64);
 }
 
 // Hero: the editor UI itself with a design on the canvas.

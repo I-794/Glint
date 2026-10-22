@@ -10,20 +10,20 @@
 // release's highlights — same checklist step as the editor version badge and
 // the changelog page.
 
-const CURRENT_VERSION = '38.0';
+const CURRENT_VERSION = '39.0';
 const LASTSEEN_KEY = 'glint_lastseen_version';
 const WELCOME_KEY  = 'glint_welcome_v1';   // set by welcome.js on dismissal
 
 // Latest release only — the newest version’s highlights, not an accumulation.
 const WHATS_NEW = {
-  heading: "v38 · Focus",
+  heading: "v39 · Glossifier",
   items: [
-    { title: 'Curves and levels',
-      desc: 'Shape every tone, per channel, in Adjust (Pro mode), with the image\'s histogram behind the curve.' },
-    { title: 'Save a look',
-      desc: 'Keep any grade as a named look and use it on the next screenshot in one click.' },
-    { title: 'Pass it on',
-      desc: 'Export a look as a file or a short code, and paste one in to use someone else\'s.' }
+    { title: 'Light to dark in one click',
+      desc: 'Flip any screenshot between light and dark mode in Adjust, with the background and frame to match.' },
+    { title: 'Both modes at once',
+      desc: 'Keep the original as Before for a slider, or develop the whole Roll in light and dark.' },
+    { title: 'Hold to compare',
+      desc: 'Hold the backslash key to see your screenshot without its grade, then let go.' }
   ]
 };
 
