@@ -2,6 +2,7 @@ import { state } from '../state/state.js';
 import { el } from '../ui/elements.js';
 import { undo, redo } from '../state/history.js';
 import { render } from '../render/render.js';
+import { holdOriginal } from '../render/hold-original.js';
 import { exportImage, copyToClipboard } from './export.js';
 import { openPalette, closePalette } from './palette.js';
 import { closeStickerDrawer } from './stickers.js';
@@ -17,7 +18,31 @@ function showShortcuts(show) {
   el.shortcutsOverlay.style.display = show ? 'flex' : 'none';
 }
 
+// v39 — hold backslash to see the screenshot without its flip, grade, curves,
+// Bokeh, Compare and filters. Preview only (render/hold-original.js); a small
+// chip on the canvas says so while it is held.
+let holdChip = null;
+function setHoldOriginal(on) {
+  if (holdOriginal.held === on) return;
+  holdOriginal.held = on;
+  if (!holdChip && on) {
+    holdChip = document.createElement('div');
+    holdChip.className = 'hold-original-chip';
+    holdChip.setAttribute('role', 'status');
+    holdChip.setAttribute('aria-live', 'polite');
+    holdChip.textContent = 'Original';
+    (document.getElementById('drop-zone') || document.body).appendChild(holdChip);
+  }
+  if (holdChip) holdChip.classList.toggle('show', on);
+  render();
+}
+const isHoldKey = (e) => e.code === 'Backslash' && !e.ctrlKey && !e.metaKey && !e.altKey;
+
 export function bindKeyboard() {
+  document.addEventListener('keyup', (e) => { if (e.code === 'Backslash') setHoldOriginal(false); });
+  window.addEventListener('blur', () => setHoldOriginal(false));
+  document.addEventListener('visibilitychange', () => { if (document.hidden) setHoldOriginal(false); });
+
   document.addEventListener('keydown', (e) => {
     const cmd = e.ctrlKey || e.metaKey;
 
@@ -28,6 +53,12 @@ export function bindKeyboard() {
       return;
     }
     if (state.ui.paletteOpen) return;
+
+    if (isHoldKey(e) && !isTypingTarget(e.target) && state.mode === 'single' && state.image) {
+      e.preventDefault();
+      if (!e.repeat) setHoldOriginal(true);
+      return;
+    }
 
     if (e.key === 'Escape') {
       // v32.1 — board Esc cascade: cancel connect → clear selection → exit board.

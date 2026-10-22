@@ -17,6 +17,8 @@ export const SHORTCUTS = [
   { id: 'delete',   keys: 'Delete',      label: 'Delete selected',                group: 'Edit',     displayOnly: true },
   { id: 'deselect', keys: 'Escape',      label: 'Deselect / Select tool',         group: 'Edit',     displayOnly: true },
   { id: 'nudge',    keys: 'arrows',      label: 'Nudge selected (Shift = 10px)',  group: 'Edit',     displayOnly: true },
+  // v39 — hold to compare (handled in keyboard.js; preview only).
+  { id: 'hold-original', keys: '\\', label: 'Hold to see the original (no grade or flip)', group: 'Edit', displayOnly: true },
   { id: 'tl-step',  keys: ', / .',       label: 'Timeline: step frame (clip loaded)', group: 'Timeline', displayOnly: true },
   { id: 'tl-inout', keys: '[ / ]',       label: 'Timeline: set in / out point',   group: 'Timeline', displayOnly: true },
   // v32.1 — Board (handled in board.js onBoardKey; Undo/Select all/Export above also apply to the board).

@@ -20,6 +20,7 @@ import { applyBokeh, bokehActive, maskFits } from './bokeh.js';
 import { applyColorTools } from './curves.js';
 import { applyCompare } from './compare.js';
 import { applyModeFlip } from './mode-flip.js';
+import { showingOriginal } from './hold-original.js';
 
 let idCounter = 0;
 const cache = { sig: null, canvas: null };
@@ -211,6 +212,7 @@ function imageId(img) {
 // saturation, blur, grayscale, sepia), for draw sites outside the flat and
 // device paths. Returns 'none' when nothing is set.
 export function cssFilterFor(f = state.imageFilters || {}) {
+  if (showingOriginal()) return 'none';   // v39: holding backslash
   const out = [];
   if (f.brightness != null && f.brightness !== 100) out.push(`brightness(${f.brightness}%)`);
   if (f.contrast != null && f.contrast !== 100) out.push(`contrast(${f.contrast}%)`);
@@ -224,6 +226,8 @@ export function cssFilterFor(f = state.imageFilters || {}) {
 // v34 — every caller gets Bokeh on top of the grade for free: this one seam
 // feeds the flat, 2D mockup, 3D screen, and Surface paths.
 export function getGradedImage(srcImage) {
+  // v39 — holding backslash shows the untouched screenshot (preview only).
+  if (showingOriginal()) return srcImage;
   // v35 — Before / After Compare wraps the finished After image (grade + Bokeh).
   const out = gradeAndBlur(srcImage);
   return srcImage === state.image ? applyCompare(out) : out;

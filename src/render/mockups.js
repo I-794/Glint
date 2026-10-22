@@ -13,6 +13,7 @@
 // it has no fragile cross-module dependencies.
 
 import { state } from '../state/state.js';
+import { showingOriginal } from './hold-original.js';
 import { getGradedImage } from './color-grade.js';
 
 export const DEVICE_TYPES = new Set([
@@ -102,7 +103,7 @@ export function drawScreenImage(ctx, rect, radius) {
   if (f.blur > 0)           fl.push(`blur(${f.blur}px)`);
   if (f.grayscale > 0)      fl.push(`grayscale(${f.grayscale}%)`);
   if (f.sepia > 0)          fl.push(`sepia(${f.sepia}%)`);
-  if (fl.length) ctx.filter = fl.join(' ');
+  if (fl.length && !showingOriginal()) ctx.filter = fl.join(' ');   // v39: off while holding backslash
 
   const img = getGradedImage(state.image);   // v17 — color-graded source
   const ir = img.width / img.height;

@@ -1937,6 +1937,17 @@ kbd {
 .simple-more-cta { font-size: 12px; font-weight: 600; color: var(--accent-secondary); margin-top: 2px; }
 
 /* v35 — floating selection toolbar (preview-only HTML, never exported) */
+/* v39 — hold backslash to see the original: a small preview-only chip. */
+.hold-original-chip {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 110;
+    padding: 4px 12px; border-radius: var(--radius-pill);
+    background: var(--bg-elevated); color: var(--text-primary);
+    border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);
+    font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+    opacity: 0; pointer-events: none; transition: opacity var(--transition-fast);
+}
+.hold-original-chip.show { opacity: 1; }
+
 .floating-toolbar {
     position: absolute; top: 0; left: 0; z-index: 120;
     display: flex; align-items: center; gap: 2px; padding: 4px;

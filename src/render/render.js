@@ -1,4 +1,5 @@
 import { state } from '../state/state.js';
+import { holdOriginal, showingOriginal } from './hold-original.js';
 import { FRAME_INSETS } from '../state/presets.js';
 import { el } from '../ui/elements.js';
 import { drawBackground } from './background.js';
@@ -64,6 +65,13 @@ export function render(forExport) {
 // canvases (forExport=true suppresses the minimap + CSS-transform sync, which
 // are live-UI only).
 export function renderInto(canvas, forExport) {
+  // v39 — an export render is never ungraded, even while backslash is held.
+  if (!forExport) return renderPasses(canvas, forExport);
+  holdOriginal.exporting++;
+  try { return renderPasses(canvas, forExport); } finally { holdOriginal.exporting--; }
+}
+
+function renderPasses(canvas, forExport) {
   if (!state.image) return;
   // v37 — keep the cropped picture in step with state.imageCrop (undo, Roll).
   ensureCrop();
@@ -363,7 +371,7 @@ function drawImageContent(ctx, x, y, imgWidth, imgHeight) {
   if (f.blur > 0)           filters.push(`blur(${f.blur}px)`);
   if (f.grayscale > 0)      filters.push(`grayscale(${f.grayscale}%)`);
   if (f.sepia > 0)          filters.push(`sepia(${f.sepia}%)`);
-  if (filters.length) ctx.filter = filters.join(' ');
+  if (filters.length && !showingOriginal()) ctx.filter = filters.join(' ');   // v39: off while holding backslash
 
   let drawWidth = imgWidth, drawHeight = imgHeight;
   if (state.imageTransform.rotation === 90 || state.imageTransform.rotation === 270) {
