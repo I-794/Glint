@@ -208,7 +208,7 @@ export function refreshModeFlipUI() {
 export function openLightDark() {
   if (!el.lightDarkSection) return;
   revealSection(el.lightDarkSection);
-  el.lightDarkSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  el.lightDarkSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Label updates live; the flip is a per-pixel pass, so it recomputes on release.

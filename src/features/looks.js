@@ -53,14 +53,48 @@ function renderList() {
     </span>`).join('');
 }
 
+// v39 — one inline field under the Looks buttons stands in for the browser's
+// prompt(): a name for Save and Export, a code for Paste, and a read-only code
+// to copy by hand when the clipboard is blocked. Enter confirms, Escape cancels.
+let fieldAction = null;
+
+function closeField() {
+  fieldAction = null;
+  if (el.looksField) el.looksField.hidden = true;
+}
+
+function openField({ label, value = '', ok, readonly = false, onOk }) {
+  if (!el.looksField || !el.looksFieldInput) return;
+  openCurves();
+  el.looksFieldLabel.textContent = label;
+  el.looksFieldInput.value = value;
+  el.looksFieldInput.readOnly = readonly;
+  el.looksFieldInput.placeholder = readonly ? '' : label;
+  el.looksFieldOk.textContent = ok;
+  fieldAction = onOk || null;
+  el.looksField.hidden = false;
+  requestAnimationFrame(() => { el.looksFieldInput.focus(); el.looksFieldInput.select(); });
+}
+
+function confirmField() {
+  const run = fieldAction;
+  const value = el.looksFieldInput ? el.looksFieldInput.value : '';
+  closeField();
+  if (run) run(value);
+}
+
 export function saveLook() {
-  const list = loadAll();
-  if (list.length >= MAX) { showNotification(`You can keep up to ${MAX} looks. Delete one first.`, 'error'); return; }
-  const name = window.prompt('Name this look', 'My look');
-  if (name === null) return;
-  const look = { ...currentLook(name), id: genId() };
-  list.push(look);
-  if (persist(list)) { renderList(); showNotification(`Saved "${look.name}".`, 'success'); }
+  if (loadAll().length >= MAX) { showNotification(`You can keep up to ${MAX} looks. Delete one first.`, 'error'); return; }
+  openField({
+    label: 'Name this look', value: 'My look', ok: 'Save',
+    onOk: (name) => {
+      const list = loadAll();
+      if (list.length >= MAX) { showNotification(`You can keep up to ${MAX} looks. Delete one first.`, 'error'); return; }
+      const look = { ...currentLook(name), id: genId() };
+      list.push(look);
+      if (persist(list)) { renderList(); showNotification(`Saved "${look.name}".`, 'success'); }
+    },
+  });
 }
 
 function deleteLook(id) {
@@ -84,16 +118,19 @@ export async function copyLookCode() {
     await navigator.clipboard.writeText(code);
     showNotification('Look code copied. Paste it into Import on any Glint.', 'success');
   } catch (e) {
-    window.prompt('Copy this look code', code);
+    openField({ label: 'Copy this look code', value: code, ok: 'Done', readonly: true });
   }
 }
 
 export function exportLookFile() {
-  const name = window.prompt('Name this look', 'My look');
-  if (name === null) return;
-  const look = currentLook(name);
-  const file = (look.name.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'look') + '.glintlook';
-  download(new Blob([lookToJson(look)], { type: 'application/json' }), file);
+  openField({
+    label: 'Name the look file', value: 'My look', ok: 'Download',
+    onOk: (name) => {
+      const look = currentLook(name);
+      const file = (look.name.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'look') + '.glintlook';
+      download(new Blob([lookToJson(look)], { type: 'application/json' }), file);
+    },
+  });
 }
 
 export function importLookFile() {
@@ -101,12 +138,15 @@ export function importLookFile() {
 }
 
 export function pasteLookCode() {
-  openCurves();
-  const code = window.prompt('Paste a look code', '');
-  if (code === null || !code.trim()) return;
-  const look = decodeLook(code);
-  if (!look) { showNotification('That is not a Glint look code.', 'error'); return; }
-  addImported(look);
+  openField({
+    label: 'Paste a look code', ok: 'Apply',
+    onOk: (code) => {
+      if (!code.trim()) return;
+      const look = decodeLook(code);
+      if (!look) { showNotification('That is not a Glint look code.', 'error'); return; }
+      addImported(look);
+    },
+  });
 }
 
 function onFile(e) {
@@ -138,5 +178,11 @@ export function bindLooks() {
   if (el.looksImportBtn) el.looksImportBtn.addEventListener('click', importLookFile);
   if (el.looksPasteBtn) el.looksPasteBtn.addEventListener('click', pasteLookCode);
   if (el.looksFileInput) el.looksFileInput.addEventListener('change', onFile);
+  el.looksFieldOk?.addEventListener('click', confirmField);
+  el.looksFieldCancel?.addEventListener('click', closeField);
+  el.looksFieldInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); confirmField(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeField(); }
+  });
   renderList();
 }

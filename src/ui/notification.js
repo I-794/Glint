@@ -4,9 +4,14 @@ import { history, undo } from '../state/history.js';
 // v33 — optional action button (e.g. { label: 'Undo', run }) and a single
 // shared hide timer, so a newer toast is never cut short by an older one's timer.
 let hideTimer = null;
+// v39 — the icon follows the type (it used to show a check on errors too).
+const ICONS = { success: '✓', error: '!', info: 'i' };
+
 export function showNotification(message, type = 'success', { action = null, duration } = {}) {
   el.notificationText.textContent = message;
   el.notification.className = `notification ${type}`;
+  const icon = el.notification.querySelector('.notification-icon');
+  if (icon) icon.textContent = ICONS[type] || ICONS.success;
   el.notification.querySelector('.notification-action')?.remove();
   if (action) {
     const btn = document.createElement('button');

@@ -87,6 +87,7 @@ const IDS = [
   'ct-tabs', 'ct-curve', 'ct-black', 'ct-black-value', 'ct-gamma', 'ct-gamma-value', 'ct-white', 'ct-white-value',
   'ct-reset-channel', 'ct-reset-all', 'looks-list', 'looks-save-btn', 'looks-copy-btn', 'looks-paste-btn',
   'looks-export-btn', 'looks-import-btn', 'looks-file-input',
+  'looks-field', 'looks-field-label', 'looks-field-input', 'looks-field-ok', 'looks-field-cancel',   // v39
 
   // v35 — Before / After Compare
   'compare-upload-btn', 'compare-use-current-btn', 'compare-file-input', 'compare-thumb-row', 'compare-thumb',

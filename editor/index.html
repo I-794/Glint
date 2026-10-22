@@ -288,6 +288,15 @@
                 <button type="button" class="btn btn-secondary" id="looks-export-btn" title="Download the current look as a .glintlook file">Export</button>
                 <button type="button" class="btn btn-secondary" id="looks-import-btn" title="Open a .glintlook file">Import</button>
             </div>
+            <!-- v39 — one inline field for naming, pasting and copying looks (no browser prompts). -->
+            <div class="looks-field" id="looks-field" hidden>
+                <label class="control-label" id="looks-field-label" for="looks-field-input">Name this look</label>
+                <input type="text" class="control-input" id="looks-field-input" autocomplete="off" spellcheck="false">
+                <div class="ct-actions">
+                    <button type="button" class="btn btn-primary" id="looks-field-ok">Save</button>
+                    <button type="button" class="btn btn-secondary" id="looks-field-cancel">Cancel</button>
+                </div>
+            </div>
             <input type="file" id="looks-file-input" accept=".glintlook,.json,application/json" hidden>
         </div>
 
@@ -1584,7 +1593,7 @@
 </div>
 
 <div class="notification" id="notification" role="status" aria-live="polite" aria-atomic="true">
-    <span class="notification-icon">✓</span>
+    <span class="notification-icon" aria-hidden="true">✓</span>
     <span class="notification-text" id="notification-text">Image exported successfully!</span>
 </div>
 

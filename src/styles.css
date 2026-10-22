@@ -127,6 +127,8 @@ body {
 .sidebar-section {
     padding: 20px; border-bottom: 1px solid var(--border-color);
     animation: sectionReveal 0.5s var(--transition-smooth) backwards;
+    /* v39 — clear the sticky .panel-header when a jump scrolls a section into view. */
+    scroll-margin-top: 64px;
 }
 @keyframes sectionReveal {
     from { opacity: 0; transform: translateY(8px); }
@@ -449,7 +451,11 @@ input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-i
 .notification.show { transform: translateX(0); opacity: 1; pointer-events: auto; visibility: visible; }
 .notification.success { border-color: rgba(52, 211, 153, 0.3); box-shadow: var(--shadow-lg), 0 0 20px rgba(52, 211, 153, 0.08); }
 .notification.error { border-color: rgba(248, 113, 113, 0.3); box-shadow: var(--shadow-lg), 0 0 20px rgba(248, 113, 113, 0.08); }
-.notification-icon { font-size: 18px; }
+.notification-icon { font-size: 18px; flex: none; width: 22px; text-align: center; font-weight: 700; }
+/* v39 — icon color per type (the icon text is set in ui/notification.js). */
+.notification.success .notification-icon { color: var(--success); }
+.notification.error .notification-icon { color: var(--error); }
+.notification.info .notification-icon { color: var(--text-secondary); font-style: italic; font-family: Georgia, serif; }
 .notification-text { font-size: 13px; font-weight: 500; }
 /* v33 — inline action (Undo) on a toast */
 .notification-action {
@@ -498,6 +504,9 @@ input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-i
 .ct-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .ct-actions .btn { flex: 1 1 auto; padding: 7px 10px; font-size: 12px; }
 .looks-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }
+.looks-field { margin-top: 10px; }   /* v39 */
+.looks-field[hidden] { display: none; }
+.looks-field .control-input { width: 100%; }
 .look-chip {
     display: inline-flex; align-items: center; border-radius: var(--radius-pill);
     background: var(--bg-tertiary); border: 1px solid var(--border-color); overflow: hidden;

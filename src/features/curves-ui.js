@@ -226,7 +226,7 @@ export function openCurves() {
   const section = document.getElementById('color-tools-section');
   if (!section) return;
   revealSection(section);
-  section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 export function bindCurves() {
