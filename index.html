@@ -28,93 +28,125 @@
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/site.css">
     <style>
-        /* v36 Glint homepage. Built under the taste-skill: asymmetric split hero,
-           bento, horizontal strip, list, statement, CTA band (six layout families).
-           Tokens and shared components live in /site.css. One accent, ink on amber. */
+        /* v40 homepage, Apple product-page language. Built under the taste-skill.
+           Read: launch-style product page for makers who ship screenshots, premium
+           consumer feel; dials VARIANCE 7 / MOTION 6 / DENSITY 3. Dark only, one amber
+           accent, ink on amber. Layout families: centered poster hero, scroll-lit
+           statement, highlights carousel, tabbed closer look, bento facts, link list,
+           centered close. Tokens and shared components live in /site.css. */
 
-        /* Hero: left copy, right real editor output. */
-        .g-hero { padding-block: clamp(40px, 6vw, 88px) clamp(48px, 6vw, 80px); }
-        .g-hero .wrap { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: clamp(32px, 5vw, 72px); align-items: center; }
-        .g-hero .eyebrow { margin-bottom: 20px; }
-        .g-hero h1 { font-size: clamp(40px, 5.2vw, 68px); font-weight: 700; line-height: 1.02; letter-spacing: -0.04em; color: var(--ink); margin-bottom: 22px; }
-        .g-hero h1 em { font-style: normal; color: var(--accent); }
-        .g-hero .sub { font-size: clamp(16.5px, 1.45vw, 19px); line-height: 1.55; color: var(--ink-2); max-width: 34ch; margin-bottom: 32px; }
-        .g-hero .actions { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
-        .text-link { font-weight: 600; font-size: 15px; color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 5px; }
-        .text-link:hover { color: var(--accent); }
-        .g-hero figure { margin: 0; border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--glass-line); box-shadow: var(--shadow-product); background: var(--bg-raise); }
-        .g-hero figure img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; }
+        .home h1, .home h2, .home h3 { font-weight: 600; color: var(--ink); }
+        .sec { padding-block: clamp(72px, 11vw, 150px); }
+        .sec-title { font-size: clamp(34px, 5vw, 60px); letter-spacing: -0.035em; line-height: 1.04; margin-bottom: clamp(32px, 4vw, 56px); }
+        .more-link { font-size: 17px; font-weight: 500; color: var(--accent); }
+        .more-link:hover { text-decoration: underline; text-underline-offset: 4px; }
 
-        /* Bento: five items, five cells, two-plus image cells. */
-        .g-sec { padding-block: clamp(48px, 7vw, 96px); }
-        .g-sec > .wrap > h2 { font-size: clamp(28px, 3.6vw, 46px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.05; color: var(--ink); max-width: 22ch; margin-bottom: 14px; }
-        .g-sec > .wrap > .lead { font-size: 17px; line-height: 1.6; color: var(--ink-2); max-width: 56ch; margin-bottom: clamp(32px, 4vw, 48px); }
-        .bento { display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-rows: minmax(150px, auto); gap: 14px; }
-        .cell { border-radius: var(--r-card); border: 1px solid var(--glass-line); background: var(--bg-raise); overflow: hidden; display: flex; flex-direction: column; }
-        .cell .txt { padding: 24px 26px 26px; }
-        .cell h3 { font-size: 20px; font-weight: 650; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 8px; }
-        .cell p { font-size: 15px; line-height: 1.55; color: var(--ink-2); max-width: 46ch; }
-        .cell img { display: block; width: 100%; height: 100%; min-height: 0; object-fit: cover; flex: 1; }
-        .cell.capture { grid-column: span 4; grid-row: span 2; }
-        .cell.frame { grid-column: span 2; grid-row: span 3; }
-        .cell.motion { grid-column: span 2; background: radial-gradient(120% 120% at 0% 0%, rgba(242,169,59,0.22), transparent 60%), var(--bg-raise); justify-content: flex-end; }
-        .cell.ai { grid-column: span 2; justify-content: flex-end; }
-        .cell.export { grid-column: span 6; flex-direction: row; align-items: stretch; }
-        .cell.export .txt { flex: 0 0 38%; align-self: center; }
-        .cell.export img { flex: 1; max-height: 340px; }
+        /* Hero: centered, one moment. The product shot grows as it scrolls in. */
+        .hero { text-align: center; padding-top: clamp(48px, 7vw, 88px); overflow: hidden; }
+        .hero .name { font-size: clamp(19px, 2vw, 24px); font-weight: 600; color: var(--ink-2); letter-spacing: -0.01em; margin-bottom: 10px; }
+        .hero h1 { font-size: clamp(48px, 8.4vw, 104px); letter-spacing: -0.05em; line-height: 1; margin-bottom: 22px; }
+        .hero h1 em { font-style: normal; color: var(--accent); }
+        .hero .sub { font-size: clamp(18px, 1.8vw, 22px); line-height: 1.45; color: var(--ink-2); max-width: 38ch; margin: 0 auto 30px; }
+        .hero .actions { display: flex; justify-content: center; align-items: center; gap: 28px; flex-wrap: wrap; }
+        .hero-shot { position: relative; margin: clamp(48px, 6vw, 80px) auto 0; max-width: 1120px; padding-inline: clamp(16px, 4vw, 40px); }
+        .hero-shot::before { content: ''; position: absolute; inset: 18% 8% -6%; z-index: -1; background: radial-gradient(closest-side, rgba(242,169,59,0.22), transparent 75%); filter: blur(30px); }
+        .hero-shot img { display: block; width: 100%; height: auto; border-radius: 22px; border: 1px solid var(--glass-line); box-shadow: var(--shadow-product); transform-origin: 50% 0; }
 
-        /* Horizontal strip of real output, scroll-snap, captions below images. */
-        .strip { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(280px, 34%); gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px; scrollbar-width: thin; }
-        .strip figure { margin: 0; scroll-snap-align: start; }
-        .strip img { display: block; width: 100%; height: auto; aspect-ratio: 5 / 3; object-fit: cover; border-radius: 14px; border: 1px solid var(--glass-line); }
-        .strip figcaption { margin-top: 10px; font-size: 14px; color: var(--ink-2); }
-        .strip-foot { margin-top: 22px; }
+        /* Statement: each line lights up as it reaches the middle of the screen. */
+        .statement p { font-size: clamp(30px, 4.6vw, 58px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.12; max-width: 26ch; color: var(--ink); }
+        .statement span { display: block; }
 
-        /* Use cases: headline left, real link list right (the right column carries content). */
+        /* Highlights: full-bleed card carousel with paddles, aligned to the page column. */
+        .hl { --gut: clamp(20px, 5vw, 64px); --edge: max(var(--gut), calc((100% - 1200px) / 2 + var(--gut))); }
+        .hl-track { display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 820px); gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--edge); padding-inline: var(--edge); padding-bottom: 8px; scrollbar-width: none; }
+        .hl-track::-webkit-scrollbar { display: none; }
+        .hl-card { scroll-snap-align: start; border-radius: 26px; background: var(--bg-raise); border: 1px solid var(--glass-line); overflow: hidden; display: flex; flex-direction: column; }
+        .hl-card .txt { padding: clamp(24px, 3vw, 36px) clamp(24px, 3vw, 40px) 0; }
+        .hl-card h3 { font-size: clamp(21px, 2.2vw, 28px); letter-spacing: -0.025em; line-height: 1.15; max-width: 26ch; }
+        .hl-card h3 b { font-weight: 600; color: var(--ink-2); }
+        .hl-card img { display: block; width: 100%; aspect-ratio: 5 / 3; object-fit: cover; margin-top: clamp(20px, 3vw, 32px); }
+        .hl-controls { display: flex; justify-content: flex-end; gap: 12px; margin-top: 22px; }
+        .paddle { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--glass-line); background: var(--glass-2); color: var(--ink); font: 600 22px/1 var(--font); cursor: pointer; display: grid; place-items: center; transition: background .2s, opacity .2s, transform .2s var(--ease); }
+        .paddle:hover:not(:disabled) { background: rgba(255,255,255,0.16); }
+        .paddle:active:not(:disabled) { transform: scale(0.94); }
+        .paddle:disabled { opacity: 0.35; cursor: default; }
+        .paddle:focus-visible, .look-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+        /* Closer look: tabs on the left swap the stage on the right. */
+        .look { display: grid; grid-template-columns: minmax(240px, 0.36fr) 1fr; gap: clamp(24px, 4vw, 56px); align-items: center; }
+        .look-tabs { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+        .look-tab { font: 600 16px/1.2 var(--font); color: var(--ink); background: var(--glass-2); border: 1px solid var(--glass-line); border-radius: var(--r-pill); padding: 13px 20px; cursor: pointer; text-align: left; transition: background .25s, color .25s, border-color .25s; }
+        .look-tab:hover { border-color: var(--glass-hi); }
+        .look-tab[aria-selected="true"] { background: var(--ink); color: var(--on-accent); border-color: var(--ink); }
+        .look-desc { margin-top: 22px; font-size: 16px; line-height: 1.55; color: var(--ink-2); max-width: 32ch; min-height: 3.2em; }
+        .look-stage { display: grid; border-radius: 26px; overflow: hidden; background: var(--bg-2); border: 1px solid var(--glass-line); aspect-ratio: 16 / 9; }
+        .look-stage img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: contain; opacity: 0; transform: scale(1.02); transition: opacity .55s var(--ease), transform .7s var(--ease); }
+        .look-stage img.on { opacity: 1; transform: none; }
+
+        /* Facts: four items, four cells, two with real visuals. */
+        .facts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+        .fact { border-radius: 26px; background: var(--bg-raise); border: 1px solid var(--glass-line); padding: clamp(26px, 3vw, 40px); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; min-height: 260px; }
+        .fact .big { font-size: clamp(56px, 7vw, 96px); font-weight: 600; letter-spacing: -0.05em; line-height: 1; color: var(--ink); margin-bottom: 14px; }
+        .fact p { font-size: 17px; line-height: 1.5; color: var(--ink-2); max-width: 34ch; }
+        .fact p strong { color: var(--ink); font-weight: 600; }
+        .fact.free { grid-column: span 4; background: radial-gradient(90% 120% at 100% 0%, rgba(242,169,59,0.30), transparent 60%), var(--bg-raise); }
+        .fact.free .big { color: var(--accent); }
+        .fact.acct, .fact.fmt { grid-column: span 2; }
+        .fact.scale { grid-column: span 4; flex-direction: row; align-items: center; gap: clamp(20px, 3vw, 40px); padding: 0 0 0 clamp(26px, 3vw, 40px); }
+        .fact.scale .txt { flex: 0 0 38%; padding-block: clamp(26px, 3vw, 40px); }
+        .fact.scale img { flex: 1; min-width: 0; align-self: stretch; object-fit: cover; object-position: left center; width: 100%; height: 100%; }
+
+        /* Use cases: headline left, real link list right. */
         .uses { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: clamp(28px, 5vw, 80px); align-items: start; }
-        .uses h2 { font-size: clamp(28px, 3.6vw, 46px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.05; color: var(--ink); }
-        .use-list { border-top: 1px solid var(--glass-line); }
+        .uses h2 { font-size: clamp(34px, 5vw, 60px); letter-spacing: -0.035em; line-height: 1.04; }
         .use-list a { display: grid; grid-template-columns: 1fr auto; gap: 4px 20px; align-items: center; padding: 22px 0; border-bottom: 1px solid var(--glass-line); }
-        .use-list strong { font-size: clamp(19px, 2vw, 24px); font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
-        .use-list span { grid-column: 1; font-size: 14.5px; color: var(--ink-2); }
-        .use-list .ar { grid-column: 2; grid-row: 1 / 3; color: var(--accent); font-size: 20px; transition: transform .2s var(--ease); }
+        .use-list a:first-child { padding-top: 6px; }
+        .use-list strong { font-size: clamp(20px, 2.2vw, 26px); font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+        .use-list span { grid-column: 1; font-size: 15px; color: var(--ink-2); }
+        .use-list .ar { grid-column: 2; grid-row: 1 / 3; color: var(--accent); font-size: 22px; transition: transform .2s var(--ease); }
         .use-list a:hover .ar { transform: translateX(4px); }
 
-        /* Statement: three verbs, set as type. */
-        .verbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 40px); }
-        .verbs h3 { font-size: clamp(34px, 4.4vw, 60px); font-weight: 700; letter-spacing: -0.045em; line-height: 1; color: var(--ink); margin-bottom: 14px; }
-        .verbs div:nth-child(2) h3 { color: var(--accent); }
-        .verbs p { font-size: 15.5px; line-height: 1.55; color: var(--ink-2); max-width: 32ch; }
+        /* Close: the mark, one line, one button. */
+        .close { text-align: center; padding-block: clamp(80px, 11vw, 150px) clamp(96px, 12vw, 170px); }
+        .close .mark { width: 88px; height: 88px; margin: 0 auto 28px; display: block; filter: drop-shadow(0 18px 40px rgba(242,169,59,0.25)); }
+        .close h2 { font-size: clamp(38px, 6vw, 76px); letter-spacing: -0.045em; line-height: 1.02; margin-bottom: 32px; }
 
-        .closing { padding: clamp(40px, 6vw, 80px) 0 clamp(72px, 9vw, 120px); }
-
-        /* Hero entrance: copy first, then the image. Motion only when allowed. */
+        /* Motion. Entrance on load, scroll-driven where the browser supports it. */
         @media (prefers-reduced-motion: no-preference) {
-            .g-hero .copy > * { animation: rise .7s var(--ease) both; }
-            .g-hero .copy > :nth-child(2) { animation-delay: .06s; }
-            .g-hero .copy > :nth-child(3) { animation-delay: .12s; }
-            .g-hero .copy > :nth-child(4) { animation-delay: .18s; }
-            .g-hero figure { animation: rise .9s var(--ease) .2s both; }
-            @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+            .hero .intro > * { animation: rise .8s var(--ease) both; }
+            .hero .intro > :nth-child(2) { animation-delay: .07s; }
+            .hero .intro > :nth-child(3) { animation-delay: .14s; }
+            .hero .intro > :nth-child(4) { animation-delay: .21s; }
+            @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+            @supports (animation-timeline: view()) {
+                .hero-shot img { animation: grow linear both; animation-timeline: view(); animation-range: cover 0% cover 50%; }
+                @keyframes grow { from { transform: scale(0.88); } to { transform: none; } }
+                .statement span { color: var(--ink-3); animation: lit linear both; animation-timeline: view(); animation-range: cover 25% cover 50%; }
+                @keyframes lit { to { color: var(--ink); } }
+            }
         }
 
         @media (max-width: 900px) {
-            .g-hero .wrap { grid-template-columns: 1fr; min-height: 0; }
-            .bento { grid-template-columns: 1fr 1fr; }
-            .cell.capture, .cell.export { grid-column: span 2; grid-row: auto; }
-            .cell.frame { grid-column: span 2; grid-row: auto; }
-            .cell.frame img { aspect-ratio: 4 / 3; }
-            .cell.motion, .cell.ai { grid-column: span 1; }
-            .cell.export { flex-direction: column; }
-            .cell.export .txt { flex: none; }
+            .look { grid-template-columns: 1fr; }
+            .look-tabs { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 6px; margin: -2px; }
+            .look-tab { flex: none; white-space: nowrap; }
+            .look-text { display: contents; }
+            .look-tabs { order: 0; }
+            .look-stage { order: 1; }
+            .look-desc { order: 2; min-height: 0; margin-top: 0; }
+            .facts { grid-template-columns: 1fr 1fr; }
+            .fact.free, .fact.scale { grid-column: span 2; }
+            .fact.acct, .fact.fmt { grid-column: span 1; }
+            .fact.scale { flex-direction: column; align-items: stretch; padding: 0; }
+            .fact.scale .txt { flex: none; padding: clamp(26px, 3vw, 40px); padding-bottom: 0; }
+            .fact.scale img { aspect-ratio: 5 / 3; height: auto; }
             .uses { grid-template-columns: 1fr; }
-            .strip { grid-auto-columns: minmax(260px, 72%); }
         }
         @media (max-width: 600px) {
-            .bento { grid-template-columns: 1fr; }
-            .cell.capture, .cell.frame, .cell.export, .cell.motion, .cell.ai { grid-column: span 1; }
-            .verbs { grid-template-columns: 1fr; }
-            .strip { grid-auto-columns: 84%; }
+            .hl-track { grid-auto-columns: 86vw; gap: 14px; }
+            .facts { grid-template-columns: 1fr; }
+            .fact.free, .fact.scale, .fact.acct, .fact.fmt { grid-column: span 1; }
+            .fact { min-height: 0; }
         }
     </style>
 </head>
@@ -123,82 +155,121 @@
 <!--PARTIAL:mark-->
 <!--PARTIAL:nav-->
 
-<header class="g-hero">
-    <div class="wrap">
-        <div class="copy">
-            <span class="eyebrow">Browser screenshot studio</span>
-            <h1>Screenshots, <em>finished</em>.</h1>
-            <p class="sub">Turn raw screenshots into finished, on-brand images. Free, in your browser, no account.</p>
-            <div class="actions">
-                <a href="/editor/" class="btn btn-primary btn-lg">Open the studio <span class="ar">→</span></a>
-                <a href="/glint/" class="text-link">Meet Glint</a>
-            </div>
+<main id="main" class="home">
+
+<header class="hero">
+    <div class="wrap intro">
+        <p class="name">Glint</p>
+        <h1>Screenshots, <em>finished.</em></h1>
+        <p class="sub">Turn raw screenshots into polished, on-brand images. Free, in your browser.</p>
+        <div class="actions">
+            <a href="/editor/" class="btn btn-primary btn-lg">Open the studio</a>
+            <a href="/glint/" class="more-link">Learn more ›</a>
         </div>
-        <figure>
-            <img src="/shots/hero-editor.webp" alt="The Glint editor framing a dashboard screenshot on a graphite and amber background" loading="eager" fetchpriority="high" width="1280" height="800">
-        </figure>
     </div>
+    <figure class="hero-shot">
+        <img src="/shots/hero-editor.webp" alt="The Glint editor framing a dashboard screenshot on a graphite and amber background" loading="eager" fetchpriority="high" width="1280" height="800">
+    </figure>
 </header>
 
-<section class="g-sec" id="features">
+<section class="sec statement">
     <div class="wrap">
-        <h2>A full studio, no install.</h2>
-        <p class="lead">From raw capture to a shareable, on-brand shot, the whole pipeline runs in your browser. Free, no account.</p>
-        <div class="bento">
-            <article class="cell capture reveal">
+        <p>
+            <span>Paste a screenshot.</span>
+            <span>Pick a look.</span>
+            <span>Ship it.</span>
+            <span>No install, no account, nothing to wait for.</span>
+        </p>
+    </div>
+</section>
+
+<section class="sec hl" id="features" style="padding-top:0;" aria-roledescription="carousel" aria-label="Highlights">
+    <div class="wrap"><h2 class="sec-title">Get the highlights.</h2></div>
+    <div class="hl-track" id="hl-track" tabindex="0">
+        <article class="hl-card">
+            <div class="txt"><h3>Device frames and 3D tilt. <b>Any screen, held up at the right angle.</b></h3></div>
+            <img src="/shots/frame-style.webp" alt="A running app screen in an iPhone frame, tilted in 3D" loading="lazy" width="1200" height="900">
+        </article>
+        <article class="hl-card">
+            <div class="txt"><h3>Spotlights and callouts. <b>Point at the one thing that matters.</b></h3></div>
+            <img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a glass panel" loading="lazy" width="1000" height="600">
+        </article>
+        <article class="hl-card">
+            <div class="txt"><h3>App Store sets. <b>Captioned shots at every store size, in one export.</b></h3></div>
+            <img src="/shots/app-store-set.webp" alt="A set of captioned App Store screenshots" loading="lazy" width="1000" height="600">
+        </article>
+        <article class="hl-card">
+            <div class="txt"><h3>Backgrounds with depth. <b>Gradients, mesh, grain and a little light.</b></h3></div>
+            <img src="/shots/amber-flare.webp" alt="A dashboard in a dark browser frame on a graphite background with an amber flare" loading="lazy" width="1000" height="600">
+        </article>
+        <article class="hl-card">
+            <div class="txt"><h3>Laptop and browser scenes. <b>Put a web app where it lives.</b></h3></div>
+            <img src="/shots/laptop-scene.webp" alt="A dashboard inside a silver laptop frame" loading="lazy" width="1000" height="600">
+        </article>
+        <article class="hl-card">
+            <div class="txt"><h3>Motion on stills. <b>Pan, zoom and wipes, exported as MP4 or GIF.</b></h3></div>
+            <img src="/shots/sunset-pop.webp" alt="A landing page on a sunset gradient with film grain" loading="lazy" width="1000" height="600">
+        </article>
+    </div>
+    <div class="wrap hl-controls">
+        <button type="button" class="paddle" id="hl-prev" aria-label="Previous highlight" disabled>‹</button>
+        <button type="button" class="paddle" id="hl-next" aria-label="Next highlight">›</button>
+    </div>
+</section>
+
+<section class="sec" id="closer" style="padding-top:0;">
+    <div class="wrap">
+        <h2 class="sec-title">Take a closer look.</h2>
+        <div class="look">
+            <div class="look-text">
+                <div class="look-tabs" role="tablist" aria-label="Glint tools">
+                    <button type="button" class="look-tab" role="tab" id="tab-bg" aria-controls="look-stage" aria-selected="true" data-i="0">Backgrounds</button>
+                    <button type="button" class="look-tab" role="tab" id="tab-dev" aria-controls="look-stage" aria-selected="false" tabindex="-1" data-i="1">Device frames</button>
+                    <button type="button" class="look-tab" role="tab" id="tab-ld" aria-controls="look-stage" aria-selected="false" tabindex="-1" data-i="2">Light and dark</button>
+                    <button type="button" class="look-tab" role="tab" id="tab-cv" aria-controls="look-stage" aria-selected="false" tabindex="-1" data-i="3">Curves and Looks</button>
+                    <button type="button" class="look-tab" role="tab" id="tab-roll" aria-controls="look-stage" aria-selected="false" tabindex="-1" data-i="4">The Roll</button>
+                </div>
+                <p class="look-desc" id="look-desc" aria-live="polite">Warm gradients, soft shadows and rounded corners, applied in one click.</p>
+            </div>
+            <div class="look-stage" id="look-stage" role="tabpanel" aria-labelledby="tab-bg">
+                <img class="on" src="/shots/warm-gradient.webp" alt="A task board with rounded corners and a soft shadow on a warm gradient" loading="lazy" width="1000" height="600" data-desc="Warm gradients, soft shadows and rounded corners, applied in one click.">
+                <img src="/shots/device-mockup.webp" alt="A phone app screen inside a device frame" loading="lazy" width="1000" height="600" data-desc="Phones, tablets, laptops and browsers, in 2D or real 3D.">
+                <img src="/shots/glossifier-modes.webp" alt="A task board split down the middle, light on the left and dark on the right" loading="lazy" width="1280" height="600" data-desc="Flip a light screenshot to dark, or dark to light, and keep the original to compare.">
+                <img src="/shots/focus-curves.webp" alt="The same dashboard before and after a curves grade" loading="lazy" width="1280" height="600" data-desc="Curves and levels for a precise grade. Save it as a Look and reuse it anywhere.">
+                <img src="/shots/roll-develop.webp" alt="Three screenshots developed with one design: a phone, a dashboard and a landing page" loading="lazy" width="1280" height="600" data-desc="Style one shot, then develop a whole roll of them with the same design.">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="sec" style="padding-top:0;">
+    <div class="wrap">
+        <h2 class="sec-title">Everything included.</h2>
+        <div class="facts">
+            <article class="fact free reveal">
+                <div class="big">$0</div>
+                <p><strong>Free, forever.</strong> Glint is open source, with no paid tier and nothing to unlock.</p>
+            </article>
+            <article class="fact acct reveal">
+                <div class="big">0</div>
+                <p><strong>Accounts needed.</strong> Open the page and start working.</p>
+            </article>
+            <article class="fact fmt reveal">
+                <div class="big">5</div>
+                <p><strong>Export formats.</strong> PNG, JPEG, WebP, MP4 and GIF.</p>
+            </article>
+            <article class="fact scale reveal">
                 <div class="txt">
-                    <h3>Get the shot in, fast.</h3>
-                    <p>Paste, drag, upload, or load from a URL. Record your screen, then arrange several images with auto-layout.</p>
+                    <div class="big">3x</div>
+                    <p><strong>Export scale.</strong> Sharp on every screen, from a phone to a projector.</p>
                 </div>
                 <img src="/shots/capture-arrange.webp" alt="Four app screenshots arranged in a grid with auto-layout" loading="lazy" width="1200" height="900">
             </article>
-            <article class="cell frame reveal">
-                <div class="txt">
-                    <h3>Make it look designed.</h3>
-                    <p>Device frames, gradients and mesh, liquid glass, grain, shadows and 3D tilt.</p>
-                </div>
-                <img src="/shots/frame-style.webp" alt="A running app screen in an iPhone frame, tilted in 3D" loading="lazy" width="1200" height="900">
-            </article>
-            <article class="cell motion reveal">
-                <div class="txt">
-                    <h3>Motion on stills</h3>
-                    <p>Pan and zoom, entrances and wipes on one timeline, exported as MP4 or GIF.</p>
-                </div>
-            </article>
-            <article class="cell ai reveal">
-                <div class="txt">
-                    <h3>AI, on your terms</h3>
-                    <p>Background removal, OCR, captions and generative edits, hosted or with your own key.</p>
-                </div>
-            </article>
-            <article class="cell export reveal">
-                <div class="txt">
-                    <h3>Export anywhere</h3>
-                    <p>App Store sets, batch ZIPs, social sizes, links and embeds, in PNG, JPEG, WebP, MP4 or GIF.</p>
-                </div>
-                <img src="/shots/app-store-set.webp" alt="A set of captioned App Store screenshots" loading="lazy" width="1600" height="700">
-            </article>
         </div>
     </div>
 </section>
 
-<section class="g-sec" id="showcase" style="padding-top:0;">
-    <div class="wrap">
-        <h2>One screenshot, a dozen ways to make it land.</h2>
-        <p class="lead">Every image here was made in the Glint editor from a plain screenshot.</p>
-        <div class="strip" tabindex="0" aria-label="Examples made in Glint">
-            <figure><img src="/shots/amber-flare.webp" alt="A dashboard in a dark browser frame on a graphite background with an amber flare" loading="lazy" width="1000" height="600"><figcaption>Amber flare, browser frame</figcaption></figure>
-            <figure><img src="/shots/warm-gradient.webp" alt="A task board with rounded corners and a soft shadow on a warm gradient" loading="lazy" width="1000" height="600"><figcaption>Warm gradient, soft shadow</figcaption></figure>
-            <figure><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a glass panel" loading="lazy" width="1000" height="600"><figcaption>Spotlight and callouts</figcaption></figure>
-            <figure><img src="/shots/device-mockup.webp" alt="A phone app screen inside a device frame" loading="lazy" width="1000" height="600"><figcaption>Device mockup</figcaption></figure>
-            <figure><img src="/shots/sunset-pop.webp" alt="A landing page on a sunset gradient with film grain" loading="lazy" width="1000" height="600"><figcaption>Sunset gradient, film grain</figcaption></figure>
-            <figure><img src="/shots/laptop-scene.webp" alt="A dashboard inside a silver laptop frame" loading="lazy" width="1000" height="600"><figcaption>Laptop scene</figcaption></figure>
-        </div>
-        <div class="strip-foot"><a href="/gallery/" class="text-link">Browse the gallery</a></div>
-    </div>
-</section>
-
-<section class="g-sec" style="padding-top:0;">
+<section class="sec" style="padding-top:0;">
     <div class="wrap uses">
         <h2>Built for the shots you ship.</h2>
         <div class="use-list">
@@ -206,32 +277,79 @@
             <a href="/use-cases/" class="reveal"><strong>Release changelogs</strong><span>Polished shots for every update.</span><span class="ar" aria-hidden="true">→</span></a>
             <a href="/use-cases/" class="reveal"><strong>Social posts</strong><span>Sized for X, LinkedIn and more.</span><span class="ar" aria-hidden="true">→</span></a>
             <a href="/use-cases/" class="reveal"><strong>Product docs</strong><span>Annotated, redacted, on-brand.</span><span class="ar" aria-hidden="true">→</span></a>
+            <a href="/gallery/" class="reveal"><strong>The gallery</strong><span>Every image in it was made in Glint.</span><span class="ar" aria-hidden="true">→</span></a>
         </div>
     </div>
 </section>
 
-<section class="g-sec" id="how" style="padding-top:0;">
-    <div class="wrap">
-        <div class="verbs">
-            <div class="reveal"><h3>Drop.</h3><p>Paste, drag or upload a screenshot. Several at once if you like.</p></div>
-            <div class="reveal"><h3>Style.</h3><p>Pick a background, frame and finish. Annotate and tilt until it reads clearly.</p></div>
-            <div class="reveal"><h3>Ship.</h3><p>Copy, download at any store size, export an MP4, or share a link.</p></div>
-        </div>
+<section class="close">
+    <div class="wrap reveal">
+        <svg class="mark" aria-hidden="true"><use href="#mark"/></svg>
+        <h2>Your next screenshot<br>starts here.</h2>
+        <a href="/editor/" class="btn btn-primary btn-lg">Open the studio</a>
     </div>
 </section>
 
-<section class="closing">
-    <div class="wrap">
-        <div class="cta-band reveal">
-            <h2>Your next screenshot, worth sharing.</h2>
-            <p>No sign-up, no download, no waiting. It starts the moment the page loads.</p>
-            <a href="/editor/" class="btn btn-primary btn-lg">Open the studio <span class="ar">→</span></a>
-        </div>
-    </div>
-</section>
+</main>
 
 <!--PARTIAL:footer-->
 
 <script src="/site.js"></script>
+<script>
+// Homepage only: highlights paddles and the closer-look tabs. No scroll listeners;
+// paddle state comes from an IntersectionObserver on the first and last card.
+(function () {
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var track = document.getElementById('hl-track');
+    var prev = document.getElementById('hl-prev');
+    var next = document.getElementById('hl-next');
+    if (track && prev && next) {
+        var cards = track.querySelectorAll('.hl-card');
+        var step = function (dir) {
+            var w = cards[0].getBoundingClientRect().width + 20;
+            track.scrollBy({ left: dir * w, behavior: reduce ? 'auto' : 'smooth' });
+        };
+        prev.addEventListener('click', function () { step(-1); });
+        next.addEventListener('click', function () { step(1); });
+        var ends = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                var btn = e.target === cards[0] ? prev : next;
+                btn.disabled = e.intersectionRatio > 0.9;
+            });
+        }, { root: track, threshold: [0, 0.9, 1] });
+        ends.observe(cards[0]);
+        ends.observe(cards[cards.length - 1]);
+    }
+
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.look-tab'));
+    var stage = document.getElementById('look-stage');
+    var desc = document.getElementById('look-desc');
+    if (tabs.length && stage) {
+        var imgs = stage.querySelectorAll('img');
+        var select = function (i, focus) {
+            tabs.forEach(function (t, j) {
+                var on = j === i;
+                t.setAttribute('aria-selected', String(on));
+                t.tabIndex = on ? 0 : -1;
+                imgs[j].classList.toggle('on', on);
+            });
+            stage.setAttribute('aria-labelledby', tabs[i].id);
+            desc.textContent = imgs[i].dataset.desc;
+            if (focus) tabs[i].focus();
+        };
+        tabs.forEach(function (t, i) {
+            t.addEventListener('click', function () { select(i, false); });
+            t.addEventListener('keydown', function (e) {
+                var n = null;
+                if (e.key === 'ArrowDown' || e.key === 'ArrowRight') n = (i + 1) % tabs.length;
+                if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
+                if (e.key === 'Home') n = 0;
+                if (e.key === 'End') n = tabs.length - 1;
+                if (n !== null) { e.preventDefault(); select(n, true); }
+            });
+        });
+    }
+})();
+</script>
 </body>
 </html>
