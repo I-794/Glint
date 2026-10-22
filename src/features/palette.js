@@ -39,6 +39,7 @@ import { formatKeys } from './shortcuts.js';
 import { getFrequencyBoost, getRecent, recordUse } from './command-usage.js';
 import { getUiMode, setUiMode } from './ui-mode.js';
 import { pickBeforeImage, useCurrentAsBefore, swapBeforeAfter, toggleCompare } from './compare-ui.js';
+import { flipLightDark, turnOffLightDark, makeLightDarkPair, openLightDark } from './mode-flip-ui.js';
 import { openCurves, resetCurves } from './curves-ui.js';
 import { saveLook, copyLookCode, pasteLookCode, importLookFile } from './looks.js';
 import { toggleFloatingToolbar, isFloatingToolbarEnabled } from './floating-toolbar.js';
@@ -76,7 +77,7 @@ function groupFor(id) {
       id.startsWith('tilt-') || id === 'reset-tilt' || id.startsWith('style-') ||
       id === 'toggle-layers' || id.startsWith('zoom') || id.startsWith('theme') ||
       id.startsWith('ui-') || id === 'toggle-float-toolbar' || id.startsWith('compare-') ||
-      id === 'toggle-spotlight' || id.startsWith('spotlight-') || id.startsWith('bokeh-') || id.startsWith('color-tools-') || id.startsWith('look-') || id === 'toggleBoard' || id.startsWith('board') || id === 'seedFromUrl' || id === 'askAgentBoard') return 'View';
+      id === 'toggle-spotlight' || id.startsWith('spotlight-') || id.startsWith('bokeh-') || id.startsWith('light-dark-') || id.startsWith('color-tools-') || id.startsWith('look-') || id === 'toggleBoard' || id.startsWith('board') || id === 'seedFromUrl' || id === 'askAgentBoard') return 'View';
   return 'More';
 }
 
@@ -208,6 +209,13 @@ export function registerCommands() {
     { id: 'spotlight-add-region', label: 'Spotlight: Add focus area',   icon: '◎', run: () => setTool('spotlight') },
     { id: 'spotlight-clear',      label: 'Spotlight: Clear focus areas', icon: '🗑', run: () => { saveStateToHistory(); state.spotlight.regions = []; pruneSelection(); render(); window.__updateUIFromState?.(); showStatus('Focus areas cleared'); } },
     // v38 — Focus: Curves & Levels + Looks.
+    // v39 — Light / Dark
+    { id: 'light-dark-flip', label: 'Light / Dark: Flip the screenshot', icon: '◑', run: () => { openLightDark(); flipLightDark(); },
+      when: () => !!state.image && !state.modeFlip?.enabled },
+    { id: 'light-dark-off', label: 'Light / Dark: Turn off', icon: '◑', run: turnOffLightDark, when: () => !!state.modeFlip?.enabled },
+    { id: 'light-dark-pair', label: 'Light / Dark: Make a light and dark pair (Before / After)', icon: '◑',
+      run: () => { openLightDark(); makeLightDarkPair(); }, when: () => !!state.image && !state.modeFlip?.enabled },
+    { id: 'light-dark-open', label: 'Light / Dark: Open', icon: '◑', run: openLightDark },
     { id: 'color-tools-open', label: 'Curves & Levels: Open', icon: '◐', run: openCurves },
     { id: 'color-tools-reset', label: 'Curves & Levels: Reset all', icon: '◐', run: resetCurves },
     { id: 'look-save', label: 'Looks: Save current look', icon: '◐', run: saveLook },

@@ -451,7 +451,10 @@ export function flipColorHex(hex, target, surface = 20) {
   if (!rgb || (target !== 'dark' && target !== 'light')) return hex;
   const [L, a, b] = srgbToOklab(...rgb);
   if (target === 'dark' ? L < 0.5 : L >= 0.5) return hex;
-  return toHex(oklabToSrgb(flipLightness(L, target, surface), a, b));
+  // Mid tones sit near the flip's fixed point; never lighten on the way to
+  // dark (or darken on the way to light).
+  const f = flipLightness(L, target, surface);
+  return toHex(oklabToSrgb(target === 'dark' ? Math.min(L, f) : Math.max(L, f), a, b));
 }
 
 const FRAME_TO_DARK = { light: 'dark', silver: 'dark', gold: 'dark', titanium: 'dark' };

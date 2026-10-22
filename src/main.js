@@ -48,6 +48,7 @@ import { bindBokeh } from './features/bokeh-ui.js';
 import { bindCurves } from './features/curves-ui.js';
 import { bindLooks } from './features/looks.js';
 import { bindCompare } from './features/compare-ui.js';
+import { bindModeFlip } from './features/mode-flip-ui.js';
 import { bindAiAssets } from './features/ai-assets.js';
 import { bindAiAgent } from './features/ai-agent.js';
 import { bindProducer } from './features/producer.js';
@@ -162,6 +163,7 @@ function init() {
   bindCurves();         // v38 — Curves & Levels (Adjust group)
   bindLooks();          // v38 — Looks library (inside Curves & Levels)
   bindCompare();        // v35 — Before / After Compare (after canvas tools: its hover cursor wins)
+  bindModeFlip();       // v39 — Light / Dark (Adjust group)
   bindAiAssets();      // v19 — AI Assets (on-brand background + isolate)
   bindAiAgent();       // v20 — AI Design Agent copilot
   bindProducer();      // v30 — Producer autopilot (separate surface)

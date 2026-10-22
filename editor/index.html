@@ -190,6 +190,26 @@
             </div>
         </div>
 
+        <!-- v39 — Glossifier: light to dark mode (render/mode-flip.js, features/mode-flip-ui.js). -->
+        <div class="sidebar-section" data-group="adjust" data-simple id="light-dark-section">
+            <h3 class="section-title">Light / Dark</h3>
+            <p class="info-text" style="margin-bottom:10px;">Flip a screenshot between light and dark mode. Photos, brand colors and panels that already match stay as they are.</p>
+            <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:8px;" id="ld-flip-btn">Flip to dark</button>
+            <div class="control-group"><label class="control-label" for="ld-engine">Engine</label><select class="control-input" id="ld-engine"><option value="free">In your browser (free)</option><option value="ai">AI (sharper, uses your key or credits)</option></select></div>
+            <p class="info-text" id="ld-ai-note" style="display:none;margin:-4px 0 8px;">AI can redraw small text, so the original is kept as Before for checking.</p>
+            <div class="control-group"><label class="control-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="ld-scene" checked style="width:auto;"> Match the scene</label></div>
+            <div class="control-group"><label class="control-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="ld-pair" style="width:auto;"> Keep the original as Before</label></div>
+            <p class="info-text" id="ld-status" style="min-height:14px;margin:0 0 6px;"></p>
+            <div id="ld-controls" style="display:none;">
+                <div class="control-group"><label class="control-label">Darkness</label><div class="range-group"><input type="range" class="range-input" id="ld-surface" min="12" max="36" value="20"><span class="range-value" id="ld-surface-value">20</span></div></div>
+                <div class="control-group"><label class="control-label">Protect</label><div class="range-group"><input type="range" class="range-input" id="ld-protect" min="0" max="100" value="60"><span class="range-value" id="ld-protect-value">60%</span></div></div>
+                <div class="ct-actions">
+                    <button type="button" class="btn btn-secondary" id="ld-off-btn">Turn off</button>
+                    <button type="button" class="btn btn-secondary" id="ld-export-pair" style="display:none;">Export slider page</button>
+                </div>
+            </div>
+        </div>
+
         <div class="sidebar-section" data-group="adjust" data-simple>
             <h3 class="section-title">Image Editing</h3>
             <label class="control-label">Transform</label>

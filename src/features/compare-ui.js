@@ -68,6 +68,21 @@ export function pickBeforeImage() {
   if (el.compareFileInput) { el.compareFileInput.value = ''; el.compareFileInput.click(); }
 }
 
+// v39 — Light / Dark pair: put the current screenshot in as Before without its
+// own history entry (the caller has already saved one, so one Undo removes the
+// pair and the flip together). Labels are optional. Returns false on failure.
+export function adoptCurrentAsBefore(labels = null) {
+  if (!state.image) return false;
+  const src = encodeBefore(state.image);
+  if (!src) return false;
+  state.compare = { ...state.compare, beforeSrc: src, enabled: true };
+  if (labels) state.compare.labels = { ...state.compare.labels, ...labels };
+  ensureCompareImage(src).then(() => { render(); refreshCompareUI(); });
+  refreshCompareUI();
+  refreshMotion();
+  return true;
+}
+
 // Keep the current screenshot as Before; the next one loaded becomes After.
 export function useCurrentAsBefore() {
   if (!state.image) { showNotification('Load a screenshot first.', 'error'); return; }

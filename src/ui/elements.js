@@ -79,6 +79,9 @@ const IDS = [
   'spotlight-tint', 'spotlight-tint-text', 'spotlight-clear-btn', 'spotlight-count',
   // v34 — Subject Bokeh
   'bokeh-detect-btn', 'bokeh-status', 'bokeh-enabled', 'bokeh-controls',
+  // v39 — Light / Dark
+  'light-dark-section', 'ld-flip-btn', 'ld-engine', 'ld-ai-note', 'ld-scene', 'ld-pair', 'ld-status', 'ld-controls',
+  'ld-surface', 'ld-surface-value', 'ld-protect', 'ld-protect-value', 'ld-off-btn', 'ld-export-pair',
   'bokeh-amount', 'bokeh-amount-value', 'bokeh-highlights', 'bokeh-highlights-value', 'bokeh-shape',
   // v38 — Curves & Levels + Looks
   'ct-tabs', 'ct-curve', 'ct-black', 'ct-black-value', 'ct-gamma', 'ct-gamma-value', 'ct-white', 'ct-white-value',
