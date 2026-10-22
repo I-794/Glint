@@ -89,6 +89,37 @@ nav.scrolled { border-bottom-color: var(--glass-line); background: rgba(13, 13, 
 .nav-link { font-size: 14.5px; font-weight: 500; color: var(--ink-2); transition: color 0.18s; }
 .nav-link:hover { color: var(--ink); }
 .nav-link[aria-current="page"] { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+/* Flyout menus (Apple-style): hovering Features or Tools drops a full-width panel
+   under the nav and blurs the page behind it. site.js toggles .open on .nav-item
+   (hover intent, the chevron button, Escape). Desktop only; phones use the menu. */
+.nav-item { position: static; align-self: stretch; display: flex; align-items: center; }
+.nav-more { width: 0; height: 0; padding: 0; overflow: hidden; border: 0; background: none; color: var(--ink-2); font: 500 14px/1 var(--font); cursor: pointer; }
+.nav-more:focus-visible { width: auto; height: auto; margin-left: 4px; padding: 2px 4px; border-radius: 6px; outline: 2px solid var(--accent); }
+.flyout {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 1;
+    background: rgba(18, 18, 20, 0.94); backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border-bottom: 1px solid var(--glass-line);
+    visibility: hidden; opacity: 0; transform: translateY(-6px);
+    transition: opacity .24s var(--ease), transform .3s var(--ease), visibility 0s linear .3s;
+}
+.nav-item.open .flyout { visibility: visible; opacity: 1; transform: none; transition: opacity .24s var(--ease), transform .3s var(--ease), visibility 0s; }
+.fly-grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: clamp(24px, 4vw, 64px); padding-block: 36px 48px; }
+.fly-col { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.fly-col h4 { font-size: 12px; font-weight: 500; color: var(--ink-3); margin-bottom: 6px; }
+.fly-col a { font-size: 13.5px; font-weight: 500; color: var(--ink-2); transition: color .15s; }
+.fly-main a { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+.fly-col a:hover, .fly-col a:focus-visible { color: var(--accent); }
+.fly-col > * { opacity: 0; transform: translateY(-4px); }
+.nav-item.open .fly-col > * { opacity: 1; transform: none; transition: opacity .3s var(--ease), transform .3s var(--ease); transition-delay: calc(var(--i, 0) * 22ms + 60ms); }
+.nav-scrim {
+    position: fixed; inset: 66px 0 0; z-index: 90; pointer-events: none;
+    background: rgba(8, 8, 10, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; transition: opacity .3s var(--ease);
+}
+nav:has(.nav-item.open) + .nav-scrim { opacity: 1; }
+nav:has(.nav-item.open) { background: rgba(18, 18, 20, 0.94); }
+@media (max-width: 900px) { .flyout, .nav-scrim, .nav-more { display: none; } }
+
 /* Phone menu button (shown <=560px) and skip link (visible only on focus). */
 .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 4px; flex-shrink: 0; width: 40px; height: 40px; padding: 0; border-radius: 10px; border: 1px solid var(--glass-line); background: transparent; color: var(--ink); cursor: pointer; -webkit-appearance: none; appearance: none; }
 /* Explicit bar width: iOS Safari doesn't stretch flex items inside a <button>, so the bars collapsed to nothing. */
@@ -162,6 +193,7 @@ footer { border-top: 1px solid var(--glass-line); padding: clamp(40px, 5vw, 64px
     nav:not(.open) .nav-right .btn .ar { display: none; }
     nav.open { background: var(--bg-2); border-bottom-color: var(--glass-line); }
     nav.open .nav-right { position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 0; padding: 8px 20px 18px; background: var(--bg-2); border-bottom: 1px solid var(--glass-line); }
+    nav.open .nav-item { display: block; }
     nav.open .nav-link { display: block; padding: 12px 0; font-size: 16px; border-bottom: 1px solid var(--glass-line); }
     nav.open .nav-right .btn { margin-top: 14px; justify-content: center; }
     .foot-inner { flex-direction: column; align-items: flex-start; }
@@ -169,10 +201,13 @@ footer { border-top: 1px solid var(--glass-line); padding: clamp(40px, 5vw, 64px
 @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
     .reveal { opacity: 1; transform: none; transition: none; }
+    .flyout, .fly-col > *, .nav-item.open .fly-col > *, .nav-scrim { transform: none; transition: none !important; }
 }
 @media (prefers-reduced-transparency: reduce) {
     nav, .btn-ghost, .glass, .glass-card, .stat, .glass-interactive { backdrop-filter: none; -webkit-backdrop-filter: none; }
     nav { background: var(--bg-2); }
+    .flyout, .nav-scrim { backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .flyout { background: var(--bg-2); }
     .glass-card, .stat { background: var(--bg-raise); }
 }
 

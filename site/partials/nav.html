@@ -8,8 +8,63 @@
         <a href="/" class="brand"><svg class="brand-mark"><use href="#mark"/></svg>Glint</a>
         <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu"><span></span><span></span><span></span></button>
         <div class="nav-right" id="nav-menu">
-            <a href="/features/" class="nav-link">Features</a>
-            <a href="/tools/" class="nav-link">Tools</a>
+            <div class="nav-item">
+                <a href="/features/" class="nav-link">Features</a>
+                <button type="button" class="nav-more" aria-expanded="false" aria-controls="fly-features" aria-label="Show Features menu">⌄</button>
+                <div class="flyout" id="fly-features">
+                    <div class="wrap fly-grid">
+                        <div class="fly-col fly-main">
+                            <h4>Explore features</h4>
+                            <a href="/features/">All features</a>
+                            <a href="/device-mockup-generator/">Device mockups</a>
+                            <a href="/app-store-screenshots/">App Store sets</a>
+                            <a href="/code-screenshots/">Code screenshots</a>
+                            <a href="/product-mockups/">Product mockups</a>
+                            <a href="/merge/">Merge Studio</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>See what it makes</h4>
+                            <a href="/gallery/">Gallery</a>
+                            <a href="/use-cases/">Use cases</a>
+                            <a href="/changelog/">What's new</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>Get started</h4>
+                            <a href="/editor/">Open the studio</a>
+                            <a href="/guide/">Guide</a>
+                            <a href="/extension/">Browser extension</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item">
+                <a href="/tools/" class="nav-link">Tools</a>
+                <button type="button" class="nav-more" aria-expanded="false" aria-controls="fly-tools" aria-label="Show Tools menu">⌄</button>
+                <div class="flyout" id="fly-tools">
+                    <div class="wrap fly-grid">
+                        <div class="fly-col fly-main">
+                            <h4>Explore tools</h4>
+                            <a href="/tools/">All tools</a>
+                            <a href="/og-image-generator/">OG images</a>
+                            <a href="/drop-shadow-generator/">Drop shadow</a>
+                            <a href="/social-media-mockups/">Social mockups</a>
+                            <a href="/github-readme-screenshots/">GitHub READMEs</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>AI tools</h4>
+                            <a href="/ai/">AI suite</a>
+                            <a href="/agent/">AI studio</a>
+                            <a href="/studio-intelligence/">Studio Intelligence</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>Compare</h4>
+                            <a href="/alternatives/">Alternatives</a>
+                            <a href="/pricing/">Pricing</a>
+                            <a href="/faq/">FAQ</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <a href="/gallery/" class="nav-link">Gallery</a>
             <a href="/ai/" class="nav-link">AI</a>
             <a href="/extension/" class="nav-link">Extension</a>
@@ -18,3 +73,4 @@
         </div>
     </div>
 </nav>
+<div class="nav-scrim" aria-hidden="true"></div>

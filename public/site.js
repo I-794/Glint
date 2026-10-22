@@ -30,6 +30,50 @@
     }
   }
 
+  // 1b) Flyout menus (Features, Tools). Hover intent opens after a short pause so a
+  // pointer passing over the nav does not flash them; the chevron button (visible
+  // on keyboard focus) toggles them; Escape or focus leaving closes them.
+  if (nav) {
+    const items = Array.from(nav.querySelectorAll('.nav-item'));
+    const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+    let openTimer = 0, closeTimer = 0;
+    const setOpen = (item, open) => {
+      items.forEach((it) => {
+        const on = open && it === item;
+        it.classList.toggle('open', on);
+        const btn = it.querySelector('.nav-more');
+        if (btn) btn.setAttribute('aria-expanded', String(on));
+      });
+    };
+    items.forEach((item) => {
+      item.querySelectorAll('.fly-col').forEach((col) => {
+        Array.from(col.children).forEach((c, i) => c.style.setProperty('--i', i));
+      });
+      item.addEventListener('pointerenter', () => {
+        if (!fine.matches) return;
+        clearTimeout(closeTimer); clearTimeout(openTimer);
+        const anyOpen = items.some((it) => it.classList.contains('open'));
+        openTimer = setTimeout(() => setOpen(item, true), anyOpen ? 0 : 140);
+      });
+      item.addEventListener('pointerleave', () => {
+        clearTimeout(openTimer);
+        closeTimer = setTimeout(() => setOpen(item, false), 160);
+      });
+      const btn = item.querySelector('.nav-more');
+      if (btn) btn.addEventListener('click', () => {
+        const open = !item.classList.contains('open');
+        setOpen(item, open);
+        if (open) { const first = item.querySelector('.fly-col a'); if (first) first.focus(); }
+      });
+      item.addEventListener('focusout', (e) => { if (!item.contains(e.relatedTarget)) setOpen(item, false); });
+      item.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape' || !item.classList.contains('open')) return;
+        setOpen(item, false);
+        (item.querySelector('.nav-more') || item.querySelector('.nav-link')).focus();
+      });
+    });
+  }
+
   // 2) Scroll reveal with sibling stagger.
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
