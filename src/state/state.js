@@ -7,6 +7,7 @@ import { bokehDefaults } from '../render/bokeh-core.js';           // v34 (DOM-f
 import { compareDefaults } from '../render/compare-core.js';       // v35 (DOM-free, no imports)
 import { rollDefaults } from '../render/roll-core.js';              // v37 (DOM-free)
 import { colorToolsDefaults } from '../render/curves-core.js'; // v38 (DOM-free)
+import { modeFlipDefaults } from '../render/mode-flip-core.js'; // v39 (DOM-free)
 
 export const state = {
   image: null,
@@ -81,6 +82,8 @@ export const state = {
   bokeh: bokehDefaults(),
   // v38 — Focus: per-channel curves + levels (see render/color-tools.js).
   colorTools: colorToolsDefaults(),
+  // v39 — Glossifier: light to dark mode flip (see render/mode-flip.js).
+  modeFlip: modeFlipDefaults(),
   // v35 — Before / After Compare. beforeSrc is the Before screenshot's dataURL;
   // the main screenshot (state.image) is After. See render/compare.js.
   compare: compareDefaults(),

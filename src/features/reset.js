@@ -7,6 +7,7 @@ import { spotlightDefaults } from '../render/spotlight-geom.js';
 import { bokehDefaults } from '../render/bokeh-core.js';
 import { compareDefaults } from '../render/compare-core.js';
 import { colorToolsDefaults } from '../render/curves-core.js';
+import { modeFlipDefaults } from '../render/mode-flip-core.js';
 
 export function resetToDefaults() {
   saveStateToHistory();
@@ -33,6 +34,7 @@ export function resetToDefaults() {
   state.bokeh = bokehDefaults();
   state.compare = compareDefaults();
   state.colorTools = colorToolsDefaults();
+  state.modeFlip = modeFlipDefaults();
   state.annotationColor = '#ff3b30';
   state.annotationStrokeWidth = 4;
   state.tool = 'select';

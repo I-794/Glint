@@ -23,6 +23,7 @@ import { applyKitObject, captureKitObject } from './brand-kit.js';
 import { escapeHTML } from '../utils/dom.js';
 import { revealSection } from './studio-nav.js';
 import { normalizeColorTools } from '../render/curves-core.js';
+import { normalizeModeFlip } from '../render/mode-flip-core.js';
 
 const GALLERY_BUCKET = 'gallery';
 
@@ -132,6 +133,7 @@ async function applyItem(id) {
     saveStateToHistory();
     Object.assign(state, data.payload);
     state.colorTools = normalizeColorTools(data.payload && data.payload.colorTools);   // v38: older items carry no curves
+    state.modeFlip = normalizeModeFlip(data.payload && data.payload.modeFlip);         // v39: or no flip
     render();
     if (typeof window.__updateUIFromState === 'function') window.__updateUIFromState();
   }

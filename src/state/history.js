@@ -81,6 +81,8 @@ function snapshot() {
     bokeh: state.bokeh,
     // v38 — curves + levels (a curve drag or a Look is one undo step).
     colorTools: state.colorTools,
+    // v39 — light to dark mode flip (Flip, sliders, Turn off are undoable).
+    modeFlip: state.modeFlip,
     // v35 — Before / After Compare (carries the Before dataURL).
     compare: state.compare,
     // v37 — the Roll (shot list, order, overrides, develop settings). Shot

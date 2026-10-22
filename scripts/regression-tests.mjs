@@ -10,6 +10,7 @@ import { migrateLocalStorage, MIGRATED_FLAG } from '../src/state/brand-migrate.j
 import { normalizeCrop, cropRect, cropKey } from '../src/render/crop-core.js';
 import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS } from '../src/render/curves-core.js';
 import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
+import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
 
 function mockRes() {
   return {
@@ -132,7 +133,7 @@ function testCompareMigratesAndPersists() {
     assert.equal(back.beforeSrc, 'data:image/png;base64,AAAA');
     assert.equal(back.split, 0.3);
     assert.equal(back.orientation, 'horizontal');
-    assert.equal(payload.schemaVersion, 23);
+    assert.equal(payload.schemaVersion, 24);
   } finally {
     state.compare = saved;
   }
@@ -224,6 +225,10 @@ function testRollFileNamesAndSizes() {
   assert.deepEqual(parseSizes('1080x1920, canvas, junk'), [
     { label: '1080x1920', width: 1080, height: 1920 }, { label: 'canvas' }]);
   assert.deepEqual(parseSizes(''), [{ label: 'canvas' }]);
+  // v39 — {mode}: filled when present, appended when a mode is given without it.
+  assert.equal(fileName('{n}-{mode}', { n: 1, name: 'a', size: null, mode: 'dark' }), '01-dark.png');
+  assert.equal(fileName('{n}-{name}', { n: 1, name: 'a', size: null, mode: 'light' }), '01-a-light.png');
+  assert.equal(fileName('{n}-{name}', { n: 1, name: 'a', size: null }), '01-a.png', 'no mode, no suffix');
 }
 
 function testRollOverrides() {
@@ -255,7 +260,7 @@ function testRollMigratesAndPersists() {
     state.roll = normalizeRoll({ shots: [{ id: 's1', name: 'x.png', src: 'data:image/jpeg;base64,AA', w: 1, h: 2,
       overrides: { 'textOverlay.content': 'hi' } }], naming: '{name}', activeShot: 's1' });
     const payload = serializeFull();
-    assert.equal(payload.schemaVersion, 23);
+    assert.equal(payload.schemaVersion, 24);
     const back = normalizeProject(payload).design.roll;
     assert.equal(back.shots[0].overrides['textOverlay.content'], 'hi');
     assert.equal(back.naming, '{name}');
@@ -334,12 +339,101 @@ function testLooksAndColorToolsPersist() {
   try {
     state.colorTools = normalizeColorTools({ curves: { rgb: [[0, 10], [255, 245]] }, levels: { r: { gamma: 1.5 } } });
     const payload = serializeFull();
-    assert.equal(payload.schemaVersion, 23);
+    assert.equal(payload.schemaVersion, 24);
     const design = normalizeProject(payload).design;
     assert.deepEqual(design.colorTools.curves.rgb, [[0, 10], [255, 245]]);
     assert.equal(design.colorTools.levels.r.gamma, 1.5);
   } finally {
     state.colorTools = saved;
+  }
+}
+
+function flat(w, h, rgb) {
+  const d = new Uint8ClampedArray(w * h * 4);
+  for (let i = 0; i < d.length; i += 4) { d[i] = rgb[0]; d[i + 1] = rgb[1]; d[i + 2] = rgb[2]; d[i + 3] = 255; }
+  return d;
+}
+
+function testModeFlipCore() {
+  // OKLab round trip stays within one step.
+  for (const c of [[0, 0, 0], [255, 255, 255], [37, 99, 235], [239, 68, 68], [18, 18, 18], [250, 204, 21]]) {
+    const back = oklabToSrgb(...srgbToOklab(...c));
+    back.forEach((v, i) => assert.ok(Math.abs(v - c[i]) <= 1, `round trip ${c} -> ${back}`));
+  }
+  // Dark: white becomes the surface level, black becomes soft ink; light is the inverse.
+  assert.ok(Math.abs(flipLightness(1, 'dark', 20) - 0.20) < 1e-9);
+  assert.ok(Math.abs(flipLightness(0, 'dark', 20) - 0.93) < 1e-9);
+  assert.ok(Math.abs(flipLightness(flipLightness(0.7, 'dark', 20), 'light', 20) - 0.7) < 1e-9);
+  const lut = buildLut3d('dark', 20, 60);
+  const px = (rgb, l = lut, protect = 60) => [...applyFlip(flat(1, 1, rgb), l, null, protect).slice(0, 3)];
+  const white = px([255, 255, 255]);
+  assert.ok(white.every(v => v > 12 && v < 40), `white goes to a dark surface, got ${white}`);
+  assert.ok(px([0, 0, 0]).every(v => v > 215), 'black text goes light');
+  // A saturated brand color keeps its lightness at protect 100, and flips at protect 0.
+  // (A bright yellow, since mid-lightness colors barely move under the flip.)
+  const yellowL = srgbToOklab(250, 204, 21)[0];
+  const kept = srgbToOklab(...px([250, 204, 21], buildLut3d('dark', 20, 100)))[0];
+  const flipped = srgbToOklab(...px([250, 204, 21], buildLut3d('dark', 20, 0)))[0];
+  assert.ok(Math.abs(kept - yellowL) < 0.03, 'protected yellow keeps its lightness');
+  assert.ok(flipped < yellowL - 0.3, 'unprotected yellow flips dark');
+  // Detection and targets: a matching target is a no-op.
+  assert.equal(detectMode(flat(40, 40, [250, 250, 250]), 40, 40), 'light');
+  assert.equal(detectMode(flat(40, 40, [20, 20, 24]), 40, 40), 'dark');
+  assert.equal(resolveTarget('auto', 'light'), 'dark');
+  assert.equal(resolveTarget('auto', 'dark'), 'light');
+  assert.equal(resolveTarget('dark', 'dark'), null);
+  assert.equal(resolveTarget('light', 'dark'), 'light');
+  // Photo mask: a noisy tile is kept, a flat one is not.
+  // Tiles, left to right: a busy photo, a smooth photo (sky: few colors but
+  // noisy), flat white, and white with a dark glyph (an interface text tile).
+  const w = 64, h = 16, d = flat(w, h, [255, 255, 255]);
+  let seed = 7;
+  const rand = () => { seed = (seed * 16807) % 2147483647; return (seed >> 7) & 255; };
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < 16; x++) {
+      const i = (y * w + x) * 4;
+      d[i] = rand(); d[i + 1] = rand(); d[i + 2] = rand();
+      const j = (y * w + x + 16) * 4;
+      d[j] = 120 + (rand() % 3); d[j + 1] = 170 + (rand() % 3); d[j + 2] = 230 + (rand() % 3);
+    }
+    for (let x = 52; x < 56; x++) { const k = (y * w + x) * 4; d[k] = d[k + 1] = d[k + 2] = 30; }
+  }
+  const mask = photoMask(d, w, h);
+  assert.equal(mask[8 * w + 8], 255, 'busy photo pixel is kept');
+  assert.equal(mask[8 * w + 24], 255, 'smooth photo pixel is kept');
+  assert.equal(mask[8 * w + 40], 0, 'flat interface pixel flips');
+  assert.equal(mask[8 * w + 53], 0, 'interface text pixel flips');
+  const out = applyFlip(new Uint8ClampedArray(d), lut, mask, 100);
+  assert.equal(out[(8 * w + 8) * 4], d[(8 * w + 8) * 4], 'photo pixel unchanged at protect 100');
+  assert.ok(out[(8 * w + 40) * 4] < 60, 'interface pixel flipped');
+  // Scene colors keep hue; colors already on the target side stay.
+  assert.equal(flipColorHex('#1a1a2e', 'dark'), '#1a1a2e');
+  assert.equal(flipColorHex('not a color', 'dark'), 'not a color');
+  const hueOf = (hex) => { const [, a, b] = srgbToOklab(parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)); return Math.atan2(b, a); };
+  const lilac = '#c8b6ff', darkLilac = flipColorHex(lilac, 'dark');
+  assert.ok(Math.abs(hueOf(lilac) - hueOf(darkLilac)) < 0.15, `hue kept: ${lilac} -> ${darkLilac}`);
+  const scene = sceneFlip({ bgMode: 'solid', bgColor: '#ffffff', deviceFrame: { type: 'chrome', color: 'silver' }, textOverlay: { color: '#111111' } }, 'dark');
+  assert.ok(srgbToOklab(...[1, 3, 5].map(i => parseInt(scene.bgColor.slice(i, i + 2), 16)))[0] < 0.3, 'solid background goes dark');
+  assert.equal(scene.deviceFrame.color, 'dark');
+  assert.ok(srgbToOklab(...[1, 3, 5].map(i => parseInt(scene.textOverlay.color.slice(i, i + 2), 16)))[0] > 0.8, 'caption goes light');
+  // Normalize repairs junk.
+  assert.deepEqual(normalizeModeFlip({ enabled: 'yes', target: 'sideways', surface: 99, protect: -5 }),
+    { enabled: false, target: 'auto', surface: 36, protect: 0 });
+}
+
+function testModeFlipMigratesAndPersists() {
+  const old = normalizeProject({ schemaVersion: 23, design: { bgColor: '#000000' }, image: null });
+  assert.deepEqual(old.design.modeFlip, normalizeModeFlip(null), 'a pre-v39 design gets the flip off');
+  assert.equal(normalizeRoll({}).modes, 'as-set');
+  assert.equal(normalizeRoll({ modes: 'both' }).modes, 'both');
+  const saved = state.modeFlip;
+  try {
+    state.modeFlip = normalizeModeFlip({ enabled: true, target: 'dark', surface: 24, protect: 80 });
+    const payload = serializeFull();
+    assert.equal(payload.schemaVersion, 24);
+    assert.deepEqual(normalizeProject(payload).design.modeFlip, { enabled: true, target: 'dark', surface: 24, protect: 80 });
+  } finally {
+    state.modeFlip = saved;
   }
 }
 
@@ -359,7 +453,9 @@ const tests = [
   testRollMigratesAndPersists,
   testCropNormalizeAndPersist,
   testColorToolsLuts,
-  testLooksAndColorToolsPersist
+  testLooksAndColorToolsPersist,
+  testModeFlipCore,
+  testModeFlipMigratesAndPersists
 ];
 
 for (const test of tests) {

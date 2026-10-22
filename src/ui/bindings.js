@@ -20,6 +20,7 @@ import { refreshCompareUI } from '../features/compare-ui.js';
 import { setSelection } from '../features/selection.js';
 import { clearAllRedactions } from '../features/canvas-tools.js';
 import { normalizeColorTools } from '../render/curves-core.js';
+import { normalizeModeFlip } from '../render/mode-flip-core.js';
 
 // Helper: link a slider+display to a state value with optional onChange (for history).
 function linkSlider(input, display, getStr, setVal, opts = {}) {
@@ -156,6 +157,7 @@ function ensureColorDefaults() {
   if (!state.colorMap || typeof state.colorMap !== 'object') state.colorMap = { mode: 'off', intensity: 100, steps: 6 };
   // v38 — templates and gallery designs Object.assign without normalizeProject.
   state.colorTools = normalizeColorTools(state.colorTools);
+  state.modeFlip = normalizeModeFlip(state.modeFlip);   // v39
 }
 function refreshPatternUI() {
   const p = state.pattern;

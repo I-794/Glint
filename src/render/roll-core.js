@@ -16,6 +16,7 @@ export const ROLL_OVERRIDE_FIELDS = [
   'compare.enabled',
   'compare.beforeSrc',
   'deviceFrame.type',
+  'modeFlip.enabled',   // v39: a shot that is already dark can skip the flip
 ];
 
 const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
@@ -75,8 +76,13 @@ export function sizeLabel(size) {
 
 // Fill a naming pattern. {n} is the 1-based shot number padded to `pad`,
 // {name} the shot's file name without its extension, {size} the size label.
-export function fileName(pattern, { n, name, size, pad = 2, ext = 'png' }) {
-  const stem = String(pattern || '{n}-{name}-{size}')
+// v39 — `mode` ('light' | 'dark') fills a {mode} token; when a mode is given and
+// the pattern has no {mode}, it is appended so light and dark never collide.
+export function fileName(pattern, { n, name, size, pad = 2, ext = 'png', mode = null }) {
+  let pat = String(pattern || '{n}-{name}-{size}');
+  if (mode && !pat.includes('{mode}')) pat += '-{mode}';
+  const stem = pat
+    .replace(/\{mode\}/g, mode || '')
     .replace(/\{n\}/g, String(n).padStart(pad, '0'))
     .replace(/\{name\}/g, sanitize(String(name || 'shot').replace(/\.[^.]+$/, ''), 'shot'))
     .replace(/\{size\}/g, sanitize(sizeLabel(size), 'canvas'));
@@ -112,6 +118,7 @@ export function rollDefaults() {
     naming: '{n}-{name}-{size}',
     smartFit: { enabled: true, phone: 'iphone16pro', tablet: 'ipadpro', wide: 'chrome' },
     pdf: false,
+    modes: 'as-set',   // v39: 'as-set' | 'both' (Develop writes light and dark)
     activeShot: null,
   };
 }
@@ -153,6 +160,7 @@ export function normalizeRoll(roll) {
     }
   }
   d.pdf = roll.pdf === true;
+  d.modes = roll.modes === 'both' ? 'both' : 'as-set';
   return d;
 }
 
