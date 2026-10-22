@@ -65,7 +65,7 @@
         .ai-tile h3 { font-size: 19px; font-weight: 650; letter-spacing: -0.02em; color: var(--ink); }
         .ai-tile p { font-size: 14.5px; color: var(--ink-2); line-height: 1.55; }
         .ai-tile .more { margin-top: auto; font-size: 13.5px; font-weight: 600; color: var(--accent-press); }
-        .ai-c4 { grid-column: span 4; } .ai-c3 { grid-column: span 3; } .ai-c2 { grid-column: span 2; }
+        .ai-c6 { grid-column: span 6; } .ai-c4 { grid-column: span 4; } .ai-c3 { grid-column: span 3; } .ai-c2 { grid-column: span 2; }
         /* the lead tile carries the generative signature so the grid is not 4 flat cards */
         .ai-tile.lead { color: #fff; border: none; background:
             radial-gradient(70% 90% at 10% 0%, rgba(242,169,59,0.4), transparent 60%),
@@ -95,12 +95,12 @@
         @media (max-width: 900px) {
             .ai-hero, .ai-spot { grid-template-columns: 1fr; }
             .ai-bento { grid-template-columns: 1fr 1fr; }
-            .ai-c4, .ai-c3, .ai-c2 { grid-column: span 2; }
+            .ai-c6, .ai-c4, .ai-c3, .ai-c2 { grid-column: span 2; }
             .ai-keys { grid-template-columns: 1fr; }
         }
         @media (max-width: 560px) {
             .ai-bento { grid-template-columns: 1fr; }
-            .ai-c4, .ai-c3, .ai-c2 { grid-column: span 1; }
+            .ai-c6, .ai-c4, .ai-c3, .ai-c2 { grid-column: span 1; }
         }
         @media (prefers-reduced-motion: reduce) {
             .ai-eyebrow { animation: none; }
@@ -168,7 +168,7 @@
                 <p>The studio reads what is on screen. Get captions and alt text written for you, and pull selectable text straight out of any screenshot.</p>
                 <a class="more" href="/editor/">Read a screenshot →</a>
             </div>
-            <div class="ai-tile ai-c3">
+            <div class="ai-tile ai-c6">
                 <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5H18l-3.75 2.7 1.5 4.5L12 12l-3.75 2.7 1.5-4.5L6 7.5h4.5z"/></svg></div>
                 <h3>Studio Intelligence</h3>
                 <p>A closer look at how every AI layer in Glint works together, what data leaves the browser, and how to get the best results from each feature.</p>

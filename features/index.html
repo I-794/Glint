@@ -16,9 +16,57 @@
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/site.css">
     <style>
-        .cat { margin-bottom: clamp(40px, 6vw, 72px); }
-        .cat > h2 { font-size: clamp(24px, 3vw, 34px); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 6px; color: var(--ink); }
-        .cat > p { font-size: 16px; color: var(--ink-2); margin-bottom: 24px; max-width: 60ch; }
+        /* Features, Apple product-page language: five chapters, each with a real
+           editor shot and its own layout (wide image + columns, split, bento, split
+           reversed, list), then the shared close. No icon boxes. */
+        .fx-head { text-align: center; padding-top: clamp(56px, 8vw, 104px); }
+        .fx-head .name { font-size: clamp(19px, 2vw, 24px); font-weight: 600; color: var(--ink-2); margin-bottom: 10px; }
+        .fx-head h1 { font-size: clamp(44px, 7.4vw, 92px); font-weight: 600; letter-spacing: -0.05em; line-height: 1.02; color: var(--ink); margin-bottom: 20px; }
+        .fx-head h1 em { font-style: normal; color: var(--accent); }
+        .fx-head p { font-size: clamp(18px, 1.8vw, 22px); line-height: 1.45; color: var(--ink-2); max-width: 40ch; margin: 0 auto; }
+
+        .ch { padding-block: clamp(72px, 10vw, 140px) 0; }
+        .ch h2 { font-size: clamp(34px, 5vw, 60px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.04; color: var(--ink); margin-bottom: 14px; }
+        .ch .lead { font-size: clamp(17px, 1.6vw, 21px); line-height: 1.5; color: var(--ink-2); max-width: 44ch; }
+        .ch img { display: block; width: 100%; height: auto; border-radius: 26px; border: 1px solid var(--glass-line); background: var(--bg-raise); }
+        .ch h3 { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 8px; }
+        .ch p.d { font-size: 16px; line-height: 1.55; color: var(--ink-2); max-width: 38ch; }
+
+        /* 1. Wide image, then three columns of text under it. */
+        .ch-wide img { margin-top: clamp(32px, 4vw, 52px); aspect-ratio: 16 / 8; object-fit: cover; }
+        .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(24px, 4vw, 56px); margin-top: clamp(32px, 4vw, 48px); }
+
+        /* 2 and 4. Split: image one side, stacked points the other. */
+        .split { display: grid; grid-template-columns: 1.15fr 1fr; gap: clamp(32px, 5vw, 80px); align-items: center; }
+        .split.rev { grid-template-columns: 1fr 1.15fr; }
+        .split.rev figure { order: 2; }
+        .split figure { margin: 0; }
+        .split img { aspect-ratio: 4 / 3; object-fit: cover; }
+        .points-v { display: flex; flex-direction: column; gap: 28px; margin-top: 36px; }
+
+        /* 3. Bento: one large image cell and two stacked, each with a caption. */
+        .fx-bento { display: grid; grid-template-columns: 1.5fr 1fr; grid-template-rows: auto auto; gap: 16px; margin-top: clamp(32px, 4vw, 52px); }
+        .fx-bento article { border-radius: 26px; background: var(--bg-raise); border: 1px solid var(--glass-line); overflow: hidden; display: flex; flex-direction: column; }
+        .fx-bento article:first-child { grid-row: span 2; }
+        .fx-bento .t { padding: clamp(22px, 2.6vw, 32px); }
+        .fx-bento img { border: 0; border-radius: 0; flex: 1; min-height: 0; aspect-ratio: 5 / 3; object-fit: cover; }
+        .fx-bento article:first-child img { aspect-ratio: auto; }
+
+        /* 5. Headline left, list of large rows right. */
+        .rows { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: clamp(28px, 5vw, 80px); align-items: start; }
+        .rows .list > div { padding: 26px 0; border-bottom: 1px solid var(--glass-line); }
+        .rows .list > div:first-child { padding-top: 4px; }
+        .rows .list h3 { font-size: clamp(21px, 2.2vw, 26px); }
+
+        @media (max-width: 900px) {
+            .cols3 { grid-template-columns: 1fr; gap: 26px; }
+            .split, .split.rev, .rows { grid-template-columns: 1fr; }
+            .split.rev figure { order: 0; }
+            .fx-bento { grid-template-columns: 1fr; }
+            .fx-bento article:first-child { grid-row: auto; }
+            .fx-bento article:first-child img { aspect-ratio: 5 / 3; }
+            .ch-wide img { aspect-ratio: 4 / 3; }
+        }
     </style>
 </head>
 <body>
@@ -26,75 +74,105 @@
 <!--PARTIAL:mark-->
 <!--PARTIAL:nav-->
 
-<header class="page-head">
-    <div class="glow"></div>
+<main id="main">
+
+<header class="fx-head">
     <div class="wrap">
-        <p class="eyebrow" style="margin-bottom:16px;">Everything in one canvas</p>
-        <h1>The whole studio, <span class="grad-text">no install</span>.</h1>
-        <p class="lede">Thirty-plus tools that take a raw capture all the way to a polished, on-brand, shareable shot, running entirely in your browser.</p>
+        <p class="name">Features</p>
+        <h1>The whole studio, <em>no install.</em></h1>
+        <p>Thirty-plus tools that take a raw capture to a polished, on-brand shot, right in your browser.</p>
     </div>
 </header>
 
-<section class="section-pad" style="padding-top:clamp(20px,3vw,32px);">
+<section class="ch ch-wide">
     <div class="wrap">
-
-        <div class="cat">
-            <h2>Capture &amp; import</h2>
-            <p>Get anything onto the canvas in seconds.</p>
-            <div class="cards3">
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M12 3v13m0 0 4-4m-4 4-4-4"/></svg></div><h3>Drop in anything</h3><p>Paste, drag, or upload an image, render an SVG, or load straight from a URL or YouTube link.</p></div>
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none"/></svg></div><h3>Screen recording</h3><p>Record your screen in the browser, then auto-zoom toward each click for a guided walkthrough.</p></div>
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></div><h3>Multi-image layouts</h3><p>Add several images and arrange them with auto-layout grids, with adjustable spacing and alignment.</p></div>
-            </div>
-        </div>
-
-        <div class="cat">
-            <h2>Frames &amp; backgrounds</h2>
-            <p>Set the stage around your shot.</p>
-            <div class="cards3">
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg></div><h3>Device &amp; window frames</h3><p>macOS, Windows, iPhone, iPad, and browser chrome, plus laptop and phone mockup scenes.</p></div>
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="9.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="9.5" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg></div><h3>Backgrounds</h3><p>Gradients, draggable mesh blobs, tiled patterns, solid, or transparent, plus palette extraction.</p></div>
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><circle cx="12" cy="11" r="2.5"/></svg></div><h3>Brand Kit</h3><p>Save colors, fonts, a signature gradient, device colorway, and logo, then apply them in one click.</p></div>
-            </div>
-        </div>
-
-        <div class="cat">
-            <h2>Style &amp; effects</h2>
-            <p>The finish that makes a shot look designed.</p>
-            <div class="cards3">
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="3"/><path d="M7 9.5l4.5 4.5" opacity="0.7"/><path d="M7 13l2.5 2.5" opacity="0.5"/></svg></div><h3>Liquid glass</h3><p>Drag a frosted glass panel that samples and blurs the pixels behind it, with tint and a rim highlight.</p></div>
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="1"/><circle cx="13" cy="6" r="1"/><circle cx="18" cy="9" r="1"/><circle cx="9" cy="13" r="1"/><circle cx="16" cy="13" r="1"/><circle cx="7" cy="18" r="1"/><circle cx="13" cy="18" r="1"/></svg></div><h3>Film grain &amp; art filters</h3><p>Cinematic grain with blend modes, plus one-tap Noir, Vintage, Vivid, and Faded looks.</p></div>
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v5h-5"/></svg></div><h3>Depth &amp; light</h3><p>Soft shadows, mirrored reflections, 3D perspective tilt, and a focus spotlight, all baked into exports.</p></div>
-            </div>
-        </div>
-
-        <div class="cat">
-            <h2>Annotate &amp; motion</h2>
-            <p>Point things out, then bring them to life.</p>
-            <div class="cards3">
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 3 14.5 9 21 9.4 16 13.7 17.7 20 12 16.3 6.3 20 8 13.7 3 9.4 9.5 9"/></svg></div><h3>Shapes &amp; annotations</h3><p>Arrows, lines, ellipses, triangles, polygons, stars, freehand, numbered callouts, and stickers.</p></div>
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h6M7 13h10" opacity="0.5"/><rect x="9" y="8" width="7" height="5" rx="1"/></svg></div><h3>Redact &amp; spotlight</h3><p>Pixelate or blur sensitive regions, and dim everything but the area you want people to look at.</p></div>
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m10 9 5 3-5 3z" fill="currentColor"/></svg></div><h3>Motion on stills</h3><p>Ken Burns pan and zoom, per-element entrances, eight easing curves, and MP4 or GIF export.</p></div>
-            </div>
-        </div>
-
-        <div class="cat">
-            <h2>AI &amp; export</h2>
-            <p>Finish faster, then ship everywhere.</p>
-            <div class="cards3">
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg></div><h3>AI tools</h3><p>Background removal, OCR, captions, generative background and extend, and a magic eraser. Bring your own key or use the hosted backend.</p></div>
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="7" height="18" rx="2"/><rect x="13" y="3" width="7" height="18" rx="2"/></svg></div><h3>App Store sets &amp; batch</h3><p>Design one mockup, export a captioned set at every store size, or run a template across many images.</p></div>
-                <div class="glass-card reveal"><div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8.2 10.8 7.6-3.6m0 9.6L8.2 13.2"/></svg></div><h3>Share &amp; export</h3><p>Links, embeds, and QR, plus social sizes in PNG, JPEG, WebP, MP4, or GIF. The editor installs and runs offline.</p></div>
-            </div>
-        </div>
-
-        <div class="cta-band reveal">
-            <h2>Open it and start building.</h2>
-            <p>No sign-up, no download. Every tool above is one click away.</p>
-            <a href="/editor/" class="btn btn-primary btn-lg">Open the studio <span class="ar">→</span></a>
+        <h2>Capture and import.</h2>
+        <p class="lead">Get anything onto the canvas in seconds.</p>
+        <img class="reveal" src="/shots/capture-arrange.webp" alt="Four app screenshots arranged in a grid with auto-layout" loading="lazy" width="1200" height="900">
+        <div class="cols3">
+            <div class="reveal"><h3>Drop in anything</h3><p class="d">Paste, drag, or upload an image, render an SVG, or load straight from a URL or YouTube link.</p></div>
+            <div class="reveal"><h3>Screen recording</h3><p class="d">Record your screen in the browser, then auto-zoom toward each click for a guided walkthrough.</p></div>
+            <div class="reveal"><h3>Multi-image layouts</h3><p class="d">Add several images and arrange them with auto-layout grids, with adjustable spacing and alignment.</p></div>
         </div>
     </div>
 </section>
+
+<section class="ch">
+    <div class="wrap split">
+        <figure class="reveal"><img src="/shots/device-mockup.webp" alt="A phone app screen inside a device frame" loading="lazy" width="1000" height="600"></figure>
+        <div>
+            <h2>Frames and backgrounds.</h2>
+            <p class="lead">Set the stage around your shot.</p>
+            <div class="points-v">
+                <div class="reveal"><h3>Device and window frames</h3><p class="d">macOS, Windows, iPhone, iPad, and browser chrome, plus laptop and phone mockup scenes.</p></div>
+                <div class="reveal"><h3>Backgrounds</h3><p class="d">Gradients, draggable mesh blobs, tiled patterns, solid, or transparent, plus palette extraction.</p></div>
+                <div class="reveal"><h3>Brand Kit</h3><p class="d">Save colors, fonts, a signature gradient, device colorway, and logo, then apply them in one click.</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ch">
+    <div class="wrap">
+        <h2>Style and effects.</h2>
+        <p class="lead">The finish that makes a shot look designed.</p>
+        <div class="fx-bento">
+            <article class="reveal">
+                <div class="t"><h3>Liquid glass</h3><p class="d">Drag a frosted glass panel that samples and blurs the pixels behind it, with tint and a rim highlight.</p></div>
+                <img src="/shots/frosted-panel.webp" alt="A frosted glass panel over a landing page on a violet gradient" loading="lazy" width="1000" height="600">
+            </article>
+            <article class="reveal">
+                <div class="t"><h3>Film grain and art filters</h3><p class="d">Cinematic grain with blend modes, plus one-tap Noir, Vintage, Vivid, and Faded looks.</p></div>
+                <img src="/shots/sunset-pop.webp" alt="A landing page on a sunset gradient with film grain" loading="lazy" width="1000" height="600">
+            </article>
+            <article class="reveal">
+                <div class="t"><h3>Depth and light</h3><p class="d">Soft shadows, mirrored reflections, 3D tilt, and a focus spotlight, all baked into exports.</p></div>
+                <img src="/shots/frame-style.webp" alt="A running app screen in an iPhone frame, tilted in 3D" loading="lazy" width="1200" height="900">
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="ch">
+    <div class="wrap split rev">
+        <figure class="reveal"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a glass panel" loading="lazy" width="1000" height="600"></figure>
+        <div>
+            <h2>Annotate and motion.</h2>
+            <p class="lead">Point things out, then bring them to life.</p>
+            <div class="points-v">
+                <div class="reveal"><h3>Shapes and annotations</h3><p class="d">Arrows, lines, ellipses, triangles, polygons, stars, freehand, numbered callouts, and stickers.</p></div>
+                <div class="reveal"><h3>Redact and spotlight</h3><p class="d">Pixelate or blur sensitive regions, and dim everything but the area you want people to look at.</p></div>
+                <div class="reveal"><h3>Motion on stills</h3><p class="d">Pan and zoom, per-element entrances, eight easing curves, and MP4 or GIF export.</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ch">
+    <div class="wrap rows">
+        <div>
+            <h2>AI and export.</h2>
+            <p class="lead">Finish faster, then ship everywhere.</p>
+        </div>
+        <div class="list">
+            <div class="reveal"><h3>AI tools</h3><p class="d">Background removal, OCR, captions, generative background and extend, and a magic eraser. Use the hosted backend or your own key.</p></div>
+            <div class="reveal"><h3>App Store sets and batch</h3><p class="d">Design one mockup, export a captioned set at every store size, or run a template across many images.</p></div>
+            <div class="reveal"><h3>Share and export</h3><p class="d">Links, embeds, and QR, plus social sizes in PNG, JPEG, WebP, MP4, or GIF. The editor installs and runs offline.</p></div>
+        </div>
+    </div>
+</section>
+
+<section class="section-pad">
+    <div class="wrap">
+        <div class="cta-band reveal">
+            <h2>Open it and start building.</h2>
+            <p>No sign-up, no download. Every tool above is one click away.</p>
+            <a href="/editor/" class="btn btn-primary btn-lg">Open the studio</a>
+        </div>
+    </div>
+</section>
+
+</main>
 
 <!--PARTIAL:footer-->
 

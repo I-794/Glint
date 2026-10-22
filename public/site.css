@@ -385,3 +385,40 @@ body::before { animation: auroraDrift 34s ease-in-out infinite alternate; }
     .points { grid-template-columns: 1fr; }
     .road { grid-template-columns: 1fr; }
 }
+
+/* ─────────── v40 Apple pass ───────────
+   One Apple product-page language across every marketing page, applied here so
+   each page's existing markup picks it up: larger, tighter 600-weight headlines,
+   plain sentence-case labels instead of mono caps, flat tiles with bare icons, and
+   an open closing section instead of a boxed band. */
+:root { --r-card: 26px; }
+
+.eyebrow, .mono-label { font-family: var(--font); font-size: 17px; font-weight: 600; letter-spacing: -0.01em; text-transform: none; color: var(--ink-2); }
+.page-head .eyebrow, .page-head .mono-label { font-size: clamp(18px, 1.8vw, 22px); }
+
+.page-head { padding: clamp(64px, 10vw, 128px) 0 clamp(40px, 6vw, 72px); }
+.page-head h1 { font-size: clamp(40px, 6.6vw, 80px); font-weight: 600; letter-spacing: -0.045em; line-height: 1.02; }
+.page-head .lede { font-size: clamp(18px, 1.7vw, 21px); line-height: 1.5; }
+.section-pad { padding: clamp(72px, 10vw, 128px) 0; }
+.head-block, .section-head { max-width: 48ch; }
+.head-block h2, .section-head h2 { font-size: clamp(32px, 4.6vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.04; }
+.head-block p, .section-head p { font-size: clamp(17px, 1.5vw, 19px); }
+
+/* Flat tiles: no glass sheen, no lift, the icon sits bare in the accent color. */
+.glass-card { background: var(--bg-raise); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; padding: clamp(26px, 2.6vw, 34px); }
+.glass-card:hover { transform: none; border-color: var(--line-strong); }
+a.glass-card:hover { border-color: var(--glass-hi); }
+.glass-card.glass-interactive::after { display: none; }
+.glass-card h3 { font-size: 20px; letter-spacing: -0.025em; }
+.glass-card p { font-size: 15.5px; }
+.card-ico { width: auto; height: auto; background: none; border: 0; border-radius: 0; justify-content: flex-start; margin-bottom: 18px; color: var(--accent); }
+.card-ico svg { width: 30px; height: 30px; }
+
+/* Closing section: Apple ends a page on open space, one line and one button. */
+.cta-band { background: radial-gradient(50% 70% at 50% 100%, rgba(242,169,59,0.12), transparent 70%); border: 0; box-shadow: none; border-radius: 0; padding: clamp(56px, 8vw, 110px) 0; }
+.cta-band h2 { font-size: clamp(36px, 5.6vw, 68px); font-weight: 600; letter-spacing: -0.045em; }
+.cta-band p { color: var(--ink-2); font-size: clamp(17px, 1.6vw, 20px); }
+
+/* Buttons stay flat, like Apple's: no glow, no hover lift. */
+.btn-primary, .btn-primary:hover { box-shadow: none; }
+.btn-primary:hover, .btn-ghost:hover { transform: none; }

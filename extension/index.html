@@ -24,7 +24,7 @@
            resolving into the studio. No em-dashes. */
 
         /* ── Hero: copy left, a browser-capture mock right ── */
-        .ex-hero { display: grid; grid-template-columns: 1.02fr 1fr; gap: clamp(32px, 5vw, 72px); align-items: center; }
+        .ex-hero { display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
         .ex-shot { position: relative; }
         .ex-browser { border-radius: 14px; overflow: hidden; background: #0e1120; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 40px 80px -26px rgba(0,0,0,0.72); transform: rotate(-1.2deg); }
         .ex-bar { height: 36px; background: #151a2b; display: flex; align-items: center; gap: 7px; padding: 0 13px; border-bottom: 1px solid rgba(255,255,255,0.06); }
@@ -105,7 +105,7 @@
             <div class="ex-shot reveal">
                 <div class="ex-browser">
                     <div class="ex-bar"><i></i><i></i><i></i><span class="u">glint studio</span></div>
-                    <img class="ex-canvas" src="https://picsum.photos/seed/glint-capture-hero/1280/800" alt="A webpage being captured" loading="eager" width="1280" height="800">
+                    <img class="ex-canvas" src="/shots/amber-flare.webp" alt="A web dashboard in a browser window, ready to capture" loading="eager" width="1000" height="600">
                 </div>
                 <div class="ex-marquee"><span></span><span></span><span></span><span></span><span class="dim">Region</span></div>
                 <div class="ex-pop">
