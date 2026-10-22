@@ -190,9 +190,9 @@ Current `SCHEMA_VERSION` is 23 (v38 Focus, curves + levels). The board is docume
 
 ## Backlog (unbuilt; v39 is planned below)
 
-### Planned: v39 Glossifier (light to dark mode + QoL), not started
+### Planned: v39 Glossifier (light to dark mode + QoL), planned, not built
 
-Codename picked by the user (the first non-photography one). Headline: convert a screenshot between light and dark mode. Plus two QoL items.
+Codename picked by the user (the first non-photography one). Headline: convert a screenshot between light and dark mode. Plus two QoL items. The implementation plan is `docs/superpowers/plans/2026-10-22-v39-glossifier.md`: the free engine is a non-destructive pass (`state.modeFlip`, schema 24), and the release also flips the scene (background, frame, caption), adds the flip as a Roll override with light-and-dark Develop, and a one-click light / dark Compare pair.
 
 - **Light to dark mode (headline):** one button flips a light-mode screenshot to dark mode (or dark to light). Two engines: an AI one through the existing image-edit path (`ai-image-edit.js` `edit()` + `applyResultAsImage()`, so the result bakes into export and undo, like `ai-screenshot-editor.js`), and a free in-browser one for visitors without the AI backend (a per-pixel Lab lightness flip that keeps hue, with a guard that leaves photos and saturated brand colors alone; DOM-free core so it can be regression-tested). Pairs with Compare: offer "Keep the original as Before" so light and dark show side by side with the slider. Lives in the Adjust or AI group with a Cmd-K command; decide whether the free engine is a non-destructive pass in `getGradedImage` (new state key + schema bump) or a one-shot image replace (no schema change).
 - **Hold to compare (QoL):** hold `\` to see the screenshot without its grade, curves, levels or Bokeh, release to see it graded again (Lightroom's key). Preview only: a runtime flag `getGradedImage` checks, never in `snapshot()` or saved, skipped for exports. Add to `SHORTCUTS` in `shortcuts.js` as `displayOnly` with the key handling in `keyboard.js`.
