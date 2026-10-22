@@ -23,7 +23,15 @@
     });
     const toggle = nav.querySelector('.nav-toggle');
     if (toggle) {
-      const setOpen = (open) => { nav.classList.toggle('open', open); toggle.setAttribute('aria-expanded', String(open)); };
+      const setOpen = (open) => {
+        nav.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.setAttribute('aria-label', open ? 'Close menu' : 'Menu');
+        if (!open) {
+          nav.classList.remove('sub');
+          nav.querySelectorAll('.nav-item.open').forEach((it) => it.classList.remove('open'));
+        }
+      };
       toggle.addEventListener('click', () => setOpen(!nav.classList.contains('open')));
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && nav.classList.contains('open')) { setOpen(false); toggle.focus(); } });
       document.addEventListener('click', (e) => { if (nav.classList.contains('open') && !nav.contains(e.target)) setOpen(false); });
@@ -36,6 +44,10 @@
   if (nav) {
     const items = Array.from(nav.querySelectorAll('.nav-item'));
     const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const small = window.matchMedia('(max-width: 980px)');
+    const back = nav.querySelector('.nav-back');
+    const menu = nav.querySelector('.nav-right');
+    if (menu) Array.from(menu.children).forEach((c, i) => c.style.setProperty('--i', i));
     let openTimer = 0, closeTimer = 0;
     const setOpen = (item, open) => {
       items.forEach((it) => {
@@ -45,17 +57,37 @@
         if (btn) btn.setAttribute('aria-expanded', String(on));
       });
     };
+    const closeSub = () => {
+      const item = items.find((it) => it.classList.contains('open'));
+      setOpen(null, false);
+      nav.classList.remove('sub');
+      const link = item && item.querySelector('.nav-link');
+      if (link) link.focus();
+    };
+    if (back) back.addEventListener('click', closeSub);
     items.forEach((item) => {
       item.querySelectorAll('.fly-col').forEach((col) => {
         Array.from(col.children).forEach((c, i) => c.style.setProperty('--i', i));
       });
+      // Phone menu: a section name opens its page instead of following the link.
+      const link = item.querySelector('.nav-link');
+      if (link) link.addEventListener('click', (e) => {
+        if (!small.matches || !nav.classList.contains('open')) return;
+        e.preventDefault();
+        setOpen(item, true);
+        nav.classList.add('sub');
+        const fly = item.querySelector('.flyout');
+        if (fly) fly.scrollTop = 0;
+        if (back) back.focus();
+      });
       item.addEventListener('pointerenter', () => {
-        if (!fine.matches) return;
+        if (!fine.matches || small.matches) return;
         clearTimeout(closeTimer); clearTimeout(openTimer);
         const anyOpen = items.some((it) => it.classList.contains('open'));
         openTimer = setTimeout(() => setOpen(item, true), anyOpen ? 0 : 140);
       });
       item.addEventListener('pointerleave', () => {
+        if (!fine.matches || small.matches) return;
         clearTimeout(openTimer);
         closeTimer = setTimeout(() => setOpen(item, false), 160);
       });
@@ -65,9 +97,10 @@
         setOpen(item, open);
         if (open) { const first = item.querySelector('.fly-col a'); if (first) first.focus(); }
       });
-      item.addEventListener('focusout', (e) => { if (!item.contains(e.relatedTarget)) setOpen(item, false); });
+      item.addEventListener('focusout', (e) => { if (!small.matches && !item.contains(e.relatedTarget)) setOpen(item, false); });
       item.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape' || !item.classList.contains('open')) return;
+        if (small.matches) { e.stopPropagation(); closeSub(); return; }
         setOpen(item, false);
         (item.querySelector('.nav-more') || item.querySelector('.nav-link')).focus();
       });

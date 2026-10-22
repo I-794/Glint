@@ -118,7 +118,6 @@ nav.scrolled { border-bottom-color: var(--glass-line); background: rgba(13, 13, 
 }
 nav:has(.nav-item.open) + .nav-scrim { opacity: 1; }
 nav:has(.nav-item.open) { background: rgba(18, 18, 20, 0.94); }
-@media (max-width: 900px) { .flyout, .nav-scrim, .nav-more { display: none; } }
 
 /* Phone menu button (shown <=560px) and skip link (visible only on focus). */
 .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 4px; flex-shrink: 0; width: 40px; height: 40px; padding: 0; border-radius: 10px; border: 1px solid var(--glass-line); background: transparent; color: var(--ink); cursor: pointer; -webkit-appearance: none; appearance: none; }
@@ -184,18 +183,45 @@ footer { border-top: 1px solid var(--glass-line); padding: clamp(40px, 5vw, 64px
 .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
 .reveal.in { opacity: 1; transform: none; }
 
-@media (max-width: 560px) {
-    .nav-link { display: none; }
-    /* Header on phones: brand, a compact one-line CTA, then the menu button at the far right. */
+.nav-back { display: none; width: 40px; height: 40px; margin-left: -10px; border: 0; background: none; color: var(--ink); font: 300 38px/1 var(--font); cursor: pointer; place-items: center; padding-bottom: 4px; }
+
+/* Phones and tablets: the menu button opens a full-screen list (Apple's phone menu).
+   Tapping a section slides its flyout in as its own page, with a back button where
+   the logo was. The nav drops its backdrop-filter while open so the fixed panels
+   size to the viewport instead of the 66px bar. */
+@media (max-width: 980px) {
+    .nav-link, .nav-more, .nav-scrim { display: none; }
+    .flyout { display: none; }
     .nav-toggle { display: inline-flex; order: 3; margin-left: 10px; }
     .nav-right { margin-left: auto; }
+    nav:not(.open) .nav-item { display: none; }
     nav:not(.open) .nav-right .btn { padding: 9px 14px; font-size: 14px; white-space: nowrap; }
     nav:not(.open) .nav-right .btn .ar { display: none; }
-    nav.open { background: var(--bg-2); border-bottom-color: var(--glass-line); }
-    nav.open .nav-right { position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 0; padding: 8px 20px 18px; background: var(--bg-2); border-bottom: 1px solid var(--glass-line); }
+    nav.open { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; border-bottom-color: transparent; }
+    body:has(nav.open) { overflow: hidden; }
+    nav.open .nav-right { position: fixed; top: 66px; left: 0; right: 0; bottom: 0; margin: 0; overflow-y: auto; flex-direction: column; align-items: stretch; gap: 0; padding: 12px clamp(28px, 9vw, 72px) 48px; background: var(--bg); }
     nav.open .nav-item { display: block; }
-    nav.open .nav-link { display: block; padding: 12px 0; font-size: 16px; border-bottom: 1px solid var(--glass-line); }
-    nav.open .nav-right .btn { margin-top: 14px; justify-content: center; }
+    nav.open .nav-link { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; font-size: clamp(27px, 7.4vw, 34px); font-weight: 600; letter-spacing: -0.025em; color: var(--ink); }
+    nav.open .nav-link::after { content: '›'; font-weight: 300; color: var(--ink-3); }
+    nav.open .nav-link[aria-current="page"] { text-decoration: none; color: var(--accent); }
+    nav.open .nav-right .btn { margin-top: 32px; justify-content: center; padding: 15px 22px; font-size: 16px; }
+    nav.open .nav-item.open .flyout { display: block; position: fixed; top: 66px; left: 0; right: 0; bottom: 0; z-index: 2; overflow-y: auto; background: var(--bg); border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; visibility: visible; opacity: 1; transform: none; }
+    .fly-grid { grid-template-columns: 1fr; gap: 44px; padding: 12px clamp(28px, 9vw, 72px) 64px; }
+    .fly-main { gap: 14px; }
+    .fly-main h4 { display: none; }
+    .fly-main a { font-size: clamp(28px, 7.6vw, 36px); }
+    .fly-col h4 { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+    .fly-col:not(.fly-main) a { font-size: 18px; font-weight: 600; color: var(--ink); }
+    nav.sub .brand { display: none; }
+    nav.sub .nav-back { display: grid; }
+    @media (prefers-reduced-motion: no-preference) {
+        nav.open:not(.sub) .nav-right > * { animation: menuIn .42s var(--ease) both; animation-delay: calc(var(--i, 0) * 28ms); }
+        nav.open .nav-item.open .flyout { animation: subIn .36s var(--ease) both; }
+        @keyframes menuIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+        @keyframes subIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+    }
+}
+@media (max-width: 560px) {
     .foot-inner { flex-direction: column; align-items: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -1,10 +1,14 @@
-<!-- Shared marketing nav. One source of truth for every page's menu. Kept to a
-     single line at desktop with six links; everything else (Code, Studio
-     Intelligence, Guide, ...) lives in the columned footer. On
-     phones (<=560px) the links fold into a dropdown behind .nav-toggle (site.js). -->
+<!-- Shared marketing nav. One source of truth for every page's menu. Apple-style:
+     every section has a flyout. On desktop (>980px) hovering a section drops its
+     flyout under the bar; the chevron button (shown on keyboard focus) opens it too.
+     On phones and tablets (<=980px) the menu button opens a full-screen list, and
+     tapping a section slides its flyout in as its own page with a back button.
+     Behavior lives in site.js (1b), styles in site.css (Flyout menus). Every link
+     must point at a real page. -->
 <a class="skip-link" href="#main">Skip to content</a>
 <nav id="nav" aria-label="Main">
     <div class="wrap nav-inner">
+        <button type="button" class="nav-back" aria-label="Back to menu">‹</button>
         <a href="/" class="brand"><svg class="brand-mark"><use href="#mark"/></svg>Glint</a>
         <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu"><span></span><span></span><span></span></button>
         <div class="nav-right" id="nav-menu">
@@ -23,16 +27,15 @@
                             <a href="/merge/">Merge Studio</a>
                         </div>
                         <div class="fly-col">
-                            <h4>See what it makes</h4>
-                            <a href="/gallery/">Gallery</a>
-                            <a href="/use-cases/">Use cases</a>
+                            <h4>Learn about Glint</h4>
+                            <a href="/glint/">Meet Glint</a>
                             <a href="/changelog/">What's new</a>
+                            <a href="/roadmap/">Roadmap</a>
                         </div>
                         <div class="fly-col">
                             <h4>Get started</h4>
                             <a href="/editor/">Open the studio</a>
                             <a href="/guide/">Guide</a>
-                            <a href="/extension/">Browser extension</a>
                         </div>
                     </div>
                 </div>
@@ -51,24 +54,112 @@
                             <a href="/github-readme-screenshots/">GitHub READMEs</a>
                         </div>
                         <div class="fly-col">
-                            <h4>AI tools</h4>
-                            <a href="/ai/">AI suite</a>
-                            <a href="/agent/">AI studio</a>
-                            <a href="/studio-intelligence/">Studio Intelligence</a>
+                            <h4>Made for</h4>
+                            <a href="/app-store-screenshots/">App Store screenshots</a>
+                            <a href="/code-screenshots/">Code screenshots</a>
+                            <a href="/use-cases/">More use cases</a>
                         </div>
                         <div class="fly-col">
                             <h4>Compare</h4>
                             <a href="/alternatives/">Alternatives</a>
-                            <a href="/pricing/">Pricing</a>
                             <a href="/faq/">FAQ</a>
                         </div>
                     </div>
                 </div>
             </div>
-            <a href="/gallery/" class="nav-link">Gallery</a>
-            <a href="/ai/" class="nav-link">AI</a>
-            <a href="/extension/" class="nav-link">Extension</a>
-            <a href="/pricing/" class="nav-link">Pricing</a>
+            <div class="nav-item">
+                <a href="/gallery/" class="nav-link">Gallery</a>
+                <button type="button" class="nav-more" aria-expanded="false" aria-controls="fly-gallery" aria-label="Show Gallery menu">⌄</button>
+                <div class="flyout" id="fly-gallery">
+                    <div class="wrap fly-grid">
+                        <div class="fly-col fly-main">
+                            <h4>See what it makes</h4>
+                            <a href="/gallery/">Browse the gallery</a>
+                            <a href="/use-cases/">Use cases</a>
+                            <a href="/product-mockups/">Print mockups</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>Make your own</h4>
+                            <a href="/editor/">Open the studio</a>
+                            <a href="/guide/">Guide</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>Recently added</h4>
+                            <a href="/changelog/">What's new</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item">
+                <a href="/ai/" class="nav-link">AI</a>
+                <button type="button" class="nav-more" aria-expanded="false" aria-controls="fly-ai" aria-label="Show AI menu">⌄</button>
+                <div class="flyout" id="fly-ai">
+                    <div class="wrap fly-grid">
+                        <div class="fly-col fly-main">
+                            <h4>Explore AI</h4>
+                            <a href="/ai/">All AI features</a>
+                            <a href="/agent/">AI studio</a>
+                            <a href="/studio-intelligence/">Studio Intelligence</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>Good to know</h4>
+                            <a href="/pricing/">Use your own key</a>
+                            <a href="/privacy/">Privacy</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>Get started</h4>
+                            <a href="/editor/">Open the studio</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item">
+                <a href="/extension/" class="nav-link">Extension</a>
+                <button type="button" class="nav-more" aria-expanded="false" aria-controls="fly-extension" aria-label="Show Extension menu">⌄</button>
+                <div class="flyout" id="fly-extension">
+                    <div class="wrap fly-grid">
+                        <div class="fly-col fly-main">
+                            <h4>Capture anywhere</h4>
+                            <a href="/extension/">Glint Capture</a>
+                            <a href="/editor/">Open the studio</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>Help</h4>
+                            <a href="/guide/">Guide</a>
+                            <a href="/faq/">FAQ</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>Open source</h4>
+                            <a href="https://github.com/I-794/Glint" target="_blank" rel="noopener">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item">
+                <a href="/pricing/" class="nav-link">Pricing</a>
+                <button type="button" class="nav-more" aria-expanded="false" aria-controls="fly-pricing" aria-label="Show Pricing menu">⌄</button>
+                <div class="flyout" id="fly-pricing">
+                    <div class="wrap fly-grid">
+                        <div class="fly-col fly-main">
+                            <h4>Free and open source</h4>
+                            <a href="/pricing/">Pricing</a>
+                            <a href="/alternatives/">Compare Glint</a>
+                            <a href="/faq/">FAQ</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>The project</h4>
+                            <a href="/about/">About</a>
+                            <a href="/roadmap/">Roadmap</a>
+                            <a href="https://github.com/I-794/Glint" target="_blank" rel="noopener">GitHub</a>
+                        </div>
+                        <div class="fly-col">
+                            <h4>Legal</h4>
+                            <a href="/privacy/">Privacy</a>
+                            <a href="/terms/">Terms</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <a href="/editor/" class="btn btn-primary">Open the studio <span class="ar">→</span></a>
         </div>
     </div>
