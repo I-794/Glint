@@ -203,6 +203,30 @@ const RECIPES = [
   }
 ];
 
+// v39.5.2: the tool pages' own images (they used stock photos). Phone panels
+// are 9:19 to fill the .lp-shots slots; product mockups go through Surface Studio.
+const PW = 720, PH = 1520;
+const GRAPHITE = { type: 'linear', angle: 180, colors: ['#2e2e34', '#16161a'], positions: [0, 100] };
+const surface = (type, variant = 'white', scale = 1) => ({ enabled: true, type, variant, scale, offsetX: 0, offsetY: 0, rotation: 0, shadow: true, shadingOpacity: 0.85 });
+RECIPES.push(
+  { file: 'dev-iphone', source: 'mobileToday', state: { canvas: { width: PW, height: PH }, ...LOOKS['device-mockup'].state, reflection: { enabled: false } } },
+  { file: 'dev-pixel', source: 'mobileWorkout', state: { canvas: { width: PW, height: PH }, ...LOOKS['aurora-mesh'].state, padding: 40, deviceFrame: { type: 'pixel', color: 'dark', glare: true } } },
+  { file: 'dev-classic', source: 'mobilePlans', state: { canvas: { width: PW, height: PH }, ...LOOKS['amber-flare'].state, padding: 40, deviceFrame: { type: 'iphone', color: 'dark', glare: true } } },
+  { file: 'social-a', source: 'mobileToday', state: { canvas: { width: PW, height: PH }, ...LOOKS['amber-flare'].state, padding: 60, deviceFrame: { type: 'iphone16pro', color: 'dark', glare: true } } },
+  { file: 'social-b', source: 'mobileWorkout', state: { canvas: { width: PW, height: PH }, ...LOOKS['sunset-pop'].state, padding: 60, deviceFrame: { type: 'iphone16pro', color: 'dark', glare: true } } },
+  { file: 'social-c', source: 'mobilePlans', state: { canvas: { width: PW, height: PH }, ...LOOKS['cobalt-mesh'].state, padding: 60, tilt3d: { rx: 0, ry: 0, rz: 0, perspective: 1400 }, deviceFrame: { type: 'iphone16pro', color: 'dark', glare: true } } },
+  { file: 'surf-tee', source: 'landing', state: { canvas: { width: PW, height: PH }, padding: 40, bgMode: 'gradient', gradient: GRAPHITE, surface: surface('tshirt', 'white', 1.8) } },
+  { file: 'surf-mug', source: 'landing', state: { canvas: { width: PW, height: PH }, padding: 40, bgMode: 'gradient', gradient: GRAPHITE, surface: surface('mug', 'white', 1.8) } },
+  { file: 'surf-poster', source: 'mobileToday', state: { canvas: { width: PW, height: PH }, padding: 40, bgMode: 'gradient', gradient: GRAPHITE, surface: surface('poster') } },
+  { file: 'surf-apparel', source: 'mobileWorkout', state: { canvas: { width: 1040, height: 1400 }, padding: 40, bgMode: 'gradient', gradient: GRAPHITE, surface: surface('tshirt') } },
+  { file: 'surf-box', source: 'landing', state: { canvas: { width: 1040, height: 720 }, padding: 40, bgMode: 'gradient', gradient: GRAPHITE, surface: surface('box') } },
+  { file: 'surf-frame', source: 'mobilePlans', state: { canvas: { width: 1040, height: 720 }, padding: 40, bgMode: 'gradient', gradient: GRAPHITE, surface: surface('framedprint') } },
+  { file: 'surf-card', source: 'landing', state: { canvas: { width: 1040, height: 720 }, padding: 40, bgMode: 'gradient', gradient: GRAPHITE, surface: surface('businesscard') } },
+  { file: 'surf-poster-wide', source: 'mobileWorkout', state: { canvas: { width: 1040, height: 720 }, padding: 40, bgMode: 'gradient', gradient: GRAPHITE, surface: surface('poster') } },
+  { file: 'surf-export', source: 'landing', state: { canvas: { width: 1200, height: 900 }, ...LOOKS['amber-flare'].state, deviceFrame: { type: null }, surface: surface('mug') } },
+  { file: 'agent-styled', source: 'mobileToday', state: { canvas: { width: 1200, height: 740 }, ...LOOKS['warm-gradient'].state, padding: 50, deviceFrame: { type: 'iphone16pro', color: 'titanium', glare: true } } }
+);
+
 // v39.5 Amplified: Tools cards that show one design rendered several ways,
 // laid out side by side. Social: the same design at square, portrait and story
 // sizes. Merge: one template filled from three CSV rows (headline + color).
@@ -435,6 +459,12 @@ for (const m of MULTI) {
     }
     const files = await renderSetPanels();
     const imgs = await Promise.all(files.map((f) => createImageBitmap(f.blob)));
+    // v39.5.2: each panel on its own (720 wide) for the App Store tool page.
+    window.__setPanels = imgs.map((im) => {
+      const c = document.createElement('canvas'); c.width = 720; c.height = Math.round(720 * im.height / im.width);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      return c.toDataURL('image/webp', q).split(',')[1];
+    });
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     const x = c.getContext('2d');
     const g = x.createLinearGradient(0, 0, W, H);
@@ -453,6 +483,8 @@ for (const m of MULTI) {
     return c.toDataURL('image/webp', q).split(',')[1];
   }, { set: SET, panelSrcs: SET.panels.map((p) => sources[p.source]), W, H, q: QUALITY });
   save(SET.file, b64);
+  const panels = await page.evaluate(() => window.__setPanels);
+  panels.forEach((p, i) => save(`store-${'abc'[i]}`, p));
 }
 
 // Roll: develop three shots with one design, then lay them out as a sheet.

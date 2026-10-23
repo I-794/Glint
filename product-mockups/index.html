@@ -44,6 +44,9 @@
         .surf-tile .cap b { display: block; font-size: 16px; font-weight: 600; color: #fff; }
         .surf-tile .cap span { font-size: 13.5px; color: rgba(255,255,255,0.74); line-height: 1.45; }
         .surf-tile.tall { grid-row: span 2; min-height: 0; }
+        /* Six tiles with one tall one leave two empty cells, so the last tile spans the row. */
+        .surf-tile:last-child { grid-column: 1 / -1; }
+        .surf-tile:last-child img { object-fit: contain; background: linear-gradient(180deg, #2e2e34, #16161a); }
         @media (max-width: 760px) {
             .surf-grid { grid-template-columns: 1fr 1fr; }
             .surf-tile.tall { grid-row: span 1; }
@@ -72,9 +75,9 @@
 <section class="section-pad" style="padding-top: clamp(8px,2vw,24px);">
     <div class="wrap">
         <div class="lp-shots reveal">
-            <div class="shot"><img src="https://picsum.photos/seed/snapsurf-tee/360/470" alt="A logo wrapped onto a t-shirt mockup" loading="eager"></div>
-            <div class="shot"><img src="https://picsum.photos/seed/snapsurf-mug/360/470" alt="Artwork wrapped around a mug mockup" loading="eager"></div>
-            <div class="shot"><img src="https://picsum.photos/seed/snapsurf-poster/360/470" alt="A design shown as a framed poster mockup" loading="eager"></div>
+            <div class="shot"><img src="/shots/surf-tee.webp" alt="A landing page printed on a white t-shirt" loading="eager"></div>
+            <div class="shot"><img src="/shots/surf-mug.webp" alt="A landing page wrapped around a white mug" loading="eager"></div>
+            <div class="shot"><img src="/shots/surf-poster.webp" alt="A fitness app screen printed as a poster on a wall" loading="eager"></div>
         </div>
     </div>
 </section>
@@ -113,27 +116,27 @@
         </div>
         <div class="surf-grid reveal">
             <div class="surf-tile tall">
-                <img src="https://picsum.photos/seed/snapsurf-apparel/520/700" alt="Apparel mockup with a chest print">
+                <img src="/shots/surf-apparel.webp" alt="A running app screen printed on the chest of a t-shirt">
                 <div class="cap"><b>Apparel</b><span>Front-print tees in seven garment colours. The print follows the fabric folds.</span></div>
             </div>
             <div class="surf-tile">
-                <img src="https://picsum.photos/seed/snapsurf-mug2/520/360" alt="Mug mockup">
+                <img src="/shots/tool-print.webp" alt="A landing page printed on a white mug">
                 <div class="cap"><b>Mug</b><span>Artwork wraps around the ceramic with a real cylinder curve.</span></div>
             </div>
             <div class="surf-tile">
-                <img src="https://picsum.photos/seed/snapsurf-box/520/360" alt="Packaging box mockup">
+                <img src="/shots/surf-box.webp" alt="A landing page wrapped around a packaging box">
                 <div class="cap"><b>Packaging box</b><span>Three faces in perspective for product and unboxing shots.</span></div>
             </div>
             <div class="surf-tile">
-                <img src="https://picsum.photos/seed/snapsurf-poster2/520/360" alt="Poster mockup">
+                <img src="/shots/surf-poster-wide.webp" alt="A running app screen printed as a poster on a wall">
                 <div class="cap"><b>Poster</b><span>A clean wall print with a soft contact shadow.</span></div>
             </div>
             <div class="surf-tile">
-                <img src="https://picsum.photos/seed/snapsurf-frame/520/360" alt="Framed print mockup">
+                <img src="/shots/surf-frame.webp" alt="A training plan screen in a black picture frame">
                 <div class="cap"><b>Framed print</b><span>A matted frame with a subtle glass highlight.</span></div>
             </div>
             <div class="surf-tile">
-                <img src="https://picsum.photos/seed/snapsurf-card/520/360" alt="Business card mockup">
+                <img src="/shots/surf-card.webp" alt="A landing page printed on business cards">
                 <div class="cap"><b>Business card</b><span>A paired layout that shows both sides at an angle.</span></div>
             </div>
         </div>
@@ -151,7 +154,7 @@
                 <a href="/editor/" class="btn btn-primary">Open the studio <span class="ar">→</span></a>
             </div>
             <div class="fc-visual">
-                <img src="https://picsum.photos/seed/snapsurf-export/900/680" alt="A product mockup exported as a flat image" loading="lazy">
+                <img src="/shots/surf-export.webp" alt="A mug mockup exported as a flat image" loading="lazy">
             </div>
         </div>
     </div>
