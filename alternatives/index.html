@@ -18,6 +18,26 @@
     <link rel="stylesheet" href="/site.css">
     <style>
         .actions { display: flex; gap: 13px; flex-wrap: wrap; align-items: center; margin-top: 30px; }
+        /* v39.5 Amplified: Apple "Compare iPhone models" columns. Each feature is a
+           full-width row heading over five columns; the tool names stick under the
+           nav. Scrolls sideways on narrow screens. */
+        @media (max-width: 900px) {
+            .cmp-scroll { overflow-x: auto; margin-inline: calc(-1 * clamp(20px, 5vw, 64px)); padding-inline: clamp(20px, 5vw, 64px); }
+            .cmp { min-width: 760px; }
+        }
+        .cmp-head, .cmp-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: 16px; }
+        .cmp-head { position: sticky; top: 66px; z-index: 3; background: var(--bg); padding: 18px 0; border-bottom: 1px solid var(--glass-line); }
+        .cmp-name { font-size: clamp(17px, 1.7vw, 21px); font-weight: 600; letter-spacing: -0.02em; color: var(--ink-2); text-align: center; }
+        .cmp-name.us { color: var(--accent); }
+        .cmp-row { padding: 26px 0; border-bottom: 1px solid var(--glass-line); }
+        .cmp-label { grid-column: 1 / -1; font-size: 13px; font-weight: 500; color: var(--ink-3); margin-bottom: 14px; }
+        .cmp-cell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; font-size: 16px; color: var(--ink); }
+        .cmp-cell .mk { font-size: 24px; line-height: 1; }
+        .cmp-cell .mk.yes { color: var(--accent); }
+        .cmp-cell .mk.no { color: var(--ink-3); }
+        .cmp-cell .v { font-size: 15px; color: var(--ink-2); }
+        .cmp-cell.us .v { color: var(--ink); font-weight: 600; }
+        .cmp-cell .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
         .disclaimer { font-size: 13px; color: var(--ink-3); margin-top: 16px; max-width: 70ch; line-height: 1.6; }
     </style>
 </head>
@@ -45,85 +65,72 @@
             <h2>How it compares.</h2>
             <p>A quick look at where Glint lands next to other popular screenshot and mockup tools.</p>
         </div>
-        <div class="compare-wrap reveal">
-            <table class="compare">
-                <thead>
-                    <tr>
-                        <th scope="col">Capability</th>
-                        <th scope="col" class="us">Glint</th>
-                        <th scope="col">Screely</th>
-                        <th scope="col">Shots.so</th>
-                        <th scope="col">CleanShot X</th>
-                        <th scope="col">Screenshot.rocks</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th scope="row">Price</th>
-                        <td class="us"><span class="yes">Free</span></td>
-                        <td>Freemium</td>
-                        <td>Freemium</td>
-                        <td>Paid</td>
-                        <td>Free</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Runs in the browser</th>
-                        <td class="us"><span class="yes">Yes</span></td>
-                        <td>Yes</td>
-                        <td>Yes</td>
-                        <td class="no">macOS app</td>
-                        <td>Yes</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">No account needed</th>
-                        <td class="us"><span class="yes">Yes</span></td>
-                        <td>Yes</td>
-                        <td>Partial</td>
-                        <td>n/a</td>
-                        <td>Yes</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Device and 3D mockups</th>
-                        <td class="us"><span class="yes">Yes</span></td>
-                        <td>2D frames</td>
-                        <td>Yes</td>
-                        <td class="no">No</td>
-                        <td>2D frames</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">AI design tools</th>
-                        <td class="us"><span class="yes">Yes</span></td>
-                        <td class="no">No</td>
-                        <td class="no">No</td>
-                        <td class="no">No</td>
-                        <td class="no">No</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Video and motion export</th>
-                        <td class="us"><span class="yes">Yes</span></td>
-                        <td class="no">No</td>
-                        <td>Yes</td>
-                        <td>Screen recording</td>
-                        <td class="no">No</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">App Store screenshot sets</th>
-                        <td class="us"><span class="yes">Yes</span></td>
-                        <td class="no">No</td>
-                        <td class="no">No</td>
-                        <td class="no">No</td>
-                        <td class="no">No</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Open source</th>
-                        <td class="us"><span class="yes">Yes</span></td>
-                        <td class="no">No</td>
-                        <td class="no">No</td>
-                        <td class="no">No</td>
-                        <td>Yes</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="cmp-scroll reveal">
+            <div class="cmp" role="table" aria-label="Glint compared with other screenshot tools">
+                <div class="cmp-head" role="row">
+                    <div class="cmp-name us" role="columnheader">Glint</div>
+                    <div class="cmp-name" role="columnheader">Screely</div>
+                    <div class="cmp-name" role="columnheader">Shots.so</div>
+                    <div class="cmp-name" role="columnheader">CleanShot X</div>
+                    <div class="cmp-name" role="columnheader">Screenshot.rocks</div>
+                </div>
+                <div class="cmp-row" role="row"><h3 class="cmp-label" role="rowheader">Price</h3>
+                    <div class="cmp-cell us" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="v">Free</span></div>
+                    <div class="cmp-cell" role="cell"><span class="v">Freemium</span></div>
+                    <div class="cmp-cell" role="cell"><span class="v">Freemium</span></div>
+                    <div class="cmp-cell" role="cell"><span class="v">Paid</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="v">Free</span></div>
+                </div>
+                <div class="cmp-row" role="row"><h3 class="cmp-label" role="rowheader">Runs in the browser</h3>
+                    <div class="cmp-cell us" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="v">macOS app</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                </div>
+                <div class="cmp-row" role="row"><h3 class="cmp-label" role="rowheader">No account needed</h3>
+                    <div class="cmp-cell us" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="v">Partial</span></div>
+                    <div class="cmp-cell" role="cell"><span class="v">n/a</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                </div>
+                <div class="cmp-row" role="row"><h3 class="cmp-label" role="rowheader">Device and 3D mockups</h3>
+                    <div class="cmp-cell us" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="v">2D frames</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                    <div class="cmp-cell" role="cell"><span class="v">2D frames</span></div>
+                </div>
+                <div class="cmp-row" role="row"><h3 class="cmp-label" role="rowheader">AI design tools</h3>
+                    <div class="cmp-cell us" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                </div>
+                <div class="cmp-row" role="row"><h3 class="cmp-label" role="rowheader">Video and motion export</h3>
+                    <div class="cmp-cell us" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="v">Screen recording</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                </div>
+                <div class="cmp-row" role="row"><h3 class="cmp-label" role="rowheader">App Store screenshot sets</h3>
+                    <div class="cmp-cell us" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                </div>
+                <div class="cmp-row" role="row"><h3 class="cmp-label" role="rowheader">Open source</h3>
+                    <div class="cmp-cell us" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk no" aria-hidden="true">–</span><span class="sr">No</span></div>
+                    <div class="cmp-cell" role="cell"><span class="mk yes" aria-hidden="true">✓</span><span class="sr">Yes</span></div>
+                </div>
+            </div>
         </div>
         <p class="disclaimer">Comparisons reflect each tool's publicly described features as of June 2026 and are summarized for orientation, not endorsement. Screenshot.rocks is also open source, and Shots.so and CleanShot X support their own forms of motion or recording. Other tools are trademarks of their owners. Check each product's site for the current details.</p>
     </div>

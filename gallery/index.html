@@ -16,26 +16,40 @@
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/site.css">
     <style>
-        .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: clamp(28px, 4vw, 40px); }
-        .chip { font-family: var(--font); font-size: 13.5px; font-weight: 600; color: var(--ink-2); cursor: pointer; padding: 9px 16px; border-radius: var(--r-pill); background: var(--glass); border: 1px solid var(--glass-line); transition: color .2s, border-color .2s, background .2s; }
+        /* v39.5 Amplified Gallery: picture-led, two across, after Shots.so's
+           template wall. Each card opens the editor with that look applied
+           (/editor/?look=<name>, see src/state/site-looks.js). */
+        .gx-head { text-align: center; padding-top: clamp(56px, 8vw, 104px); padding-bottom: clamp(28px, 4vw, 44px); }
+        .gx-head .name { font-size: clamp(19px, 2vw, 24px); font-weight: 600; color: var(--ink-2); margin-bottom: 10px; }
+        .gx-head h1 { font-size: clamp(44px, 7.4vw, 92px); font-weight: 600; letter-spacing: -0.05em; line-height: 1.02; color: var(--ink); margin-bottom: 20px; }
+        .gx-head h1 em { font-style: normal; color: var(--accent); }
+        .gx-head p { font-size: clamp(18px, 1.8vw, 22px); line-height: 1.45; color: var(--ink-2); max-width: 40ch; margin: 0 auto; }
+
+        .filters { position: sticky; top: 66px; z-index: 5; display: flex; justify-content: center; gap: 8px; padding: 14px 0; margin-bottom: clamp(20px, 3vw, 32px); background: linear-gradient(var(--bg) 70%, transparent); overflow-x: auto; scrollbar-width: none; }
+        .filters::-webkit-scrollbar { display: none; }
+        .chip { flex: none; font-family: var(--font); font-size: 14px; font-weight: 500; color: var(--ink-2); cursor: pointer; padding: 9px 18px; border-radius: var(--r-pill); background: var(--glass-2); border: 1px solid var(--glass-line); transition: color .2s, border-color .2s, background .2s; }
         .chip:hover { color: var(--ink); border-color: var(--glass-hi); }
-        .chip.active { background: var(--accent-deep); color: #fff; border-color: transparent; }
-        .gal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-        .shot { border-radius: var(--r-card); overflow: hidden; position: relative; aspect-ratio: 4 / 3; padding: 20px; display: flex; align-items: flex-end; box-shadow: var(--shadow-lift); }
-        .shot.hide { display: none; }
-        .shot .pic { position: absolute; inset: 18px 18px 60px; border-radius: 10px; overflow: hidden; box-shadow: 0 16px 36px -10px rgba(0,0,0,0.6); transform: rotate(-1.3deg); }
-        .shot .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .shot .cap { position: relative; z-index: 1; color: #fff; }
-        .shot .cap strong { display: block; font-size: 14.5px; font-weight: 600; }
-        .shot .cap span { font-size: 12px; opacity: 0.82; }
-        .g1 { background: linear-gradient(160deg, #ff8a5c, #ff5e7e 55%, #c5318f); }
-        .g2 { background: linear-gradient(160deg, #2bd4c4, #c47a14 60%, #1631a8); }
-        .g3 { background: linear-gradient(160deg, #3a2d6b, #15161a); }
-        .g4 { background: linear-gradient(160deg, #f6bb5e, #c47a14 55%, #e8613a); }
-        .g5 { background: linear-gradient(160deg, #11998e, #38ef7d); }
-        .g6 { background: linear-gradient(160deg, #f857a6, #ff5858); }
-        @media (max-width: 860px) { .gal { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 560px) { .gal { grid-template-columns: 1fr; } }
+        .chip.active { background: var(--ink); color: var(--on-accent); border-color: var(--ink); }
+        .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        .gal { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(16px, 2.4vw, 28px) clamp(16px, 2vw, 24px); }
+        .look { display: flex; flex-direction: column; gap: 14px; }
+        .look.hide { display: none; }
+        .look .pic { display: block; border-radius: 22px; overflow: hidden; border: 1px solid var(--glass-line); background: var(--bg-raise); }
+        .look .pic img { display: block; width: 100%; height: auto; aspect-ratio: 5 / 3; object-fit: cover; transition: transform .6s var(--ease); }
+        .look .pic:hover img { transform: scale(1.03); }
+        .look .pic:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+        .look .meta { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-inline: 4px; }
+        .look h2 { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+        .look .meta p { font-size: 14.5px; color: var(--ink-2); margin-top: 2px; }
+        .look .use { flex: none; font-size: 15px; font-weight: 500; color: var(--accent); white-space: nowrap; }
+        .look .use:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+        .gx-note { text-align: center; font-size: 17px; color: var(--ink-2); max-width: 46ch; margin: clamp(48px, 6vw, 72px) auto 0; }
+        @media (max-width: 760px) {
+            .gal { grid-template-columns: 1fr; }
+            .filters { justify-content: flex-start; }
+        }
     </style>
 </head>
 <body>
@@ -43,42 +57,83 @@
 <!--PARTIAL:mark-->
 <!--PARTIAL:nav-->
 
-<header class="page-head">
-    <div class="glow"></div>
+<main id="main">
+
+<header class="gx-head">
     <div class="wrap">
-        <p class="eyebrow" style="margin-bottom:16px;">Showcase</p>
-        <h1>What a screenshot <span class="grad-text">can become</span>.</h1>
-        <p class="lede">A few looks built entirely in the studio. Every one started as a plain capture. Filter by style, then open the editor and make your own.</p>
+        <p class="name">Gallery</p>
+        <h1>What a screenshot <em>can become.</em></h1>
+        <p>Every look here started as a plain capture. Pick one and it opens in the studio, ready for yours.</p>
     </div>
 </header>
 
-<section class="section-pad" style="padding-top:clamp(20px,3vw,32px);">
+<section style="padding-bottom: clamp(32px, 5vw, 64px);">
     <div class="wrap">
-        <div class="filters" id="filters">
-            <button class="chip active" data-filter="all">All</button>
-            <button class="chip" data-filter="gradient">Gradient</button>
-            <button class="chip" data-filter="mesh">Mesh</button>
-            <button class="chip" data-filter="glass">Liquid glass</button>
-            <button class="chip" data-filter="device">Device</button>
-            <button class="chip" data-filter="store">App Store</button>
+        <div class="filters" id="filters" role="group" aria-label="Filter by style">
+            <button type="button" class="chip active" data-filter="all" aria-pressed="true">All</button>
+            <button type="button" class="chip" data-filter="gradient" aria-pressed="false">Gradient</button>
+            <button type="button" class="chip" data-filter="mesh" aria-pressed="false">Mesh</button>
+            <button type="button" class="chip" data-filter="glass" aria-pressed="false">Liquid glass</button>
+            <button type="button" class="chip" data-filter="device" aria-pressed="false">Device</button>
+            <button type="button" class="chip" data-filter="store" aria-pressed="false">App Store</button>
         </div>
         <div class="gal" id="gal">
-            <div class="shot g1" data-cat="gradient"><div class="pic"><img src="/shots/warm-gradient.webp" alt="A task board screenshot with rounded corners and a soft shadow on a warm gradient" loading="lazy" width="1000" height="600"></div><div class="cap"><strong>Warm gradient</strong><span>Soft shadow, rounded corners</span></div></div>
-            <div class="shot g2" data-cat="mesh"><div class="pic"><img src="/shots/cobalt-mesh.webp" alt="A dashboard in a browser frame, tilted in 3D on a cobalt mesh background" loading="lazy" width="1000" height="600"></div><div class="cap"><strong>Cobalt mesh</strong><span>Browser frame, 3D tilt</span></div></div>
-            <div class="shot g3" data-cat="glass"><div class="pic"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a liquid glass panel" loading="lazy" width="1000" height="600"></div><div class="cap"><strong>Glass &amp; spotlight</strong><span>Liquid glass, annotations</span></div></div>
-            <div class="shot g4" data-cat="device"><div class="pic"><img src="/shots/device-mockup.webp" alt="A fitness app screen in an iPhone frame with a reflection on a blue gradient" loading="lazy" width="1000" height="600"></div><div class="cap"><strong>Device mockup</strong><span>iPhone frame, reflection</span></div></div>
-            <div class="shot g5" data-cat="store"><div class="pic"><img src="/shots/app-store-set.webp" alt="Three captioned App Store panels exported from one screenshot set" loading="lazy" width="1000" height="600"></div><div class="cap"><strong>App Store set</strong><span>Three captioned panels, one set</span></div></div>
-            <div class="shot g6" data-cat="gradient"><div class="pic"><img src="/shots/sunset-pop.webp" alt="A landing page with a vivid color filter and film grain on a sunset gradient" loading="lazy" width="1000" height="600"></div><div class="cap"><strong>Sunset pop</strong><span>Vivid filter, film grain</span></div></div>
-            <div class="shot g2" data-cat="mesh"><div class="pic"><img src="/shots/aurora-mesh.webp" alt="A task board in a macOS window on a green and violet aurora mesh" loading="lazy" width="1000" height="600"></div><div class="cap"><strong>Aurora mesh</strong><span>macOS window, deep shadow</span></div></div>
-            <div class="shot g3" data-cat="glass"><div class="pic"><img src="/shots/frosted-panel.webp" alt="A landing page with a frosted glass panel over its lower half on a violet mesh" loading="lazy" width="1000" height="600"></div><div class="cap"><strong>Frosted panel</strong><span>Glass over a hero shot</span></div></div>
-            <div class="shot g4" data-cat="device"><div class="pic"><img src="/shots/laptop-scene.webp" alt="A dashboard inside a MacBook Pro frame with a soft shadow" loading="lazy" width="1000" height="600"></div><div class="cap"><strong>Laptop scene</strong><span>Mockup, soft shadow</span></div></div>
+            <article class="look" data-cat="mesh">
+                <a class="pic" href="/editor/?look=amber-flare"><img src="/shots/amber-flare.webp" alt="A dashboard in a dark browser frame on a graphite background with an amber flare" loading="lazy" width="1000" height="600"></a>
+                <div class="meta"><div><h2>Amber flare</h2><p>Dark browser frame, graphite and amber</p></div><a class="use" href="/editor/?look=amber-flare" aria-label="Use the Amber flare look">Use this look ›</a></div>
+            </article>
+            <article class="look" data-cat="gradient">
+                <a class="pic" href="/editor/?look=warm-gradient"><img src="/shots/warm-gradient.webp" alt="A task board with rounded corners and a soft shadow on a warm gradient" loading="lazy" width="1000" height="600"></a>
+                <div class="meta"><div><h2>Warm gradient</h2><p>Soft shadow, rounded corners</p></div><a class="use" href="/editor/?look=warm-gradient" aria-label="Use the Warm gradient look">Use this look ›</a></div>
+            </article>
+            <article class="look" data-cat="mesh">
+                <a class="pic" href="/editor/?look=cobalt-mesh"><img src="/shots/cobalt-mesh.webp" alt="A dashboard in a browser frame, tilted in 3D on a cobalt mesh background" loading="lazy" width="1000" height="600"></a>
+                <div class="meta"><div><h2>Cobalt mesh</h2><p>Browser frame, 3D tilt</p></div><a class="use" href="/editor/?look=cobalt-mesh" aria-label="Use the Cobalt mesh look">Use this look ›</a></div>
+            </article>
+            <article class="look" data-cat="glass">
+                <a class="pic" href="/editor/?look=glass-spotlight"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a liquid glass panel" loading="lazy" width="1000" height="600"></a>
+                <div class="meta"><div><h2>Glass and spotlight</h2><p>Liquid glass, annotations</p></div><a class="use" href="/editor/?look=glass-spotlight" aria-label="Use the Glass and spotlight look">Use this look ›</a></div>
+            </article>
+            <article class="look" data-cat="device">
+                <a class="pic" href="/editor/?look=device-mockup"><img src="/shots/device-mockup.webp" alt="A fitness app screen in an iPhone frame with a reflection on a blue gradient" loading="lazy" width="1000" height="600"></a>
+                <div class="meta"><div><h2>Device mockup</h2><p>iPhone frame, reflection</p></div><a class="use" href="/editor/?look=device-mockup" aria-label="Use the Device mockup look">Use this look ›</a></div>
+            </article>
+            <article class="look" data-cat="gradient">
+                <a class="pic" href="/editor/?look=sunset-pop"><img src="/shots/sunset-pop.webp" alt="A landing page with a vivid color filter and film grain on a sunset gradient" loading="lazy" width="1000" height="600"></a>
+                <div class="meta"><div><h2>Sunset pop</h2><p>Vivid filter, film grain</p></div><a class="use" href="/editor/?look=sunset-pop" aria-label="Use the Sunset pop look">Use this look ›</a></div>
+            </article>
+            <article class="look" data-cat="mesh">
+                <a class="pic" href="/editor/?look=aurora-mesh"><img src="/shots/aurora-mesh.webp" alt="A task board in a macOS window on a green and violet aurora mesh" loading="lazy" width="1000" height="600"></a>
+                <div class="meta"><div><h2>Aurora mesh</h2><p>macOS window, deep shadow</p></div><a class="use" href="/editor/?look=aurora-mesh" aria-label="Use the Aurora mesh look">Use this look ›</a></div>
+            </article>
+            <article class="look" data-cat="glass">
+                <a class="pic" href="/editor/?look=frosted-panel"><img src="/shots/frosted-panel.webp" alt="A landing page with a frosted glass panel over its lower half on a violet mesh" loading="lazy" width="1000" height="600"></a>
+                <div class="meta"><div><h2>Frosted panel</h2><p>Glass over a hero shot</p></div><a class="use" href="/editor/?look=frosted-panel" aria-label="Use the Frosted panel look">Use this look ›</a></div>
+            </article>
+            <article class="look" data-cat="device">
+                <a class="pic" href="/editor/?look=laptop-scene"><img src="/shots/laptop-scene.webp" alt="A dashboard inside a MacBook Pro frame with a soft shadow" loading="lazy" width="1000" height="600"></a>
+                <div class="meta"><div><h2>Laptop scene</h2><p>Mockup, soft shadow</p></div><a class="use" href="/editor/?look=laptop-scene" aria-label="Use the Laptop scene look">Use this look ›</a></div>
+            </article>
+            <article class="look" data-cat="store">
+                <a class="pic" href="/app-store-screenshots/"><img src="/shots/app-store-set.webp" alt="Three captioned App Store panels exported from one screenshot set" loading="lazy" width="1000" height="600"></a>
+                <div class="meta"><div><h2>App Store set</h2><p>Three captioned panels, one set</p></div><a class="use" href="/app-store-screenshots/">See how ›</a></div>
+            </article>
         </div>
-        <p class="lede" style="margin-top:32px;font-size:15px;">Want to publish your own? The studio has a community gallery built in, so you can share a design or browse what others have made.</p>
-        <div style="margin-top:28px;">
-            <a href="/editor/" class="btn btn-primary btn-lg">Open the studio <span class="ar">→</span></a>
+        <p class="gx-note">Want to publish your own? The studio has a community gallery built in, so you can share a design or browse what others have made.</p>
+    </div>
+</section>
+
+<section class="section-pad" style="padding-top: 0;">
+    <div class="wrap">
+        <div class="cta-band reveal">
+            <h2>Start from a blank canvas.</h2>
+            <p>Or skip the gallery and build a look of your own.</p>
+            <a href="/editor/" class="btn btn-primary btn-lg">Open the studio</a>
         </div>
     </div>
 </section>
+
+</main>
 
 <!--PARTIAL:footer-->
 
@@ -87,11 +142,11 @@
     // Gallery style filter. Plain class toggles, no dependencies.
     (function () {
         const chips = document.querySelectorAll('#filters .chip');
-        const shots = Array.from(document.querySelectorAll('#gal .shot'));
+        const looks = Array.from(document.querySelectorAll('#gal .look'));
         chips.forEach((chip) => chip.addEventListener('click', () => {
-            chips.forEach((c) => c.classList.toggle('active', c === chip));
+            chips.forEach((c) => { c.classList.toggle('active', c === chip); c.setAttribute('aria-pressed', String(c === chip)); });
             const f = chip.dataset.filter;
-            shots.forEach((s) => {
+            looks.forEach((s) => {
                 const cats = (s.dataset.cat || '').split(' ');
                 s.classList.toggle('hide', f !== 'all' && !cats.includes(f));
             });

@@ -1,7 +1,7 @@
 {
   "name": "glint",
   "private": true,
-  "version": "39.0.0",
+  "version": "39.5.0",
   "type": "module",
   "license": "MIT",
   "homepage": "https://snapshotpro.xyz",

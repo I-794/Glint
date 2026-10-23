@@ -19,6 +19,7 @@ import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync, readFileSync } from 'fs';
 import path from 'path';
 import * as SOURCES from './site-shots/sources.mjs';
+import { LOOKS } from '../src/state/site-looks.js';
 
 const BASE = (process.argv[2] || 'http://localhost:5173').replace(/\/+$/, '');
 const OUT = 'public/shots';
@@ -46,118 +47,64 @@ const RECIPES = [
   {
     file: 'warm-gradient', source: 'kanban',
     state: {
-      canvas: { width: W, height: H }, padding: 64, borderRadius: 18,
-      bgMode: 'gradient', gradient: { type: 'linear', angle: 150, colors: ['#ffb45c', '#ff5e7e', '#c5318f'], positions: [0, 55, 100] },
-      shadow: shadow(60, 34, 24)
+      canvas: { width: W, height: H }, ...LOOKS['warm-gradient'].state
     }
   },
   {
     file: 'cobalt-mesh', source: 'dashboard',
     state: {
-      canvas: { width: W, height: H }, padding: 80, borderRadius: 12,
-      bgMode: 'mesh',
-      meshGradient: { points: [
-        // The first point's color is also the base fill; the rest blend additively.
-        { x: 0.2, y: 0.85, color: '#0c1a5e', radius: 0.7 },
-        { x: 0.78, y: 0.12, color: '#1f45e0', radius: 0.7 },
-        { x: 0.08, y: 0.08, color: '#139e93', radius: 0.4 },
-        { x: 0.95, y: 0.95, color: '#4a22b8', radius: 0.5 }
-      ] },
-      deviceFrame: { type: 'chrome', color: 'dark', url: 'lumen.app/overview', title: 'Lumen' },
-      tilt3d: { rx: 10, ry: -24, rz: 3, perspective: 1400 },
-      shadow: shadow(70, 45, 30)
+      canvas: { width: W, height: H }, ...LOOKS['cobalt-mesh'].state
     }
   },
   {
     file: 'glass-spotlight', source: 'dashboard',
     state: {
-      canvas: { width: W, height: H }, padding: 56, borderRadius: 14,
-      bgMode: 'gradient', gradient: { type: 'linear', angle: 160, colors: ['#3a2d6b', '#15161a'], positions: [0, 100] },
-      // Image sits at x 110, y 56, scale 0.542 (1440x900 source, 56px padding),
-      // so the two left KPI cards land at roughly (255,115)-(558,212).
+      canvas: { width: W, height: H }, ...LOOKS['glass-spotlight'].state,
+      // Placed for the dashboard source: image at x 110, y 56, scale 0.542, so
+      // the two left KPI cards land at roughly (255,115)-(558,212).
       spotlight: { enabled: true, x: 0.24, y: 0.17, w: 0.335, h: 0.21, opacity: 0.6 },
-      glass: { enabled: true, x: 0.63, y: 0.55, w: 0.27, h: 0.32, radius: 22, blur: 14, tint: '#ffffff', tintOpacity: 14, rim: true, rimOpacity: 50 },
       annotations: [
         { id: 1, type: 'rect', x1: 248, y1: 108, x2: 566, y2: 219, color: '#ffd23f', strokeWidth: 4, number: null },
         { id: 2, type: 'arrow', x1: 720, y1: 70, x2: 580, y2: 126, color: '#ffd23f', strokeWidth: 5, number: null },
         { id: 3, type: 'number', x1: 248, y1: 108, x2: 248, y2: 108, color: '#ff3b6b', strokeWidth: 4, number: 1 }
-      ],
-      shadow: shadow(50, 40, 20)
+      ]
     }
   },
   {
     file: 'device-mockup', source: 'mobileToday',
     state: {
-      canvas: { width: W, height: H }, padding: 40,
-      bgMode: 'gradient', gradient: { type: 'linear', angle: 135, colors: ['#5b82ff', '#2348ff', '#6a3cff'], positions: [0, 55, 100] },
-      deviceFrame: { type: 'iphone16pro', color: 'titanium', glare: true },
-      reflection: { enabled: true, opacity: 0.3, length: 0.35, gap: 6 },
-      shadow: shadow(50, 40, 24)
+      canvas: { width: W, height: H }, ...LOOKS['device-mockup'].state
     }
   },
   {
     file: 'sunset-pop', source: 'landing',
     state: {
-      canvas: { width: W, height: H }, padding: 70, borderRadius: 16,
-      bgMode: 'gradient', gradient: { type: 'linear', angle: 120, colors: ['#ffd36e', '#ff7a59', '#e0379b'], positions: [0, 50, 100] },
-      imageFilters: { brightness: 104, contrast: 112, saturation: 145, blur: 0, grayscale: 0, sepia: 0, temperature: 18, tint: 0 },
-      grain: { enabled: true, amount: 22, scale: 1, blend: 'overlay', monochrome: true },
-      shadow: shadow(60, 40, 26)
+      canvas: { width: W, height: H }, ...LOOKS['sunset-pop'].state
     }
   },
   {
     file: 'aurora-mesh', source: 'kanban',
     state: {
-      canvas: { width: W, height: H }, padding: 72, borderRadius: 14,
-      bgMode: 'mesh',
-      meshGradient: { points: [
-        { x: 0.5, y: 0.95, color: '#061620', radius: 0.7 },
-        { x: 0.12, y: 0.1, color: '#14a37a', radius: 0.55 },
-        { x: 0.6, y: 0.05, color: '#1f5fc4', radius: 0.5 },
-        { x: 0.95, y: 0.4, color: '#6a2fd0', radius: 0.5 }
-      ] },
-      deviceFrame: { type: 'macos', color: 'dark', title: 'Tasklane' },
-      shadow: shadow(60, 55, 26)
+      canvas: { width: W, height: H }, ...LOOKS['aurora-mesh'].state
     }
   },
   {
     file: 'frosted-panel', source: 'landing',
     state: {
-      canvas: { width: W, height: H }, padding: 60, borderRadius: 16,
-      bgMode: 'mesh',
-      meshGradient: { points: [
-        { x: 0.85, y: 0.9, color: '#25163f', radius: 0.6 },
-        { x: 0.1, y: 0.1, color: '#6a4fe0', radius: 0.6 },
-        { x: 0.9, y: 0.15, color: '#2f7fd0', radius: 0.55 },
-        { x: 0.2, y: 0.9, color: '#c2408f', radius: 0.5 }
-      ] },
-      glass: { enabled: true, x: 0.12, y: 0.62, w: 0.76, h: 0.26, radius: 26, blur: 18, tint: '#ffffff', tintOpacity: 16, rim: true, rimOpacity: 55 },
-      shadow: shadow(60, 45, 24)
+      canvas: { width: W, height: H }, ...LOOKS['frosted-panel'].state
     }
   },
   {
     file: 'laptop-scene', source: 'dashboard',
     state: {
-      canvas: { width: W, height: H }, padding: 40,
-      bgMode: 'gradient', gradient: { type: 'linear', angle: 180, colors: ['#eef1f8', '#cfd6e6'], positions: [0, 100] },
-      deviceFrame: { type: 'macbookpro', color: 'silver', glare: true },
-      shadow: shadow(40, 22, 18)
+      canvas: { width: W, height: H }, ...LOOKS['laptop-scene'].state
     }
   },
   // v36 Glint: graphite with one amber flare, the brand's own look.
   {
     file: 'amber-flare', source: 'dashboard',
     state: {
-      canvas: { width: W, height: H }, padding: 80, borderRadius: 12,
-      bgMode: 'mesh',
-      meshGradient: { points: [
-        { x: 0.5, y: 0.9, color: '#121214', radius: 0.8 },
-        { x: 0.1, y: 0.06, color: '#f2a93b', radius: 0.5 },
-        { x: 0.98, y: 0.98, color: '#e8613a', radius: 0.42 },
-        { x: 0.85, y: 0.1, color: '#2a2a30', radius: 0.5 }
-      ] },
-      deviceFrame: { type: 'chrome', color: 'dark', url: 'lumen.app/overview', title: 'Lumen' },
-      shadow: shadow(70, 50, 30)
+      canvas: { width: W, height: H }, ...LOOKS['amber-flare'].state
     }
   },
   // Homepage "Capture & arrange": several screenshots arranged by auto-layout.
@@ -187,6 +134,97 @@ const RECIPES = [
       grain: { enabled: true, amount: 12, scale: 1, blend: 'overlay', monochrome: true },
       shadow: shadow(60, 45, 30)
     }
+  },
+  // v39.5 Amplified: the homepage raw-vs-Glint slider. Same canvas size, so the
+  // two line up under the divider: the plain capture filling the frame, then the
+  // same capture finished with the amber-flare design.
+  {
+    file: 'compare-raw', source: 'dashboard',
+    state: {
+      canvas: { width: 1600, height: 1000 }, padding: 0, borderRadius: 0,
+      bgMode: 'solid', bgColor: '#ffffff', shadow: shadow(0, 0, 0)
+    }
+  },
+  {
+    file: 'compare-finished', source: 'dashboard',
+    state: {
+      canvas: { width: 1600, height: 1000 }, padding: 120, borderRadius: 14,
+      bgMode: 'mesh',
+      meshGradient: { points: [
+        { x: 0.5, y: 0.9, color: '#121214', radius: 0.8 },
+        { x: 0.1, y: 0.06, color: '#f2a93b', radius: 0.5 },
+        { x: 0.98, y: 0.98, color: '#e8613a', radius: 0.42 },
+        { x: 0.85, y: 0.1, color: '#2a2a30', radius: 0.5 }
+      ] },
+      deviceFrame: { type: 'chrome', color: 'dark', url: 'lumen.app/overview', title: 'Lumen' },
+      shadow: shadow(80, 55, 34)
+    }
+  },
+  // v39.5 Amplified: one real output per Tools card.
+  {
+    file: 'tool-shadow', source: 'kanban',
+    state: {
+      canvas: { width: W, height: H }, padding: 90, borderRadius: 16,
+      bgMode: 'solid', bgColor: '#eceef2',
+      shadow: shadow(90, 30, 44)
+    }
+  },
+  {
+    file: 'tool-readme', source: 'landing',
+    state: {
+      canvas: { width: W, height: H }, padding: 56, borderRadius: 12,
+      bgMode: 'gradient', gradient: { type: 'linear', angle: 180, colors: ['#f6f8fa', '#d8dee4'], positions: [0, 100] },
+      deviceFrame: { type: 'chrome', color: 'light', url: 'orbit.dev', title: 'Orbit' },
+      shadow: shadow(40, 22, 16)
+    }
+  },
+  {
+    file: 'tool-print', source: 'landing',
+    state: {
+      canvas: { width: W, height: H }, padding: 40,
+      bgMode: 'gradient', gradient: { type: 'linear', angle: 180, colors: ['#3a3a40', '#1c1c20'], positions: [0, 100] },
+      surface: { enabled: true, type: 'mug', variant: 'white', scale: 1, offsetX: 0, offsetY: 0, rotation: 0, shadow: true, shadingOpacity: 0.85 }
+    }
+  },
+  {
+    file: 'tool-og', source: 'landing',
+    state: {
+      canvas: { width: 1200, height: 630 }, padding: 110, borderRadius: 12,
+      bgMode: 'mesh',
+      meshGradient: { points: [
+        { x: 0.5, y: 0.9, color: '#121214', radius: 0.8 },
+        { x: 0.1, y: 0.06, color: '#f2a93b', radius: 0.5 },
+        { x: 0.98, y: 0.98, color: '#e8613a', radius: 0.42 },
+        { x: 0.85, y: 0.1, color: '#2a2a30', radius: 0.5 }
+      ] },
+      textOverlay: { enabled: true, content: 'Orbit 3.0 is here', size: 46, font: 'Arial', color: '#ffffff', bold: true, x: 0.5, y: 0.1 },
+      shadow: shadow(50, 45, 20)
+    }
+  }
+];
+
+// v39.5 Amplified: Tools cards that show one design rendered several ways,
+// laid out side by side. Social: the same design at square, portrait and story
+// sizes. Merge: one template filled from three CSV rows (headline + color).
+const BRAND_MESH = RECIPES.find(r => r.file === 'amber-flare').state.meshGradient;
+const MULTI = [
+  {
+    file: 'tool-social', source: 'mobileToday',
+    base: { padding: 70, bgMode: 'mesh', meshGradient: BRAND_MESH, deviceFrame: { type: 'iphone16pro', color: 'dark', glare: true }, shadow: shadow(50, 45, 24) },
+    variants: [
+      { canvas: { width: 1080, height: 1080 } },
+      { canvas: { width: 1080, height: 1350 } },
+      { canvas: { width: 1080, height: 1920 } }
+    ]
+  },
+  {
+    file: 'tool-merge', source: 'mobileWorkout',
+    base: { canvas: { width: 1080, height: 1350 }, padding: 150, bgMode: 'gradient', deviceFrame: { type: 'iphone16pro', color: 'dark', glare: true }, shadow: shadow(50, 40, 24) },
+    variants: [
+      { gradient: { type: 'linear', angle: 160, colors: ['#ffd36e', '#ff7a59'], positions: [0, 100] }, textOverlay: { enabled: true, content: 'Track every run', size: 64, font: 'Arial', color: '#141416', bold: true, x: 0.5, y: 0.06 } },
+      { gradient: { type: 'linear', angle: 160, colors: ['#5b82ff', '#6a3cff'], positions: [0, 100] }, textOverlay: { enabled: true, content: 'Beat your pace', size: 64, font: 'Arial', color: '#ffffff', bold: true, x: 0.5, y: 0.06 } },
+      { gradient: { type: 'linear', angle: 160, colors: ['#2bd4c4', '#139e93'], positions: [0, 100] }, textOverlay: { enabled: true, content: 'Train with a plan', size: 64, font: 'Arial', color: '#0b2420', bold: true, x: 0.5, y: 0.06 } }
+    ]
   }
 ];
 
@@ -342,6 +380,42 @@ for (const r of RECIPES) {
   await upload(r.source);
   await applyState(r.state, r.extras);
   save(r.file, await exportWebp());
+}
+
+// Multi-render cards: each variant is applied over the base and rendered with
+// renderInto, then the results are set side by side at matching heights.
+for (const m of MULTI) {
+  await upload(m.source);
+  const canvases = [];
+  for (const v of m.variants) {
+    await applyState({ ...m.base, ...v });
+    canvases.push(await exportWebp());
+  }
+  const b64 = await page.evaluate(async ({ shots, W, H, q }) => {
+    const imgs = await Promise.all(shots.map(async (s) => { const i = new Image(); i.src = 'data:image/webp;base64,' + s; await i.decode(); return i; }));
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#1c1c20'); g.addColorStop(1, '#0f0f11');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    // Fit the row: 82% of the height, or less when the panels would run off the sides.
+    const gap = W * 0.03, ratios = imgs.map((i) => i.width / i.height);
+    const th = Math.min(H * 0.82, (W * 0.9 - gap * (imgs.length - 1)) / ratios.reduce((a, b) => a + b, 0));
+    const widths = ratios.map((r) => th * r);
+    let tx = (W - widths.reduce((a, b) => a + b, 0) - gap * (imgs.length - 1)) / 2;
+    imgs.forEach((im, i) => {
+      const ty = (H - th) / 2;
+      x.save();
+      x.shadowColor = 'rgba(0,0,0,0.45)'; x.shadowBlur = 30; x.shadowOffsetY = 14;
+      x.beginPath(); x.roundRect(tx, ty, widths[i], th, 12); x.fillStyle = '#121214'; x.fill();
+      x.shadowColor = 'transparent'; x.clip();
+      x.drawImage(im, tx, ty, widths[i], th);
+      x.restore();
+      tx += widths[i] + gap;
+    });
+    return c.toDataURL('image/webp', q).split(',')[1];
+  }, { shots: canvases, W, H, q: QUALITY });
+  save(m.file, b64);
 }
 
 // App Store set: Set mode renders each panel at the real store size.

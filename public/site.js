@@ -107,6 +107,22 @@
     });
   }
 
+  // 1c) Sticky sub-bar: mark the link whose section is in the middle band of
+  // the screen.
+  const sublinks = Array.from(document.querySelectorAll('.subnav-links a[href^="#"]'));
+  if (sublinks.length) {
+    const byId = new Map(sublinks.map((a) => [a.getAttribute('href').slice(1), a]));
+    const spy = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        sublinks.forEach((a) => a.removeAttribute('aria-current'));
+        const a = byId.get(e.target.id);
+        if (a) a.setAttribute('aria-current', 'true');
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    byId.forEach((_, id) => { const el = document.getElementById(id); if (el) spy.observe(el); });
+  }
+
   // 2) Scroll reveal with sibling stagger.
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => {

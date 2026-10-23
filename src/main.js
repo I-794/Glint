@@ -93,6 +93,7 @@ import { bindUiMode } from './features/ui-mode.js';
 import { bindFloatingToolbar } from './features/floating-toolbar.js';
 import { bindShareTarget } from './features/share-target.js';
 import { bindExtReceiver } from './features/ext-receiver.js';
+import { bindLookLink } from './features/look-link.js';
 import { bindWelcome } from './features/welcome.js';
 import { bindWhatsNew } from './features/whats-new.js';
 import { bindInstallApp } from './features/install-app.js';
@@ -219,6 +220,7 @@ function init() {
   setTool('select');
 
   showNotification('Glint loaded. Drag, paste, or upload an image to begin.', 'success');
+  bindLookLink();       // v39.5 — /editor/?look=<name> opens with a Gallery look applied
 }
 
 if (document.readyState === 'loading') {

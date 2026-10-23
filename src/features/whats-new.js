@@ -10,20 +10,20 @@
 // release's highlights — same checklist step as the editor version badge and
 // the changelog page.
 
-const CURRENT_VERSION = '39.0';
+const CURRENT_VERSION = '39.5';
 const LASTSEEN_KEY = 'glint_lastseen_version';
 const WELCOME_KEY  = 'glint_welcome_v1';   // set by welcome.js on dismissal
 
 // Latest release only — the newest version’s highlights, not an accumulation.
 const WHATS_NEW = {
-  heading: "v39 · Glossifier",
+  heading: "v39.5 · Amplified",
   items: [
-    { title: 'Light to dark in one click',
-      desc: 'Flip any screenshot between light and dark mode in Adjust, with the background and frame to match.' },
-    { title: 'Both modes at once',
-      desc: 'Keep the original as Before for a slider, or develop the whole Roll in light and dark.' },
-    { title: 'Hold to compare',
-      desc: 'Hold the backslash key to see your screenshot without its grade, then let go.' }
+    { title: 'A new website',
+      desc: 'Apple-style pages, menus for every section, and a drag slider that shows a raw capture next to the finished one.' },
+    { title: 'Looks from the Gallery',
+      desc: 'Pick a look on the Gallery page and the studio opens with it applied, ready for your screenshot.' },
+    { title: 'Every tool, shown',
+      desc: 'Each tool page now leads with a real image made in Glint, so you can see what you will get.' }
   ]
 };
 

@@ -854,6 +854,9 @@
         .spotlight-glint .btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: 0 10px 28px rgba(242,169,59,0.22); }
         .spotlight-glint .btn-primary:hover { background: var(--accent-press); }
         .gl-stage { position: relative; width: 100%; }
+        /* v39.5 Amplified spotlight: raw capture and finished shot split down the middle. */
+        .amp-split .amp-fin { position: absolute; inset: 0; height: 100%; clip-path: inset(0 0 0 50%); box-shadow: none; }
+        .amp-split .amp-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: var(--ink); }
         .gl-stage img.shot { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 30px 60px -18px rgba(0,0,0,0.6); }
         .gl-stage img.mk { position: absolute; left: -18px; bottom: -18px; width: 84px; height: 84px; border-radius: 22px; box-shadow: 0 18px 40px rgba(232,97,58,0.3); }
         @media (max-width: 860px) { .gl-stage img.mk { left: 10px; bottom: -14px; width: 64px; height: 64px; } }
@@ -917,33 +920,20 @@
         @media (max-width: 480px) { .ct-tag { font-size: 10px; padding: 3px 8px; } .ct-chip { font-size: 9px; padding: 5px 7px; } }
 
         /* ── Timeline (full release history) ── */
-        /* v16 — each release is a frosted glass card floating over the page
-           aurora, so the whole changelog carries the liquid-glass look. */
-        .log { list-style: none; display: flex; flex-direction: column; gap: 18px; }
-        .entry {
-            display: grid; grid-template-columns: 150px 1fr; gap: clamp(16px, 4vw, 48px);
-            padding: clamp(22px, 3vw, 34px); border-radius: var(--r-card);
-            background: linear-gradient(135deg, rgba(255,255,255,0.09), rgba(255,255,255,0.035));
-            backdrop-filter: blur(18px) saturate(150%);
-            -webkit-backdrop-filter: blur(18px) saturate(150%);
-            border: 1px solid var(--glass-line);
-            box-shadow: var(--shadow-glass);
-        }
-        .entry.latest {
-            border-color: var(--accent-line);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 18px 50px rgba(196,122,20,0.22);
-        }
-        .entry-meta { display: flex; flex-direction: column; gap: 8px; }
-        .ver { display: inline-flex; align-items: center; align-self: flex-start; font-family: var(--font-mono); font-size: 13px; font-weight: 500; padding: 4px 11px; border-radius: var(--r-pill); background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-line); }
-        .entry.latest .ver { background: var(--accent); color: var(--on-accent); border-color: transparent; }
-        .entry-date { font-size: 12.5px; font-weight: 500; color: var(--ink-3); }
-        .entry h2 { font-size: clamp(20px, 2.6vw, 27px); font-weight: 700; letter-spacing: -0.025em; margin-bottom: 14px; line-height: 1.15; }
-        .entry-note { color: color-mix(in srgb, var(--ink-2) 60%, var(--ink-3)); font-size: 14.5px; line-height: 1.55; max-width: 62ch; margin: -6px 0 14px; text-wrap: pretty; }
-        .changes { list-style: none; display: flex; flex-direction: column; gap: 11px; }
-        .changes li { position: relative; padding-left: 22px; color: var(--ink-2); font-size: 15.5px; line-height: 1.55; }
-        .changes li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 7px; height: 7px; border-radius: 2px; background: var(--accent); }
-        .changes b { color: var(--ink); font-weight: 600; }
-        .log-head { font-size: clamp(22px, 3vw, 30px); font-weight: 700; letter-spacing: -0.03em; margin-bottom: clamp(20px, 3vw, 32px); }
+        /* v39.5 Amplified: an open release list (after Linear's changelog) with
+           each codename set big, like a roll of film's label (after Halide). The
+           version reads as a frame number; releases with a real Glint shot show it. */
+        .log { list-style: none; display: flex; flex-direction: column; }
+        .entry { display: grid; grid-template-columns: 160px 1fr; gap: clamp(16px, 4vw, 56px); padding: clamp(40px, 6vw, 72px) 0; border-top: 1px solid var(--glass-line); }
+        .entry-meta { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; }
+        .ver { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--accent); }
+        .entry-date { font-size: 13px; font-weight: 500; color: var(--ink-3); }
+        .entry h2 { font-size: clamp(40px, 6vw, 72px); font-weight: 600; letter-spacing: -0.05em; line-height: 1; margin-bottom: 18px; color: var(--ink); }
+        .entry.minor h2 { font-size: clamp(26px, 3.4vw, 38px); letter-spacing: -0.035em; }
+        .entry-note { color: var(--ink-2); font-size: clamp(17px, 1.6vw, 20px); line-height: 1.5; max-width: 52ch; margin: 0 0 24px; text-wrap: pretty; }
+        .entry-shot { margin: 0 0 28px; border-radius: 22px; overflow: hidden; border: 1px solid var(--glass-line); background: var(--bg-raise); }
+        .entry-shot img { display: block; width: 100%; height: auto; }
+        .log-head { font-size: clamp(34px, 5vw, 60px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.04; margin-bottom: clamp(20px, 3vw, 32px); }
 
         /* v16 — the glass reacts to the cursor: a soft specular highlight tracks
            the pointer across the panel, like light moving over real glass. The
@@ -958,15 +948,11 @@
             background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.34), transparent 60%);
             mix-blend-mode: screen;
         }
-        .entry.glass-interactive::after {
-            background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(196,122,20,0.20), transparent 55%);
-        }
 
         /* Solid fallback where translucency is unwanted or unsupported. */
         @media (prefers-reduced-transparency: reduce) {
             .spot-copy { background: rgba(12,17,33,0.94); backdrop-filter: none; -webkit-backdrop-filter: none; }
             body::before { display: none; }
-            .entry { background: var(--bg-raise); backdrop-filter: none; -webkit-backdrop-filter: none; border-color: var(--line); }
         }
         @media (max-width: 860px) {
             .spotlight { grid-template-columns: 1fr; gap: 32px; }
@@ -1000,34 +986,33 @@
             <!-- SWAP-START -->
             <div class="spot-copy">
                 <span class="spot-tag">Latest release</span>
-                <div class="spot-ver">v39 · October 2026</div>
-                <h2>Glossifier.</h2>
-                <p class="spot-lede">Flip any screenshot between light and dark mode in one click, with the background and frame to match.</p>
+                <div class="spot-ver">v39.5 · October 2026</div>
+                <h2>Amplified.</h2>
+                <p class="spot-lede">A new website, built the way Apple builds product pages, with ideas from the best tools in our space.</p>
                 <div class="spot-feats">
                     <div class="spot-feat">
-                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"/></svg></span>
-                        <div><strong>Light to dark</strong><span>Brand colors, photos and dark panels stay as they are, so the result reads like a real dark theme.</span></div>
+                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span>
+                        <div><strong>Menus for every section</strong><span>Hover a section for its menu, or tap it on a phone to slide in its own page.</span></div>
                     </div>
                     <div class="spot-feat">
-                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="13" height="13" rx="2"/><path d="M8 4h11a2 2 0 0 1 2 2v11"/></svg></span>
-                        <div><strong>Both modes at once</strong><span>Keep the original as Before for a slider page, or develop the whole Roll in light and dark.</span></div>
+                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 5v14"/></svg></span>
+                        <div><strong>Raw to ready</strong><span>Drag across a plain capture and the same capture finished in Glint, right on the homepage.</span></div>
                     </div>
                     <div class="spot-feat">
-                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="3"/><path d="m10 9 4 6"/></svg></span>
-                        <div><strong>Hold to compare</strong><span>Hold the backslash key to see your screenshot without its grade. Let go and it comes back.</span></div>
+                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></span>
+                        <div><strong>Looks you can open</strong><span>Every Gallery look opens in the studio with its settings applied.</span></div>
                     </div>
                 </div>
                 <div class="spot-actions">
-                    <a href="/editor/" class="btn btn-primary btn-lg">Open the studio <span class="ar">→</span></a>
+                    <a href="/" class="btn btn-primary btn-lg">See the new site <span class="ar">→</span></a>
                     <a href="#history" class="btn btn-ghost btn-lg">Read the notes</a>
                 </div>
             </div>
             <div class="spot-visual">
-                <div class="gl-stage">
-                    <span class="gl-gloss">
-                        <img class="shot" src="/shots/glossifier-modes.webp" alt="A kanban board split down the middle: the light original on the left and the same screenshot flipped to dark on the right" width="1280" height="600" loading="eager">
-                        <span class="gl-sheen" aria-hidden="true"></span>
-                    </span>
+                <div class="gl-stage amp-split">
+                    <img class="shot" src="/shots/compare-raw.webp" alt="A plain dashboard screenshot, as captured" width="1600" height="1000" loading="eager">
+                    <img class="shot amp-fin" src="/shots/compare-finished.webp" alt="The same dashboard finished in Glint on a graphite and amber background" width="1600" height="1000" loading="eager">
+                    <span class="amp-line" aria-hidden="true"></span>
                 </div>
             </div>
             <!-- SWAP-END -->
@@ -1040,10 +1025,30 @@
         <h2 class="log-head reveal">Every release</h2>
         <ul class="log">
             <li class="entry latest reveal">
+                <div class="entry-meta"><span class="ver">v39.5</span><span class="entry-date">October 2026</span></div>
+                <div>
+                    <h2>Amplified</h2>
+                    <p class="entry-note">A website release. Every page now follows Apple's product pages, with ideas from Screen Studio, Pixelmator Pro, Raycast, Linear, Shots.so and Halide.</p>
+                    <figure class="entry-shot"><img src="/shots/compare-finished.webp" alt="A dashboard finished in Glint: a dark browser frame on a graphite and amber background" loading="lazy" width="1600" height="1000"></figure>
+                    <ul class="changes">
+                        <li><b>Menus for every section.</b> Hover Features, Tools, Gallery, AI, Extension or Pricing for a full-width menu. On a phone, the menu fills the screen and each section slides in as its own page with a back button.</li>
+                        <li><b>A new homepage.</b> One big headline, a product shot that grows as you scroll, a highlights carousel, a closer-look viewer, and a slider that shows a raw capture next to the same capture finished in Glint.</li>
+                        <li><b>Sticky section bars.</b> Features, AI and Glint Capture have a bar under the menu that jumps to each part of the page and shows where you are.</li>
+                        <li><b>Features, rebuilt.</b> Five chapters, each with a real image made in Glint, in place of a grid of boxes.</li>
+                        <li><b>Tools you can see.</b> Every tool card leads with that tool's real output, from the mug mockup to the Merge Studio set.</li>
+                        <li><b>Gallery looks open in the studio.</b> Choose Use this look and the editor opens with it applied. One undo takes it off.</li>
+                        <li><b>Compare, Apple style.</b> The Alternatives page lines the tools up in columns with a check for each feature, and the names stay pinned as you scroll.</li>
+                        <li><b>This page.</b> Each release name is set large, and releases with a picture show it.</li>
+                        <li><b>Calmer everywhere.</b> Bigger headlines, plain labels in place of small capitals, flat cards and open endings on every page.</li>
+                    </ul>
+                </div>
+            </li>
+            <li class="entry reveal">
                 <div class="entry-meta"><span class="ver">v39.0</span><span class="entry-date">October 2026</span></div>
                 <div>
                     <h2>Glossifier</h2>
                     <p class="entry-note">The first codename from outside photography. This one turns light screenshots dark, and dark ones light.</p>
+                    <figure class="entry-shot"><img src="/shots/glossifier-modes.webp" alt="A kanban board split down the middle: the light original on the left and the same screenshot flipped to dark on the right" loading="lazy" width="1280" height="600"></figure>
                     <ul class="changes">
                         <li><b>Light / Dark.</b> A new section at the top of Adjust, in Simple and Pro mode. Press Flip to dark, or Flip to light for a dark screenshot, and Glint flips it in your browser. Colors keep their hue, and brand colors and photos stay as they are.</li>
                         <li><b>Panels that already match.</b> A dark sidebar, header or code block stays dark when you flip a light screenshot, text and all.</li>
@@ -1063,6 +1068,7 @@
                 <div>
                     <h2>Focus</h2>
                     <p class="entry-note">The sixth photography codename. This one brings photo editor color control to your screenshots.</p>
+                    <figure class="entry-shot"><img src="/shots/focus-curves.webp" alt="The same dashboard before and after a curves grade" loading="lazy" width="1280" height="600"></figure>
                     <ul class="changes">
                         <li><b>Curves.</b> A new Curves &amp; Levels section in Adjust (Pro mode). Click the curve to add a point, drag it to brighten or darken that tone, and double-click a point or drag it off the box to remove it. Edit all colors at once, or red, green and blue on their own, with the image's histogram behind the curve.</li>
                         <li><b>Levels.</b> Set the black point, white point and midtones for all colors or for one channel. The picture updates as you drag.</li>
@@ -1080,6 +1086,7 @@
                 <div>
                     <h2>Exposure</h2>
                     <p class="entry-note">The fifth photography codename. This one develops a whole roll of screenshots the same way, like a roll of film.</p>
+                    <figure class="entry-shot"><img src="/shots/roll-develop.webp" alt="Three screenshots developed with one design: a phone, a dashboard and a landing page" loading="lazy" width="1280" height="600"></figure>
                     <ul class="changes">
                         <li><b>The Roll.</b> A new Roll section in Export. Add screenshots one at a time, many at once, or a whole folder, and every shot is styled with the design on your canvas. Drag shots to reorder them. Adding, removing and moving shots can all be undone.</li>
                         <li><b>Contact sheet.</b> Every shot shows up as a thumbnail with your current design, and the thumbnails update a moment after you change something.</li>
@@ -1097,6 +1104,7 @@
                 <div>
                     <h2>Darkroom</h2>
                     <p class="entry-note">The fourth photography codename, and the biggest launch so far: the studio is now Glint.</p>
+                    <figure class="entry-shot"><img src="/shots/hero-editor.webp" alt="The Glint editor framing a dashboard on a graphite and amber background" loading="lazy" width="1280" height="800"></figure>
                     <ul class="changes">
                         <li><b>A new name.</b> The studio is now Glint, everywhere: the studio, the site, the installed app and the browser extension. Read why on the new <a href="/glint/">Meet Glint</a> page.</li>
                         <li><b>A new look.</b> A sparkle mark, and a graphite and off-white interface with one amber accent. In light mode, highlighted text stays dark so it is easy to read.</li>
@@ -1126,6 +1134,7 @@
                 <div>
                     <h2>Bokeh</h2>
                     <p class="entry-note">The second photography codename. This one is about focus: showing people exactly where to look.</p>
+                    <figure class="entry-shot"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a glass panel" loading="lazy" width="1000" height="600"></figure>
                     <ul class="changes">
                         <li><b>Spotlight, rebuilt.</b> Add as many focus areas as you need with the Spotlight tool, as boxes, circles, or rounded shapes (hold Shift for a circle). Select one to move it, drag its corner to resize it, or duplicate and delete it like any other object.</li>
                         <li><b>Blur, soft edges, and color.</b> Everything outside your focus areas can now be blurred as well as dimmed, with a soft-edge slider and any dim color. Spotlights in older projects open exactly as before.</li>
@@ -1134,7 +1143,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v33.2</span><span class="entry-date">October 2026</span></div>
                 <div>
                     <h2>Aperture, tidied</h2>
@@ -1147,7 +1156,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v33.1</span><span class="entry-date">October 2026</span></div>
                 <div>
                     <h2>Aperture, polished</h2>
@@ -1173,7 +1182,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v32.1</span><span class="entry-date">September 2026</span></div>
                 <div>
                     <h2>Open Canvas, polished</h2>
@@ -1321,7 +1330,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v20.1</span><span class="entry-date">June 2026</span></div>
                 <div>
                     <h2>A tidier studio</h2>
@@ -1374,7 +1383,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v16.2</span><span class="entry-date">June 2026</span></div>
                 <div>
                     <h2>Pattern backgrounds and art filters</h2>
@@ -1384,7 +1393,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v16.1</span><span class="entry-date">June 2026</span></div>
                 <div>
                     <h2>Liquid glass and film grain</h2>
@@ -1406,7 +1415,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v15.2</span><span class="entry-date">June 2026</span></div>
                 <div>
                     <h2>Motion on stills</h2>
@@ -1419,7 +1428,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v15.1</span><span class="entry-date">June 2026</span></div>
                 <div>
                     <h2>Timeline scrubber and export controls</h2>
@@ -1439,7 +1448,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v14</span><span class="entry-date">June 2026</span></div>
                 <div>
                     <h2>Alignment, reflections, and text effects</h2>
@@ -1450,7 +1459,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v13.6</span><span class="entry-date">June 2026</span></div>
                 <div>
                     <h2>More background gradients</h2>
@@ -1460,7 +1469,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v13.5</span><span class="entry-date">June 2026</span></div>
                 <div>
                     <h2>Studio redesign</h2>
@@ -1471,7 +1480,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v13</span><span class="entry-date">June 2026</span></div>
                 <div>
                     <h2>Multi-page decks</h2>
@@ -1482,7 +1491,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v12</span><span class="entry-date">June 2026</span></div>
                 <div>
                     <h2>Projects &amp; version history</h2>
@@ -1493,7 +1502,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v11</span><span class="entry-date">June 2026</span></div>
                 <div>
                     <h2>Record, generate, collaborate</h2>
@@ -1527,7 +1536,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="entry reveal">
+            <li class="entry minor reveal">
                 <div class="entry-meta"><span class="ver">v8.1</span><span class="entry-date">May 2026</span></div>
                 <div>
                     <h2>Deeper mockups</h2>
@@ -1580,7 +1589,7 @@
     // re-layout). Skipped entirely under reduced-motion.
     (function () {
         if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-        document.querySelectorAll('.spot-copy, .entry').forEach(function (elGlass) {
+        document.querySelectorAll('.spot-copy').forEach(function (elGlass) {
             elGlass.classList.add('glass-interactive');
             elGlass.addEventListener('pointermove', function (e) {
                 var r = elGlass.getBoundingClientRect();

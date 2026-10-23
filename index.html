@@ -56,6 +56,20 @@
         .statement p { font-size: clamp(30px, 4.6vw, 58px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.12; max-width: 26ch; color: var(--ink); }
         .statement span { display: block; }
 
+        /* Raw vs Glint: drag the divider. A transparent range input covers the
+           stage, so mouse, touch and keyboard all move it; --pos drives the clip. */
+        .rvg h2 { text-align: center; }
+        .rvg .sec-sub { text-align: center; font-size: clamp(17px, 1.6vw, 21px); color: var(--ink-2); margin: -20px auto clamp(32px, 4vw, 48px); max-width: 40ch; }
+        .rvg-stage { --pos: 50%; position: relative; border-radius: 26px; overflow: hidden; border: 1px solid var(--glass-line); aspect-ratio: 16 / 10; background: var(--bg-raise); max-width: 1120px; margin: 0 auto; touch-action: pan-y; }
+        .rvg-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+        .rvg-stage .fin { clip-path: inset(0 0 0 var(--pos)); }
+        .rvg-line { position: absolute; top: 0; bottom: 0; left: var(--pos); width: 2px; margin-left: -1px; background: var(--ink); pointer-events: none; box-shadow: 0 0 0 1px rgba(0,0,0,0.15); }
+        .rvg-knob { position: absolute; top: 50%; left: var(--pos); width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: var(--ink); color: var(--on-accent); display: grid; place-items: center; font: 600 20px/1 var(--font); letter-spacing: 4px; padding-left: 4px; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+        .rvg-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; -webkit-appearance: none; appearance: none; }
+        .rvg-stage:has(.rvg-range:focus-visible) { outline: 2px solid var(--accent); outline-offset: 4px; }
+        .rvg-labels { display: flex; justify-content: space-between; max-width: 1120px; margin: 16px auto 0; font-size: 15px; font-weight: 500; color: var(--ink-2); }
+        .rvg-labels span:last-child { color: var(--accent); }
+
         /* Highlights: full-bleed card carousel with paddles, aligned to the page column. */
         .hl { --gut: clamp(20px, 5vw, 64px); --edge: max(var(--gut), calc((100% - 1200px) / 2 + var(--gut))); }
         .hl-track { display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 820px); gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--edge); padding-inline: var(--edge); padding-bottom: 8px; scrollbar-width: none; }
@@ -180,6 +194,21 @@
             <span>Ship it.</span>
             <span>No install, no account, nothing to wait for.</span>
         </p>
+    </div>
+</section>
+
+<section class="sec rvg" style="padding-top:0;">
+    <div class="wrap">
+        <h2 class="sec-title">From raw to ready.</h2>
+        <p class="sec-sub">Drag across a real capture and the same capture finished in Glint.</p>
+        <div class="rvg-stage" id="rvg">
+            <img src="/shots/compare-raw.webp" alt="A plain dashboard screenshot, as captured" loading="lazy" width="1600" height="1000">
+            <img class="fin" src="/shots/compare-finished.webp" alt="The same dashboard finished in Glint: a dark browser frame on a graphite and amber background" loading="lazy" width="1600" height="1000">
+            <span class="rvg-line" aria-hidden="true"></span>
+            <span class="rvg-knob" aria-hidden="true">‹›</span>
+            <input class="rvg-range" type="range" min="0" max="100" value="50" step="0.5" aria-label="Compare the raw capture with the Glint version">
+        </div>
+        <div class="rvg-labels"><span>Raw capture</span><span>Made in Glint</span></div>
     </div>
 </section>
 
@@ -319,6 +348,32 @@
         }, { root: track, threshold: [0, 0.9, 1] });
         ends.observe(cards[0]);
         ends.observe(cards[cards.length - 1]);
+    }
+
+    // Raw vs Glint: the range input sets --pos. The first time the stage scrolls
+    // into view the divider sweeps once, so it reads as something to drag.
+    var rvg = document.getElementById('rvg');
+    if (rvg) {
+        var range = rvg.querySelector('.rvg-range');
+        var setPos = function (v) { rvg.style.setProperty('--pos', v + '%'); };
+        range.addEventListener('input', function () { setPos(range.value); });
+        if (!reduce) {
+            var hint = new IntersectionObserver(function (entries) {
+                if (!entries[0].isIntersecting) return;
+                hint.disconnect();
+                var t0 = performance.now(), dur = 1400, touched = false;
+                range.addEventListener('pointerdown', function () { touched = true; }, { once: true });
+                var tick = function (t) {
+                    if (touched) return;
+                    var k = Math.min(1, (t - t0) / dur);
+                    var v = 50 + Math.sin(k * Math.PI * 2) * 22 * (1 - k);
+                    setPos(v); range.value = v;
+                    if (k < 1) requestAnimationFrame(tick);
+                };
+                requestAnimationFrame(tick);
+            }, { threshold: 0.6 });
+            hint.observe(rvg);
+        }
     }
 
     var tabs = Array.prototype.slice.call(document.querySelectorAll('.look-tab'));

@@ -422,3 +422,24 @@ a.glass-card:hover { border-color: var(--glass-hi); }
 /* Buttons stay flat, like Apple's: no glow, no hover lift. */
 .btn-primary, .btn-primary:hover { box-shadow: none; }
 .btn-primary:hover, .btn-ghost:hover { transform: none; }
+
+/* v39.5 Amplified: Apple-style sticky sub-bar on product pages (Features, AI,
+   Extension). Page name on the left, section links, one button. It sticks under
+   the main nav; the flyout scrim (z 90) still covers it. site.js marks the
+   section in view. */
+.subnav { position: sticky; top: 66px; z-index: 89; height: 52px; display: flex; align-items: center; background: rgba(13, 13, 15, 0.72); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%); border-bottom: 1px solid var(--glass-line); }
+.subnav-inner { display: flex; align-items: center; gap: 24px; }
+.subnav-title { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); margin-right: auto; white-space: nowrap; }
+.subnav-links { display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; }
+.subnav-links::-webkit-scrollbar { display: none; }
+.subnav-links a { font-size: 13px; color: var(--ink-2); white-space: nowrap; transition: color .15s; }
+.subnav-links a:hover, .subnav-links a[aria-current="true"] { color: var(--ink); }
+.subnav-cta.btn { padding: 6px 14px; font-size: 13px; }
+body:has(.subnav) [id] { scroll-margin-top: 134px; }
+@media (max-width: 700px) {
+    .subnav-cta { display: none; }
+    .subnav-inner { gap: 16px; }
+    .subnav-title { font-size: 17px; }
+    .subnav-links { margin-right: calc(-1 * clamp(20px, 5vw, 64px)); padding-right: 20px; }
+}
+@media (prefers-reduced-transparency: reduce) { .subnav { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg-2); } }
