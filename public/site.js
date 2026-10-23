@@ -136,6 +136,16 @@
   }, { threshold: 0.16, rootMargin: '0px 0px -50px 0px' });
   document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
+  // 2b) The glint: mark product shots as lit the first time they are mostly in
+  // view; CSS runs the light streak (and skips it under reduced motion).
+  const glints = document.querySelectorAll('.glint');
+  if (glints.length) {
+    const gio = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('lit'); gio.unobserve(e.target); } });
+    }, { threshold: 0.45 });
+    glints.forEach((g) => gio.observe(g));
+  }
+
   if (reduce) return;   // everything below is cinematic motion
 
   // 3) Cursor-reactive glass: a specular highlight tracks the pointer across any

@@ -11,9 +11,10 @@
     <meta property="og:description" content="Every Glint release, up to v39 Glossifier (light to dark mode in one click), v38 Focus (curves, levels and shareable looks), v37 Exposure (the Roll), v36 Darkroom (Meet Glint), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (quality of life), and v32 Open Canvas: an infinite board of cards for your whole project, seed it from a URL, drive it by chat, and export it as one image. Plus v31 Merge Studio (CSV to N on-brand designs) and the full trail back to a single HTML file.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
     <meta name="theme-color" content="#0d0d0f">
+    <link rel="preload" href="/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/site.css">
     <style>
         /* ── Featured major-release spotlight ───────────────────────────────
@@ -33,7 +34,7 @@
            glass panel that holds the copy, so the card actually refracts the
            color behind it (the same liquid-glass motif v16 adds to the editor). */
         .spotlight {
-            position: relative; isolation: isolate; overflow: hidden; border-radius: 30px;
+            position: relative; isolation: isolate; overflow: hidden; border-radius: var(--r-card);
             padding: clamp(28px, 4vw, 54px);
             display: grid; grid-template-columns: 1.04fr 0.96fr; gap: clamp(28px, 4vw, 56px);
             align-items: center; color: #fff; box-shadow: var(--shadow-product);
@@ -53,7 +54,7 @@
         }
         .spotlight > * { position: relative; z-index: 1; }
         .spot-copy {
-            border-radius: 22px; padding: clamp(22px, 2.6vw, 32px);
+            border-radius: var(--r-card); padding: clamp(22px, 2.6vw, 32px);
             background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.05));
             backdrop-filter: blur(22px) saturate(165%);
             -webkit-backdrop-filter: blur(22px) saturate(165%);
@@ -267,12 +268,12 @@
         /* the device, rendered in perspective: this IS the 3D mockup feature, depicted */
         .mock3d-stage { width: 100%; display: flex; align-items: center; justify-content: center; perspective: 1100px; }
         .mock3d {
-            position: relative; width: min(72%, 320px); border-radius: 34px; padding: 9px;
+            position: relative; width: min(72%, 320px); border-radius: var(--r-card); padding: 9px;
             background: linear-gradient(160deg, #1a2030, #0c0f1a); overflow: hidden;
             transform: rotateY(-26deg) rotateX(7deg) rotateZ(1deg); transform-style: preserve-3d;
             box-shadow: 0 46px 80px -26px rgba(0,0,0,0.72), inset 0 0 0 1px rgba(255,255,255,0.08);
         }
-        .mock3d img { display: block; width: 100%; border-radius: 26px; aspect-ratio: 9 / 16; object-fit: cover; }
+        .mock3d img { display: block; width: 100%; border-radius: var(--r-card); aspect-ratio: 9 / 16; object-fit: cover; }
         @media (prefers-reduced-motion: reduce) { .mock3d { transform: rotateY(-18deg); } }
         @media (max-width: 860px) { .mock3d { transform: rotateY(-14deg); width: 58%; } }
 
@@ -342,12 +343,12 @@
         .ms-stage { width: 100%; display: flex; align-items: center; justify-content: center; }
         .ms-phone {
             position: relative; width: min(62%, 244px); aspect-ratio: 9 / 19;
-            border-radius: 36px; padding: 9px;
+            border-radius: var(--r-card); padding: 9px;
             background: linear-gradient(165deg, #1b2230, #0c0f1a);
             box-shadow: 0 44px 74px -26px rgba(0,0,0,0.72), inset 0 0 0 1px rgba(255,255,255,0.08);
         }
         .ms-screen {
-            position: relative; height: 100%; border-radius: 28px; overflow: hidden;
+            position: relative; height: 100%; border-radius: var(--r-card); overflow: hidden;
             background: linear-gradient(160deg, #11202e, #0c1420);
             display: flex; flex-direction: column;
         }
@@ -432,7 +433,7 @@
            (the feature, iconographically), not a fake screenshot. */
         .tp-stage { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 18px; }
         .tp-screen {
-            position: relative; width: min(94%, 384px); aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden;
+            position: relative; width: min(94%, 384px); aspect-ratio: 4 / 3; border-radius: var(--r-card); overflow: hidden;
             transform: rotate(-1.2deg); box-shadow: 0 38px 72px -26px rgba(0,0,0,0.72);
             background:
                 radial-gradient(78% 70% at 24% 16%, #f2a93b, transparent 60%),
@@ -552,7 +553,7 @@
         .spotlight-qol::after { display: none; }
         .spotlight-qol .spot-copy { background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); }
         .spotlight-qol .spot-feat-ico { background: linear-gradient(135deg, rgba(242,169,59,0.34), rgba(122,103,255,0.24)); }
-        .qol-stage { position: relative; width: 100%; aspect-ratio: 5/4; border-radius: 18px; overflow: hidden;
+        .qol-stage { position: relative; width: 100%; aspect-ratio: 5/4; border-radius: var(--r-card); overflow: hidden;
             background: radial-gradient(80% 70% at 50% 28%, #131a31, #0a0d18);
             border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 24px 50px -22px rgba(0,0,0,0.6); }
         .qol-obj { position: absolute; border-radius: 10px; box-shadow: 0 8px 22px rgba(0,0,0,0.4); }
@@ -592,7 +593,7 @@
         .spotlight-motion .btn-primary:hover { background: #f0f0ee; }
         /* the timeline, depicted with abstract shapes (lanes + clips), not fake UI. */
         .mo-stage { position: relative; container-type: inline-size; width: 100%; aspect-ratio: 5/4;
-            border-radius: 18px; overflow: hidden; padding: 22px 20px;
+            border-radius: var(--r-card); overflow: hidden; padding: 22px 20px;
             display: flex; flex-direction: column; gap: 11px;
             background: radial-gradient(80% 70% at 50% 22%, #131a31, #0a0d18);
             border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 24px 50px -22px rgba(0,0,0,0.6); }
@@ -716,7 +717,7 @@
         .spotlight-canvas .btn-primary { background: #fff; color: #141416; }
         .spotlight-canvas .btn-primary:hover { background: #f0f0ee; }
         .oc-stage {
-            position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 18px;
+            position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: var(--r-card);
             overflow: hidden; background: #0b0d16;
             background-image: radial-gradient(rgba(255,255,255,0.10) 1px, transparent 1px);
             background-size: 22px 22px;
@@ -759,7 +760,7 @@
         .spotlight-aperture .btn-primary { background: #fff; color: #14110c; box-shadow: 0 10px 28px rgba(232,166,79,0.26); }
         .spotlight-aperture .btn-primary:hover { background: #f0f0ee; }
         .ap-stage {
-            position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 18px; overflow: hidden;
+            position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: var(--r-card); overflow: hidden;
             background: #100e0b;
             background-image: radial-gradient(rgba(255,255,255,0.09) 1px, transparent 1px);
             background-size: 22px 22px;
@@ -810,7 +811,7 @@
         .spotlight-bokeh .btn-primary { background: #fff; color: #170e10; box-shadow: 0 10px 28px rgba(228,138,158,0.26); }
         .spotlight-bokeh .btn-primary:hover { background: #f0f0ee; }
         .bk-stage {
-            position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 18px; overflow: hidden;
+            position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: var(--r-card); overflow: hidden;
             background: #120d0e;
             box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07), 0 24px 54px rgba(8,4,5,0.55);
         }
@@ -858,7 +859,7 @@
         .amp-split .amp-fin { position: absolute; inset: 0; height: 100%; clip-path: inset(0 0 0 50%); box-shadow: none; }
         .amp-split .amp-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: var(--ink); }
         .gl-stage img.shot { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 30px 60px -18px rgba(0,0,0,0.6); }
-        .gl-stage img.mk { position: absolute; left: -18px; bottom: -18px; width: 84px; height: 84px; border-radius: 22px; box-shadow: 0 18px 40px rgba(232,97,58,0.3); }
+        .gl-stage img.mk { position: absolute; left: -18px; bottom: -18px; width: 84px; height: 84px; border-radius: var(--r-card); box-shadow: 0 18px 40px rgba(232,97,58,0.3); }
         @media (max-width: 860px) { .gl-stage img.mk { left: 10px; bottom: -14px; width: 64px; height: 64px; } }
         /* v39 Glossifier spotlight: one soft sheen sweeps across the shot as it
            scrolls in, the codename's gloss. Transform only; off for reduced motion. */
@@ -886,7 +887,7 @@
         .spotlight-contrast .btn-primary:hover { background: #f0f0ee; }
         .ct-stage {
             --split: 50%;
-            position: relative; width: 100%; aspect-ratio: 16 / 11; border-radius: 18px; overflow: hidden;
+            position: relative; width: 100%; aspect-ratio: 16 / 11; border-radius: var(--r-card); overflow: hidden;
             background: linear-gradient(135deg, #5b6cff, #a855f7);
             box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 24px 54px rgba(5,5,12,0.55);
         }
@@ -931,7 +932,7 @@
         .entry h2 { font-size: clamp(40px, 6vw, 72px); font-weight: 600; letter-spacing: -0.05em; line-height: 1; margin-bottom: 18px; color: var(--ink); }
         .entry.minor h2 { font-size: clamp(26px, 3.4vw, 38px); letter-spacing: -0.035em; }
         .entry-note { color: var(--ink-2); font-size: clamp(17px, 1.6vw, 20px); line-height: 1.5; max-width: 52ch; margin: 0 0 24px; text-wrap: pretty; }
-        .entry-shot { margin: 0 0 28px; border-radius: 22px; overflow: hidden; border: 1px solid var(--glass-line); background: var(--bg-raise); }
+        .entry-shot { margin: 0 0 28px; border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--glass-line); background: var(--bg-raise); }
         .entry-shot img { display: block; width: 100%; height: auto; }
         .log-head { font-size: clamp(34px, 5vw, 60px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.04; margin-bottom: clamp(20px, 3vw, 32px); }
 
@@ -1024,12 +1025,27 @@
     <div class="wrap">
         <h2 class="log-head reveal">Every release</h2>
         <ul class="log">
-            <li class="entry latest reveal">
+            <li class="entry minor latest reveal">
+                <div class="entry-meta"><span class="ver">v39.5.1</span><span class="entry-date">October 2026</span></div>
+                <div>
+                    <h2>Amplified, developed</h2>
+                    <p class="entry-note">The site now looks like Glint and nothing else. Its look comes from the darkroom, where every release name comes from.</p>
+                    <ul class="changes">
+                        <li><b>New type.</b> Headlines are set in Funnel Display and text in Funnel Sans, served from the site itself.</li>
+                        <li><b>Film grain and a light leak.</b> A fine grain sits over every page, and warm light bleeds in from the corner like it does on a roll of film.</li>
+                        <li><b>Prints, not bubbles.</b> Images and cards have sharp corners, like prints on a contact sheet. Buttons stay round.</li>
+                        <li><b>The safelight.</b> One section of the homepage glows amber, the way a darkroom does under its safelight.</li>
+                        <li><b>The glint.</b> A streak of light crosses product shots as they come into view, and again when you point at them.</li>
+                        <li><b>The mark up top.</b> The homepage leads with the Glint sparkle, and its editor shot shows the current version.</li>
+                    </ul>
+                </div>
+            </li>
+            <li class="entry reveal">
                 <div class="entry-meta"><span class="ver">v39.5</span><span class="entry-date">October 2026</span></div>
                 <div>
                     <h2>Amplified</h2>
                     <p class="entry-note">A website release. Every page now follows Apple's product pages, with ideas from Screen Studio, Pixelmator Pro, Raycast, Linear, Shots.so and Halide.</p>
-                    <figure class="entry-shot"><img src="/shots/compare-finished.webp" alt="A dashboard finished in Glint: a dark browser frame on a graphite and amber background" loading="lazy" width="1600" height="1000"></figure>
+                    <figure class="entry-shot glint"><img src="/shots/compare-finished.webp" alt="A dashboard finished in Glint: a dark browser frame on a graphite and amber background" loading="lazy" width="1600" height="1000"></figure>
                     <ul class="changes">
                         <li><b>Menus for every section.</b> Hover Features, Tools, Gallery, AI, Extension or Pricing for a full-width menu. On a phone, the menu fills the screen and each section slides in as its own page with a back button.</li>
                         <li><b>A new homepage.</b> One big headline, a product shot that grows as you scroll, a highlights carousel, a closer-look viewer, and a slider that shows a raw capture next to the same capture finished in Glint.</li>
@@ -1048,7 +1064,7 @@
                 <div>
                     <h2>Glossifier</h2>
                     <p class="entry-note">The first codename from outside photography. This one turns light screenshots dark, and dark ones light.</p>
-                    <figure class="entry-shot"><img src="/shots/glossifier-modes.webp" alt="A kanban board split down the middle: the light original on the left and the same screenshot flipped to dark on the right" loading="lazy" width="1280" height="600"></figure>
+                    <figure class="entry-shot glint"><img src="/shots/glossifier-modes.webp" alt="A kanban board split down the middle: the light original on the left and the same screenshot flipped to dark on the right" loading="lazy" width="1280" height="600"></figure>
                     <ul class="changes">
                         <li><b>Light / Dark.</b> A new section at the top of Adjust, in Simple and Pro mode. Press Flip to dark, or Flip to light for a dark screenshot, and Glint flips it in your browser. Colors keep their hue, and brand colors and photos stay as they are.</li>
                         <li><b>Panels that already match.</b> A dark sidebar, header or code block stays dark when you flip a light screenshot, text and all.</li>
@@ -1068,7 +1084,7 @@
                 <div>
                     <h2>Focus</h2>
                     <p class="entry-note">The sixth photography codename. This one brings photo editor color control to your screenshots.</p>
-                    <figure class="entry-shot"><img src="/shots/focus-curves.webp" alt="The same dashboard before and after a curves grade" loading="lazy" width="1280" height="600"></figure>
+                    <figure class="entry-shot glint"><img src="/shots/focus-curves.webp" alt="The same dashboard before and after a curves grade" loading="lazy" width="1280" height="600"></figure>
                     <ul class="changes">
                         <li><b>Curves.</b> A new Curves &amp; Levels section in Adjust (Pro mode). Click the curve to add a point, drag it to brighten or darken that tone, and double-click a point or drag it off the box to remove it. Edit all colors at once, or red, green and blue on their own, with the image's histogram behind the curve.</li>
                         <li><b>Levels.</b> Set the black point, white point and midtones for all colors or for one channel. The picture updates as you drag.</li>
@@ -1086,7 +1102,7 @@
                 <div>
                     <h2>Exposure</h2>
                     <p class="entry-note">The fifth photography codename. This one develops a whole roll of screenshots the same way, like a roll of film.</p>
-                    <figure class="entry-shot"><img src="/shots/roll-develop.webp" alt="Three screenshots developed with one design: a phone, a dashboard and a landing page" loading="lazy" width="1280" height="600"></figure>
+                    <figure class="entry-shot glint"><img src="/shots/roll-develop.webp" alt="Three screenshots developed with one design: a phone, a dashboard and a landing page" loading="lazy" width="1280" height="600"></figure>
                     <ul class="changes">
                         <li><b>The Roll.</b> A new Roll section in Export. Add screenshots one at a time, many at once, or a whole folder, and every shot is styled with the design on your canvas. Drag shots to reorder them. Adding, removing and moving shots can all be undone.</li>
                         <li><b>Contact sheet.</b> Every shot shows up as a thumbnail with your current design, and the thumbnails update a moment after you change something.</li>
@@ -1104,7 +1120,7 @@
                 <div>
                     <h2>Darkroom</h2>
                     <p class="entry-note">The fourth photography codename, and the biggest launch so far: the studio is now Glint.</p>
-                    <figure class="entry-shot"><img src="/shots/hero-editor.webp" alt="The Glint editor framing a dashboard on a graphite and amber background" loading="lazy" width="1280" height="800"></figure>
+                    <figure class="entry-shot glint"><img src="/shots/hero-editor.webp" alt="The Glint editor framing a dashboard on a graphite and amber background" loading="lazy" width="1280" height="800"></figure>
                     <ul class="changes">
                         <li><b>A new name.</b> The studio is now Glint, everywhere: the studio, the site, the installed app and the browser extension. Read why on the new <a href="/glint/">Meet Glint</a> page.</li>
                         <li><b>A new look.</b> A sparkle mark, and a graphite and off-white interface with one amber accent. In light mode, highlighted text stays dark so it is easy to read.</li>
@@ -1134,7 +1150,7 @@
                 <div>
                     <h2>Bokeh</h2>
                     <p class="entry-note">The second photography codename. This one is about focus: showing people exactly where to look.</p>
-                    <figure class="entry-shot"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a glass panel" loading="lazy" width="1000" height="600"></figure>
+                    <figure class="entry-shot glint"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a glass panel" loading="lazy" width="1000" height="600"></figure>
                     <ul class="changes">
                         <li><b>Spotlight, rebuilt.</b> Add as many focus areas as you need with the Spotlight tool, as boxes, circles, or rounded shapes (hold Shift for a circle). Select one to move it, drag its corner to resize it, or duplicate and delete it like any other object.</li>
                         <li><b>Blur, soft edges, and color.</b> Everything outside your focus areas can now be blurred as well as dimmed, with a soft-edge slider and any dim color. Spotlights in older projects open exactly as before.</li>

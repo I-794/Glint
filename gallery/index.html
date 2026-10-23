@@ -11,9 +11,10 @@
     <meta property="og:description" content="See what a screenshot can become: gradients, mesh, liquid glass, device mockups, and store sets.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
     <meta name="theme-color" content="#0d0d0f">
+    <link rel="preload" href="/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/site.css">
     <style>
         /* v39.5 Amplified Gallery: picture-led, two across, after Shots.so's
@@ -35,7 +36,7 @@
         .gal { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(16px, 2.4vw, 28px) clamp(16px, 2vw, 24px); }
         .look { display: flex; flex-direction: column; gap: 14px; }
         .look.hide { display: none; }
-        .look .pic { display: block; border-radius: 22px; overflow: hidden; border: 1px solid var(--glass-line); background: var(--bg-raise); }
+        .look .pic { display: block; border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--glass-line); background: var(--bg-raise); }
         .look .pic img { display: block; width: 100%; height: auto; aspect-ratio: 5 / 3; object-fit: cover; transition: transform .6s var(--ease); }
         .look .pic:hover img { transform: scale(1.03); }
         .look .pic:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
@@ -79,43 +80,43 @@
         </div>
         <div class="gal" id="gal">
             <article class="look" data-cat="mesh">
-                <a class="pic" href="/editor/?look=amber-flare"><img src="/shots/amber-flare.webp" alt="A dashboard in a dark browser frame on a graphite background with an amber flare" loading="lazy" width="1000" height="600"></a>
+                <a class="pic glint" href="/editor/?look=amber-flare"><img src="/shots/amber-flare.webp" alt="A dashboard in a dark browser frame on a graphite background with an amber flare" loading="lazy" width="1000" height="600"></a>
                 <div class="meta"><div><h2>Amber flare</h2><p>Dark browser frame, graphite and amber</p></div><a class="use" href="/editor/?look=amber-flare" aria-label="Use the Amber flare look">Use this look ›</a></div>
             </article>
             <article class="look" data-cat="gradient">
-                <a class="pic" href="/editor/?look=warm-gradient"><img src="/shots/warm-gradient.webp" alt="A task board with rounded corners and a soft shadow on a warm gradient" loading="lazy" width="1000" height="600"></a>
+                <a class="pic glint" href="/editor/?look=warm-gradient"><img src="/shots/warm-gradient.webp" alt="A task board with rounded corners and a soft shadow on a warm gradient" loading="lazy" width="1000" height="600"></a>
                 <div class="meta"><div><h2>Warm gradient</h2><p>Soft shadow, rounded corners</p></div><a class="use" href="/editor/?look=warm-gradient" aria-label="Use the Warm gradient look">Use this look ›</a></div>
             </article>
             <article class="look" data-cat="mesh">
-                <a class="pic" href="/editor/?look=cobalt-mesh"><img src="/shots/cobalt-mesh.webp" alt="A dashboard in a browser frame, tilted in 3D on a cobalt mesh background" loading="lazy" width="1000" height="600"></a>
+                <a class="pic glint" href="/editor/?look=cobalt-mesh"><img src="/shots/cobalt-mesh.webp" alt="A dashboard in a browser frame, tilted in 3D on a cobalt mesh background" loading="lazy" width="1000" height="600"></a>
                 <div class="meta"><div><h2>Cobalt mesh</h2><p>Browser frame, 3D tilt</p></div><a class="use" href="/editor/?look=cobalt-mesh" aria-label="Use the Cobalt mesh look">Use this look ›</a></div>
             </article>
             <article class="look" data-cat="glass">
-                <a class="pic" href="/editor/?look=glass-spotlight"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a liquid glass panel" loading="lazy" width="1000" height="600"></a>
+                <a class="pic glint" href="/editor/?look=glass-spotlight"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a liquid glass panel" loading="lazy" width="1000" height="600"></a>
                 <div class="meta"><div><h2>Glass and spotlight</h2><p>Liquid glass, annotations</p></div><a class="use" href="/editor/?look=glass-spotlight" aria-label="Use the Glass and spotlight look">Use this look ›</a></div>
             </article>
             <article class="look" data-cat="device">
-                <a class="pic" href="/editor/?look=device-mockup"><img src="/shots/device-mockup.webp" alt="A fitness app screen in an iPhone frame with a reflection on a blue gradient" loading="lazy" width="1000" height="600"></a>
+                <a class="pic glint" href="/editor/?look=device-mockup"><img src="/shots/device-mockup.webp" alt="A fitness app screen in an iPhone frame with a reflection on a blue gradient" loading="lazy" width="1000" height="600"></a>
                 <div class="meta"><div><h2>Device mockup</h2><p>iPhone frame, reflection</p></div><a class="use" href="/editor/?look=device-mockup" aria-label="Use the Device mockup look">Use this look ›</a></div>
             </article>
             <article class="look" data-cat="gradient">
-                <a class="pic" href="/editor/?look=sunset-pop"><img src="/shots/sunset-pop.webp" alt="A landing page with a vivid color filter and film grain on a sunset gradient" loading="lazy" width="1000" height="600"></a>
+                <a class="pic glint" href="/editor/?look=sunset-pop"><img src="/shots/sunset-pop.webp" alt="A landing page with a vivid color filter and film grain on a sunset gradient" loading="lazy" width="1000" height="600"></a>
                 <div class="meta"><div><h2>Sunset pop</h2><p>Vivid filter, film grain</p></div><a class="use" href="/editor/?look=sunset-pop" aria-label="Use the Sunset pop look">Use this look ›</a></div>
             </article>
             <article class="look" data-cat="mesh">
-                <a class="pic" href="/editor/?look=aurora-mesh"><img src="/shots/aurora-mesh.webp" alt="A task board in a macOS window on a green and violet aurora mesh" loading="lazy" width="1000" height="600"></a>
+                <a class="pic glint" href="/editor/?look=aurora-mesh"><img src="/shots/aurora-mesh.webp" alt="A task board in a macOS window on a green and violet aurora mesh" loading="lazy" width="1000" height="600"></a>
                 <div class="meta"><div><h2>Aurora mesh</h2><p>macOS window, deep shadow</p></div><a class="use" href="/editor/?look=aurora-mesh" aria-label="Use the Aurora mesh look">Use this look ›</a></div>
             </article>
             <article class="look" data-cat="glass">
-                <a class="pic" href="/editor/?look=frosted-panel"><img src="/shots/frosted-panel.webp" alt="A landing page with a frosted glass panel over its lower half on a violet mesh" loading="lazy" width="1000" height="600"></a>
+                <a class="pic glint" href="/editor/?look=frosted-panel"><img src="/shots/frosted-panel.webp" alt="A landing page with a frosted glass panel over its lower half on a violet mesh" loading="lazy" width="1000" height="600"></a>
                 <div class="meta"><div><h2>Frosted panel</h2><p>Glass over a hero shot</p></div><a class="use" href="/editor/?look=frosted-panel" aria-label="Use the Frosted panel look">Use this look ›</a></div>
             </article>
             <article class="look" data-cat="device">
-                <a class="pic" href="/editor/?look=laptop-scene"><img src="/shots/laptop-scene.webp" alt="A dashboard inside a MacBook Pro frame with a soft shadow" loading="lazy" width="1000" height="600"></a>
+                <a class="pic glint" href="/editor/?look=laptop-scene"><img src="/shots/laptop-scene.webp" alt="A dashboard inside a MacBook Pro frame with a soft shadow" loading="lazy" width="1000" height="600"></a>
                 <div class="meta"><div><h2>Laptop scene</h2><p>Mockup, soft shadow</p></div><a class="use" href="/editor/?look=laptop-scene" aria-label="Use the Laptop scene look">Use this look ›</a></div>
             </article>
             <article class="look" data-cat="store">
-                <a class="pic" href="/app-store-screenshots/"><img src="/shots/app-store-set.webp" alt="Three captioned App Store panels exported from one screenshot set" loading="lazy" width="1000" height="600"></a>
+                <a class="pic glint" href="/app-store-screenshots/"><img src="/shots/app-store-set.webp" alt="Three captioned App Store panels exported from one screenshot set" loading="lazy" width="1000" height="600"></a>
                 <div class="meta"><div><h2>App Store set</h2><p>Three captioned panels, one set</p></div><a class="use" href="/app-store-screenshots/">See how ›</a></div>
             </article>
         </div>

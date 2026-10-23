@@ -11,9 +11,10 @@
     <meta property="og:description" content="Capture any page (visible, full-page, or a region) and edit it in the Glint studio. One click, nothing uploaded until you say so.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
     <meta name="theme-color" content="#0d0d0f">
+    <link rel="preload" href="/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/site.css">
     <style>
         /* Extension landing. Design read: Chrome-extension page for people who
@@ -64,7 +65,7 @@
         .ex-step p { font-size: 14.5px; color: var(--ink-2); line-height: 1.55; }
 
         /* ── Trust row ── */
-        .ex-trust { display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap; border-radius:20px; padding: clamp(24px,3.5vw,40px); background: var(--accent-soft); border:1px solid var(--accent-line); }
+        .ex-trust { display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap; border-radius:var(--r-card); padding: clamp(24px,3.5vw,40px); background: var(--accent-soft); border:1px solid var(--accent-line); }
         .ex-trust h2 { font-size: clamp(22px,2.6vw,30px); font-weight:700; letter-spacing:-0.025em; color:var(--ink); margin-bottom:8px; }
         .ex-trust ul { list-style:none; display:flex; flex-direction:column; gap:9px; }
         .ex-trust li { position:relative; padding-left:24px; font-size:15px; color:var(--ink-2); line-height:1.5; }

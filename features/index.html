@@ -11,9 +11,10 @@
     <meta property="og:description" content="The full studio: capture, frame, style, annotate, animate, and export, all in your browser.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
     <meta name="theme-color" content="#0d0d0f">
+    <link rel="preload" href="/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/site.css">
     <style>
         /* Features, Apple product-page language: five chapters, each with a real
@@ -28,7 +29,7 @@
         .ch { padding-block: clamp(72px, 10vw, 140px) 0; }
         .ch h2 { font-size: clamp(34px, 5vw, 60px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.04; color: var(--ink); margin-bottom: 14px; }
         .ch .lead { font-size: clamp(17px, 1.6vw, 21px); line-height: 1.5; color: var(--ink-2); max-width: 44ch; }
-        .ch img { display: block; width: 100%; height: auto; border-radius: 26px; border: 1px solid var(--glass-line); background: var(--bg-raise); }
+        .ch img { display: block; width: 100%; height: auto; border-radius: var(--r-card); border: 1px solid var(--glass-line); background: var(--bg-raise); }
         .ch h3 { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 8px; }
         .ch p.d { font-size: 16px; line-height: 1.55; color: var(--ink-2); max-width: 38ch; }
 
@@ -46,7 +47,7 @@
 
         /* 3. Bento: one large image cell and two stacked, each with a caption. */
         .fx-bento { display: grid; grid-template-columns: 1.5fr 1fr; grid-template-rows: auto auto; gap: 16px; margin-top: clamp(32px, 4vw, 52px); }
-        .fx-bento article { border-radius: 26px; background: var(--bg-raise); border: 1px solid var(--glass-line); overflow: hidden; display: flex; flex-direction: column; }
+        .fx-bento article { border-radius: var(--r-card); background: var(--bg-raise); border: 1px solid var(--glass-line); overflow: hidden; display: flex; flex-direction: column; }
         .fx-bento article:first-child { grid-row: span 2; }
         .fx-bento .t { padding: clamp(22px, 2.6vw, 32px); }
         .fx-bento img { border: 0; border-radius: 0; flex: 1; min-height: 0; aspect-ratio: 5 / 3; object-fit: cover; }
@@ -106,7 +107,7 @@
 
 <section id="frames" class="ch">
     <div class="wrap split">
-        <figure class="reveal"><img src="/shots/device-mockup.webp" alt="A phone app screen inside a device frame" loading="lazy" width="1000" height="600"></figure>
+        <figure class="reveal glint"><img src="/shots/device-mockup.webp" alt="A phone app screen inside a device frame" loading="lazy" width="1000" height="600"></figure>
         <div>
             <h2>Frames and backgrounds.</h2>
             <p class="lead">Set the stage around your shot.</p>
@@ -142,7 +143,7 @@
 
 <section id="annotate" class="ch">
     <div class="wrap split rev">
-        <figure class="reveal"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a glass panel" loading="lazy" width="1000" height="600"></figure>
+        <figure class="reveal glint"><img src="/shots/glass-spotlight.webp" alt="A dashboard with a spotlight, a numbered callout, an arrow and a glass panel" loading="lazy" width="1000" height="600"></figure>
         <div>
             <h2>Annotate and motion.</h2>
             <p class="lead">Point things out, then bring them to life.</p>

@@ -11,9 +11,10 @@
     <meta property="og:description" content="Screenshots deserve better. A private, in-browser studio that is free and open source.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
     <meta name="theme-color" content="#0d0d0f">
+    <link rel="preload" href="/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/site.css">
     <style>
         /* About / manifesto. Design read: OSS product-manifesto page for makers
@@ -37,7 +38,7 @@
         .ab-story b { color: var(--ink); font-weight: 600; }
 
         /* open-source band */
-        .ab-os { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; border-radius: 20px; padding: clamp(24px, 3.5vw, 40px); background: var(--accent-soft); border: 1px solid var(--accent-line); }
+        .ab-os { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; border-radius: var(--r-card); padding: clamp(24px, 3.5vw, 40px); background: var(--accent-soft); border: 1px solid var(--accent-line); }
         .ab-os h2 { font-size: clamp(22px, 2.6vw, 30px); font-weight: 700; letter-spacing: -0.025em; color: var(--ink); margin-bottom: 8px; }
         .ab-os p { font-size: 16px; color: var(--ink-2); max-width: 52ch; line-height: 1.55; }
         .ab-os .acts { display: flex; gap: 12px; flex-wrap: wrap; }

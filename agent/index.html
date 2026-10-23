@@ -11,9 +11,10 @@
     <meta property="og:description" content="Describe, edit, and ship with AI. The Design Agent, Brand Brain, AI Screenshot Editor, Campaign Generator, and Producer, all in your browser.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
     <meta name="theme-color" content="#0d0d0f">
+    <link rel="preload" href="/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/site.css">
     <style>
         /* v20 launch page. Page base stays on the site's LIGHT theme so the shared
@@ -26,7 +27,7 @@
         /* ---- shared dark island ---- */
         .ag-dark {
             position: relative; isolation: isolate; overflow: hidden;
-            border-radius: 28px; color: #fff;
+            border-radius: var(--r-card); color: #fff;
             background:
                 radial-gradient(60% 90% at 8% 0%, rgba(74,168,255,0.20), transparent 56%),
                 radial-gradient(55% 85% at 100% 100%, rgba(232,97,58,0.22), transparent 56%),
@@ -111,7 +112,7 @@
         .ag-chip { font-size: 12px; color: #fff; border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; padding: 5px 12px; }
 
         /* ---- arc band + final cta ---- */
-        .ag-arc { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding: clamp(22px, 3vw, 34px) clamp(24px, 4vw, 44px); border-radius: 20px; background: var(--accent-soft, rgba(196,122,20,0.08)); border: 1px solid var(--accent-line, rgba(196,122,20,0.18)); }
+        .ag-arc { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding: clamp(22px, 3vw, 34px) clamp(24px, 4vw, 44px); border-radius: var(--r-card); background: var(--accent-soft, rgba(196,122,20,0.08)); border: 1px solid var(--accent-line, rgba(196,122,20,0.18)); }
         .ag-arc p { font-size: 16px; color: var(--ink-2, #41485a); max-width: 60ch; }
         .ag-arc b { color: var(--ink, #0e0e11); font-weight: 650; }
         .ag-cta { text-align: center; padding: clamp(40px, 6vw, 72px) clamp(24px, 4vw, 44px); }
@@ -210,7 +211,7 @@
     <div class="wrap">
         <h2 class="ag-head reveal">AI across the whole studio</h2>
         <p class="ag-sub reveal">Not one feature. A toolset that spans creating, editing, and shipping.</p>
-        <div class="ag-flow reveal" style="border:1px solid var(--line, rgba(10,16,40,0.10)); border-radius:20px; overflow:hidden;">
+        <div class="ag-flow reveal" style="border:1px solid var(--line, rgba(10,16,40,0.10)); border-radius:var(--r-card); overflow:hidden;">
             <div class="ag-step">
                 <div class="n">Create</div>
                 <h3>Design from a sentence</h3>

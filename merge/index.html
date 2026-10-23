@@ -12,9 +12,10 @@
     <meta property="og:description" content="Design once, ship a thousand. Mark your design with {{tokens}}, drop in a CSV, and get one image per row with text, colors, and screenshots swapped automatically.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
     <meta name="theme-color" content="#0d0d0f">
+    <link rel="preload" href="/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/site.css">
     <script type="application/ld+json">
     {
@@ -65,7 +66,7 @@
             display: flex; align-items: center; gap: 20px; min-height: 210px;
         }
         .tpl .avatar {
-            flex: none; width: 84px; height: 84px; border-radius: 20px;
+            flex: none; width: 84px; height: 84px; border-radius: var(--r-card);
             border: 1px dashed var(--accent-line); background: var(--accent-soft);
             display: flex; align-items: center; justify-content: center;
             font-family: var(--font-mono); font-size: 11px; color: var(--accent); text-align: center;

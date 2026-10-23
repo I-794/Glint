@@ -23,9 +23,10 @@
     <meta name="twitter:description" content="Glint is a browser screenshot studio. Turn raw screenshots into finished, on-brand images, free in your browser.">
     <meta name="twitter:image" content="__OG_BASE__/og.png?v=3">
     <meta name="theme-color" content="#0d0d0f">
+    <link rel="preload" href="/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/site.css">
     <style>
         /* v40 homepage, Apple product-page language. Built under the taste-skill.
@@ -43,6 +44,8 @@
 
         /* Hero: centered, one moment. The product shot grows as it scrolls in. */
         .hero { text-align: center; padding-top: clamp(48px, 7vw, 88px); overflow: hidden; }
+        .hero .brandline { display: inline-flex; align-items: center; gap: 12px; color: var(--ink); }
+        .hero .hero-mark { width: 40px; height: 40px; }
         .hero .name { font-size: clamp(19px, 2vw, 24px); font-weight: 600; color: var(--ink-2); letter-spacing: -0.01em; margin-bottom: 10px; }
         .hero h1 { font-size: clamp(48px, 8.4vw, 104px); letter-spacing: -0.05em; line-height: 1; margin-bottom: 22px; }
         .hero h1 em { font-style: normal; color: var(--accent); }
@@ -50,17 +53,22 @@
         .hero .actions { display: flex; justify-content: center; align-items: center; gap: 28px; flex-wrap: wrap; }
         .hero-shot { position: relative; margin: clamp(48px, 6vw, 80px) auto 0; max-width: 1120px; padding-inline: clamp(16px, 4vw, 40px); }
         .hero-shot::before { content: ''; position: absolute; inset: 18% 8% -6%; z-index: -1; background: radial-gradient(closest-side, rgba(242,169,59,0.22), transparent 75%); filter: blur(30px); }
-        .hero-shot img { display: block; width: 100%; height: auto; border-radius: 22px; border: 1px solid var(--glass-line); box-shadow: var(--shadow-product); transform-origin: 50% 0; }
+        .hero-shot .glint { border-radius: var(--r-card); border: 1px solid var(--glass-line); box-shadow: var(--shadow-product); transform-origin: 50% 0; }
+        .hero-shot img { display: block; width: 100%; height: auto; }
 
         /* Statement: each line lights up as it reaches the middle of the screen. */
-        .statement p { font-size: clamp(30px, 4.6vw, 58px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.12; max-width: 26ch; color: var(--ink); }
+        /* The safelight: the one section that switches to amber, like a darkroom
+           under its safelight. Ink on amber; the lines darken as they reach the
+           middle of the screen. */
+        .statement { background: var(--accent); color: var(--on-accent); }
+        .statement p { font-family: var(--font-display); font-size: clamp(30px, 4.6vw, 58px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.12; max-width: 26ch; color: var(--on-accent); }
         .statement span { display: block; }
 
         /* Raw vs Glint: drag the divider. A transparent range input covers the
            stage, so mouse, touch and keyboard all move it; --pos drives the clip. */
         .rvg h2 { text-align: center; }
         .rvg .sec-sub { text-align: center; font-size: clamp(17px, 1.6vw, 21px); color: var(--ink-2); margin: -20px auto clamp(32px, 4vw, 48px); max-width: 40ch; }
-        .rvg-stage { --pos: 50%; position: relative; border-radius: 26px; overflow: hidden; border: 1px solid var(--glass-line); aspect-ratio: 16 / 10; background: var(--bg-raise); max-width: 1120px; margin: 0 auto; touch-action: pan-y; }
+        .rvg-stage { --pos: 50%; position: relative; border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--glass-line); aspect-ratio: 16 / 10; background: var(--bg-raise); max-width: 1120px; margin: 0 auto; touch-action: pan-y; }
         .rvg-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
         .rvg-stage .fin { clip-path: inset(0 0 0 var(--pos)); }
         .rvg-line { position: absolute; top: 0; bottom: 0; left: var(--pos); width: 2px; margin-left: -1px; background: var(--ink); pointer-events: none; box-shadow: 0 0 0 1px rgba(0,0,0,0.15); }
@@ -74,7 +82,7 @@
         .hl { --gut: clamp(20px, 5vw, 64px); --edge: max(var(--gut), calc((100% - 1200px) / 2 + var(--gut))); }
         .hl-track { display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 820px); gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--edge); padding-inline: var(--edge); padding-bottom: 8px; scrollbar-width: none; }
         .hl-track::-webkit-scrollbar { display: none; }
-        .hl-card { scroll-snap-align: start; border-radius: 26px; background: var(--bg-raise); border: 1px solid var(--glass-line); overflow: hidden; display: flex; flex-direction: column; }
+        .hl-card { scroll-snap-align: start; border-radius: var(--r-card); background: var(--bg-raise); border: 1px solid var(--glass-line); overflow: hidden; display: flex; flex-direction: column; }
         .hl-card .txt { padding: clamp(24px, 3vw, 36px) clamp(24px, 3vw, 40px) 0; }
         .hl-card h3 { font-size: clamp(21px, 2.2vw, 28px); letter-spacing: -0.025em; line-height: 1.15; max-width: 26ch; }
         .hl-card h3 b { font-weight: 600; color: var(--ink-2); }
@@ -93,13 +101,13 @@
         .look-tab:hover { border-color: var(--glass-hi); }
         .look-tab[aria-selected="true"] { background: var(--ink); color: var(--on-accent); border-color: var(--ink); }
         .look-desc { margin-top: 22px; font-size: 16px; line-height: 1.55; color: var(--ink-2); max-width: 32ch; min-height: 3.2em; }
-        .look-stage { display: grid; border-radius: 26px; overflow: hidden; background: var(--bg-2); border: 1px solid var(--glass-line); aspect-ratio: 16 / 9; }
+        .look-stage { display: grid; border-radius: var(--r-card); overflow: hidden; background: var(--bg-2); border: 1px solid var(--glass-line); aspect-ratio: 16 / 9; }
         .look-stage img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: contain; opacity: 0; transform: scale(1.02); transition: opacity .55s var(--ease), transform .7s var(--ease); }
         .look-stage img.on { opacity: 1; transform: none; }
 
         /* Facts: four items, four cells, two with real visuals. */
         .facts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
-        .fact { border-radius: 26px; background: var(--bg-raise); border: 1px solid var(--glass-line); padding: clamp(26px, 3vw, 40px); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; min-height: 260px; }
+        .fact { border-radius: var(--r-card); background: var(--bg-raise); border: 1px solid var(--glass-line); padding: clamp(26px, 3vw, 40px); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; min-height: 260px; }
         .fact .big { font-size: clamp(56px, 7vw, 96px); font-weight: 600; letter-spacing: -0.05em; line-height: 1; color: var(--ink); margin-bottom: 14px; }
         .fact p { font-size: 17px; line-height: 1.5; color: var(--ink-2); max-width: 34ch; }
         .fact p strong { color: var(--ink); font-weight: 600; }
@@ -133,10 +141,10 @@
             .hero .intro > :nth-child(4) { animation-delay: .21s; }
             @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
             @supports (animation-timeline: view()) {
-                .hero-shot img { animation: grow linear both; animation-timeline: view(); animation-range: cover 0% cover 50%; }
+                .hero-shot .glint { animation: grow linear both; animation-timeline: view(); animation-range: cover 0% cover 50%; }
                 @keyframes grow { from { transform: scale(0.88); } to { transform: none; } }
-                .statement span { color: var(--ink-3); animation: lit linear both; animation-timeline: view(); animation-range: cover 25% cover 50%; }
-                @keyframes lit { to { color: var(--ink); } }
+                .statement span { color: rgba(20, 20, 22, 0.3); animation: lit linear both; animation-timeline: view(); animation-range: cover 25% cover 50%; }
+                @keyframes lit { to { color: var(--on-accent); } }
             }
         }
 
@@ -173,7 +181,7 @@
 
 <header class="hero">
     <div class="wrap intro">
-        <p class="name">Glint</p>
+        <p class="name brandline"><svg class="hero-mark" aria-hidden="true"><use href="#mark"/></svg>Glint</p>
         <h1>Screenshots, <em>finished.</em></h1>
         <p class="sub">Turn raw screenshots into polished, on-brand images. Free, in your browser.</p>
         <div class="actions">
@@ -182,7 +190,7 @@
         </div>
     </div>
     <figure class="hero-shot">
-        <img src="/shots/hero-editor.webp" alt="The Glint editor framing a dashboard screenshot on a graphite and amber background" loading="eager" fetchpriority="high" width="1280" height="800">
+        <span class="glint"><img src="/shots/hero-editor.webp" alt="The Glint editor framing a dashboard screenshot on a graphite and amber background" loading="eager" fetchpriority="high" width="1280" height="800"></span>
     </figure>
 </header>
 
@@ -197,7 +205,7 @@
     </div>
 </section>
 
-<section class="sec rvg" style="padding-top:0;">
+<section class="sec rvg">
     <div class="wrap">
         <h2 class="sec-title">From raw to ready.</h2>
         <p class="sec-sub">Drag across a real capture and the same capture finished in Glint.</p>
