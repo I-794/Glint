@@ -12,6 +12,7 @@ import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLu
 import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
 import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, surfaceMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
 import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, withSnapshot, clearHistory } from '../src/state/history.js';
+import { describeChange } from '../src/state/history-labels.js';
 
 function mockRes() {
   return {
@@ -564,6 +565,31 @@ function testHistoryPeekPutsLiveStateBack() {
   }
 }
 
+function testHistoryLabels() {
+  assert.equal(describeChange({ padding: 10 }, { padding: 20 }), 'Padding');
+  assert.equal(describeChange({ padding: 10 }, { padding: 10 }), 'Edit');
+  assert.equal(describeChange(null, { padding: 1 }), 'Edit');
+  assert.equal(describeChange({ bgColor: '#000', deviceFrame: { type: null } }, { bgColor: '#fff', deviceFrame: { type: 'iphone' } }), 'Background and frame');
+  assert.equal(describeChange({ bgColor: '#000', gradient: { a: 1 } }, { bgColor: '#fff', gradient: { a: 2 } }), 'Background', 'two keys with one name read once');
+  assert.equal(describeChange({ padding: 1, shadow: {}, scale: 1 }, { padding: 2, shadow: { blur: 1 }, scale: 2 }), 'Changed 3 settings');
+  assert.equal(describeChange({ annotations: [] }, { annotations: [{ id: 1, type: 'arrow' }] }), 'Added arrow');
+  assert.equal(describeChange(
+    { annotations: [], nextNumber: 1, annotationColor: '#f00' },
+    { annotations: [{ id: 1, type: 'rect' }], nextNumber: 2, annotationColor: '#0f0' }), 'Added rectangle', 'tool defaults do not count');
+  assert.equal(describeChange({ annotations: [{ id: 1, type: 'arrow' }, { id: 2, type: 'arrow' }] }, { annotations: [] }), 'Deleted 2 annotations');
+  assert.equal(describeChange({ annotations: [{ id: 1, type: 'pen', x: 1 }] }, { annotations: [{ id: 1, type: 'pen', x: 5 }] }), 'Edited pen drawing');
+  assert.equal(describeChange({ redactions: [] }, { redactions: [{ id: 3 }] }), 'Added redaction');
+  assert.equal(describeChange({ extraImages: [{ id: 1 }] }, { extraImages: [] }), 'Deleted image');
+  assert.equal(describeChange({ textOverlay: { content: '' } }, { textOverlay: { content: 'Ship faster with a much longer headline' } }), 'Text: "Ship faster with a much…"');
+  assert.equal(describeChange({ textOverlay: { content: 'a', size: 10 } }, { textOverlay: { content: 'a', size: 20 } }), 'Text');
+  assert.equal(describeChange({ modeFlip: { enabled: false, target: 'auto' } }, { modeFlip: { enabled: true, target: 'dark' } }), 'Flipped to dark');
+  assert.equal(describeChange({ modeFlip: { enabled: true, target: 'dark' } }, { modeFlip: { enabled: false, target: 'dark' } }), 'Light / Dark off');
+  assert.equal(describeChange({ imageCrop: null }, { imageCrop: { x: 0, y: 0, w: 0.5, h: 0.5, angle: 0 } }), 'Cropped');
+  assert.equal(describeChange({ imageCrop: { x: 0 } }, { imageCrop: null }), 'Removed crop');
+  assert.equal(describeChange({ compare: { beforeSrc: null } }, { compare: { beforeSrc: 'data:x' } }), 'Set Before image');
+  assert.equal(describeChange({ someNewKey: 1 }, { someNewKey: 2 }), 'Some new key');
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -584,7 +610,8 @@ const tests = [
   testModeFlipCore,
   testModeFlipMigratesAndPersists,
   testHistoryStepsStayPaired,
-  testHistoryPeekPutsLiveStateBack
+  testHistoryPeekPutsLiveStateBack,
+  testHistoryLabels
 ];
 
 for (const test of tests) {
