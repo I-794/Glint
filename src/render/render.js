@@ -57,6 +57,7 @@ export function render(forExport) {
   // v37 — the Roll's contact sheet re-renders after design changes.
   if (!forExport) window.__rollRefresh?.();
   if (!forExport) window.__colorToolsImageCheck?.();   // v38: redraw the histogram for a new image
+  if (!forExport) window.__looksImageCheck?.();        // v40: Look chips preview the new screenshot
   if (!forExport) window.__modeFlipImageCheck?.();     // v39: Light / Dark button label for a new image
   if (!forExport) window.__historyPanelCheck?.();      // v40: refresh the current History thumbnail
   if (!forExport) window.__versionsCheck?.();          // v40: versions list follows page / project loads

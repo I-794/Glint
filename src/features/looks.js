@@ -9,7 +9,8 @@ import { render } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
 import { escapeHTML } from '../utils/dom.js';
 import { download } from './motion-export.js';
-import { STARTER_LOOKS, normalizeLook, normalizeFilters, normalizeColorTools, encodeLook, decodeLook, lookToJson } from '../render/curves-core.js';
+import { STARTER_LOOKS, normalizeLook, normalizeFilters, normalizeColorTools, encodeLook, decodeLook, lookToJson, channelLuts, applyLuts } from '../render/curves-core.js';
+import { cssFilterFor } from '../render/color-grade.js';
 import { openCurves } from './curves-ui.js';
 
 const KEY = 'glint_looks';
@@ -28,29 +29,86 @@ function persist(list) {
 }
 function genId() { return 'look_' + Date.now().toString(36) + '_' + (seq++); }
 
-function allLooks() { return [...STARTER_LOOKS, ...loadAll()]; }
+export function allLooks() { return [...STARTER_LOOKS, ...loadAll()]; }
 
 function currentLook(name) {
   return normalizeLook({ name, imageFilters: state.imageFilters, colorTools: state.colorTools });
+}
+
+// v40 — the look's grade with no history entry or toast (the Design Agent saves
+// one entry for its whole turn). applyLook wraps it.
+export function setLook(look) {
+  const n = normalizeLook(look);
+  if (!n) return false;
+  state.imageFilters = normalizeFilters(n.imageFilters);
+  state.colorTools = normalizeColorTools(n.colorTools);
+  return true;
 }
 
 export function applyLook(look) {
   const n = normalizeLook(look);
   if (!n) return;
   saveStateToHistory(`Look: ${n.name}`);
-  state.imageFilters = normalizeFilters(n.imageFilters);
-  state.colorTools = normalizeColorTools(n.colorTools);
+  setLook(n);
   window.__updateUIFromState?.();
   render();
   showNotification(`Applied "${n.name}". Undo if needed.`, 'success');
+}
+
+// v40 — each chip shows the current screenshot with that look: the curves and
+// levels tables on a small center crop, then the filter sliders as a canvas
+// filter, the order the editor grades in. Temperature and tint are left out
+// (no starter look uses them), so it is a preview, not the export.
+const THUMB = { w: 88, h: 56 };   // drawn at 2x a 44x28 chip
+let thumbSource = null;           // { image, canvas }
+
+function smallSource() {
+  const img = state.image;
+  if (!img || !img.width) { thumbSource = null; return null; }
+  if (thumbSource && thumbSource.image === img) return thumbSource.canvas;
+  const c = document.createElement('canvas');
+  c.width = THUMB.w; c.height = THUMB.h;
+  const s = Math.max(THUMB.w / img.width, THUMB.h / img.height);
+  const sw = THUMB.w / s, sh = THUMB.h / s;
+  c.getContext('2d').drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, THUMB.w, THUMB.h);
+  thumbSource = { image: img, canvas: c };
+  return c;
+}
+
+function paintThumb(canvas, look, src) {
+  const tmp = document.createElement('canvas');
+  tmp.width = src.width; tmp.height = src.height;
+  const t = tmp.getContext('2d');
+  t.drawImage(src, 0, 0);
+  const data = t.getImageData(0, 0, tmp.width, tmp.height);   // throws on a cross-origin screenshot
+  const [lr, lg, lb] = channelLuts(look.colorTools);
+  applyLuts(data.data, lr, lg, lb);
+  t.putImageData(data, 0, 0);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.filter = cssFilterFor(look.imageFilters);
+  ctx.drawImage(tmp, 0, 0, canvas.width, canvas.height);
+  ctx.filter = 'none';
+}
+
+function paintThumbs() {
+  if (!el.looksList) return;
+  const src = smallSource();
+  const looks = allLooks();
+  el.looksList.querySelectorAll('canvas[data-look-thumb]').forEach((c) => {
+    const look = looks.find((l) => l.id === c.dataset.lookThumb);
+    if (!src || !look) { c.hidden = true; return; }
+    try { paintThumb(c, normalizeLook(look), src); c.hidden = false; } catch (e) { c.hidden = true; }
+  });
 }
 
 function renderList() {
   if (!el.looksList) return;
   el.looksList.innerHTML = allLooks().map(l => `
     <span class="look-chip">
-      <button type="button" class="look-apply" data-look="${escapeHTML(l.id)}" title="Apply ${escapeHTML(l.name)}">${escapeHTML(l.name)}</button>${l.builtIn ? '' : `<button type="button" class="look-delete" data-look-delete="${escapeHTML(l.id)}" title="Delete ${escapeHTML(l.name)}" aria-label="Delete ${escapeHTML(l.name)}">✕</button>`}
+      <button type="button" class="look-apply" data-look="${escapeHTML(l.id)}" title="Apply ${escapeHTML(l.name)}"><canvas class="look-thumb" data-look-thumb="${escapeHTML(l.id)}" width="${THUMB.w}" height="${THUMB.h}" aria-hidden="true" hidden></canvas>${escapeHTML(l.name)}</button>${l.builtIn ? '' : `<button type="button" class="look-delete" data-look-delete="${escapeHTML(l.id)}" title="Delete ${escapeHTML(l.name)}" aria-label="Delete ${escapeHTML(l.name)}">✕</button>`}
     </span>`).join('');
+  paintThumbs();
 }
 
 // v39 — one inline field under the Looks buttons stands in for the browser's
@@ -184,5 +242,7 @@ export function bindLooks() {
     if (e.key === 'Enter') { e.preventDefault(); confirmField(); }
     else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeField(); }
   });
+  // A new screenshot repaints the chips (render() calls this after each frame).
+  window.__looksImageCheck = () => { if ((state.image || null) !== (thumbSource ? thumbSource.image : null)) paintThumbs(); };
   renderList();
 }

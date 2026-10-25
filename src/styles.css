@@ -518,6 +518,12 @@ input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-i
 .look-chip .look-delete { padding: 6px 9px 6px 2px; color: var(--text-tertiary); }
 .look-chip button:hover { color: var(--accent-text); }
 .look-chip:focus-within { border-color: var(--accent-line); }
+/* v40 — a preview of the screenshot in that look; the pill tightens around it
+   so the thumb's rounded ends sit concentric with the chip's. */
+.look-apply { display: inline-flex; align-items: center; gap: 6px; }
+.look-chip .look-apply:has(.look-thumb:not([hidden])) { padding: 4px 11px 4px 4px; }
+.look-thumb { width: 44px; height: 28px; border-radius: var(--radius-pill); display: block; flex-shrink: 0; }
+.look-thumb[hidden] { display: none; }
 
 /* ─── Annotation Toolbar ─── */
 /* v13.5 — slimmer, flatter toolbar (was a heavy glass slab with a glow ring) */
