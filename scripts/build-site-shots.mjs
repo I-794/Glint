@@ -303,6 +303,16 @@ const GLOSS = {
   state: { ...RECIPES.find(r => r.file === 'amber-flare').state, canvas: { width: 1280, height: 600 }, padding: 46 }
 };
 
+// v40 Hindsight: one design at three points in its history (framed, then a
+// look, then flipped to dark), each drawn back from its undo snapshot with
+// withSnapshot + renderInto, oldest on the left. 380px tall so the three
+// cards fill the strip instead of floating in backdrop.
+const HINDSIGHT = {
+  file: 'hindsight-steps', source: 'kanban', look: 'starter-warm-film',
+  state: { ...RECIPES.find(r => r.file === 'amber-flare').state, canvas: { width: 1200, height: 900 }, padding: 70 },
+  backdrop: ['#1c1c20', '#0f0f11']
+};
+
 // Homepage hero: the editor itself, mid-design.
 const HERO = {
   file: 'hero-editor', source: 'dashboard', viewport: { width: 1280, height: 800 },
@@ -597,6 +607,51 @@ for (const m of MULTI) {
     return off.toDataURL('image/webp', q).split(',')[1];
   }, { q: QUALITY });
   save(GLOSS.file, b64);
+}
+
+// Hindsight: three history steps of one design, oldest on the left.
+{
+  await upload(HINDSIGHT.source);
+  await applyState(HINDSIGHT.state);
+  const b64 = await page.evaluate(async ({ hs, W, H, q }) => {
+    const { state } = await window.__shotImport('/src/state/state.js');
+    const { renderInto } = await window.__shotImport('/src/render/render.js');
+    const hist = await window.__shotImport('/src/state/history.js');
+    const core = await window.__shotImport('/src/render/curves-core.js');
+    const flip = await window.__shotImport('/src/render/mode-flip-core.js');
+    const look = core.STARTER_LOOKS.find((l) => l.id === hs.look);
+    const framed = hist.currentSnapshot();
+    state.colorTools = core.normalizeColorTools(look.colorTools);
+    state.imageFilters = core.normalizeFilters(look.imageFilters);
+    const graded = hist.currentSnapshot();
+    state.modeFlip = { ...flip.modeFlipDefaults(), enabled: true, target: 'dark' };
+    const flipped = hist.currentSnapshot();
+    const outs = [framed, graded, flipped].map((snap) => hist.withSnapshot(snap, () => {
+      const off = document.createElement('canvas');
+      renderInto(off, true);
+      return off;
+    }));
+    state.colorTools = core.colorToolsDefaults();
+    state.imageFilters = core.normalizeFilters({});
+    state.modeFlip = flip.modeFlipDefaults();
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, hs.backdrop[0]); g.addColorStop(1, hs.backdrop[1]);
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    const gap = W * 0.02, tw = (W - gap * 4) / 3, th = tw * 900 / 1200;
+    outs.forEach((im, i) => {
+      const tx = gap + i * (tw + gap), ty = (H - th) / 2;
+      x.save();
+      x.shadowColor = 'rgba(0,0,0,0.45)'; x.shadowBlur = 30; x.shadowOffsetY = 14;
+      x.beginPath(); x.roundRect(tx, ty, tw, th, 6); x.fillStyle = '#121214'; x.fill();
+      x.shadowColor = 'transparent'; x.clip();
+      x.drawImage(im, tx, ty, tw, th);
+      x.restore();
+    });
+    return c.toDataURL('image/webp', q).split(',')[1];
+  }, { hs: HINDSIGHT, W: 1280, H: 380, q: QUALITY });
+  save(HINDSIGHT.file, b64);
 }
 
 // Hero: the editor UI itself with a design on the canvas.
