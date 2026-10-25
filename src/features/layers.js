@@ -55,10 +55,10 @@ export function renderLayersPanel() {
     const isSelected = state.selection.layerIds.includes(l.id);
     const eye = l.visible ? '👁' : '⊘';
     const lock = l.locked ? '🔒' : '';
-    return `<div class="layer-row${isSelected ? ' selected' : ''}" data-layer-id="${l.id}" draggable="true">
+    return `<div class="layer-row${isSelected ? ' selected' : ''}" data-layer-id="${escapeHTML(l.id)}" draggable="true">
       <button class="layer-action-btn${l.visible ? ' active' : ''}" data-act="vis" title="Visibility">${eye}</button>
-      <span class="layer-icon">${l.icon}</span>
-      <span class="layer-name" data-name="${l.id}">${escapeHTML(l.name)}</span>
+      <span class="layer-icon">${escapeHTML(l.icon)}</span>
+      <span class="layer-name" data-name="${escapeHTML(l.id)}">${escapeHTML(l.name)}</span>
       <button class="layer-action-btn${l.locked ? ' locked' : ''}" data-act="lock" title="Lock">${lock || '🔓'}</button>
     </div>`;
   }).join('');
@@ -246,7 +246,9 @@ function toggleLayerLock(id) {
 function beginRenameLayer(id) {
   const f = findLayerRef(id);
   if (!f || !f.ref || f.kind === 'image' || f.kind === 'spotlight' || f.kind === 'text' || f.kind === 'watermark') return;
-  const span = el.layersList.querySelector(`.layer-name[data-name="${id}"]`);
+  // Ids can come from gallery / collab JSON, so match on dataset (unescaped)
+  // instead of building a selector from them.
+  const span = [...el.layersList.querySelectorAll('.layer-name')].find(n => n.dataset.name === id);
   if (!span) return;
   span.setAttribute('contenteditable', 'true');
   span.focus();
