@@ -305,8 +305,9 @@ const GLOSS = {
 
 // v40 Hindsight: one design at three points in its history (framed, then a
 // look, then flipped to dark), each drawn back from its undo snapshot with
-// withSnapshot + renderInto, oldest on the left. 380px tall so the three
-// cards fill the strip instead of floating in backdrop.
+// withSnapshot + renderInto. Composed as a stack of prints cascading down to
+// the right: oldest at the back top-left, newest at the front bottom-right. The
+// canvas is portrait so it holds the changelog spotlight's narrow column.
 const HINDSIGHT = {
   file: 'hindsight-steps', source: 'kanban', look: 'starter-warm-film',
   state: { ...RECIPES.find(r => r.file === 'amber-flare').state, canvas: { width: 1200, height: 900 }, padding: 70 },
@@ -639,18 +640,19 @@ for (const m of MULTI) {
     const g = x.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, hs.backdrop[0]); g.addColorStop(1, hs.backdrop[1]);
     x.fillStyle = g; x.fillRect(0, 0, W, H);
-    const gap = W * 0.02, tw = (W - gap * 4) / 3, th = tw * 900 / 1200;
+    const m = W * 0.035, tw = W * 0.76, th = tw * 900 / 1200;
+    const dx = (W - m * 2 - tw) / 2, dy = (H - m * 2 - th) / 2;
     outs.forEach((im, i) => {
-      const tx = gap + i * (tw + gap), ty = (H - th) / 2;
+      const tx = m + i * dx, ty = m + i * dy;
       x.save();
-      x.shadowColor = 'rgba(0,0,0,0.45)'; x.shadowBlur = 30; x.shadowOffsetY = 14;
+      x.shadowColor = 'rgba(0,0,0,0.5)'; x.shadowBlur = 40; x.shadowOffsetY = 18;
       x.beginPath(); x.roundRect(tx, ty, tw, th, 6); x.fillStyle = '#121214'; x.fill();
       x.shadowColor = 'transparent'; x.clip();
       x.drawImage(im, tx, ty, tw, th);
       x.restore();
     });
     return c.toDataURL('image/webp', q).split(',')[1];
-  }, { hs: HINDSIGHT, W: 1280, H: 380, q: QUALITY });
+  }, { hs: HINDSIGHT, W: 1200, H: 1560, q: QUALITY });
   save(HINDSIGHT.file, b64);
 }
 

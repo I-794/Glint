@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <meta name="description" content="Glint changelog. What shipped in each release, up to v40 Hindsight (a History panel with named steps, pins and looks you can preview), v39 Glossifier (flip a screenshot between light and dark mode), v38 Focus (curves, levels and shareable looks), v37 Exposure (develop a whole roll of screenshots), v36 Darkroom (Meet Glint), v35 Contrast (Before / After), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (eyedropper, recent colors, distribute, undo from the toast, quick export), and v32 Open Canvas: lay every page on an infinite, pan-and-zoom board of cards you can arrange, connect, group, seed from a URL, drive by chat, and export as one image, on top of v31 Merge Studio (CSV to N designs), v30 Studio Intelligence, the AI Design Agent, AI Assets, Design Variations, color filters and palettes, vector shape tools, motion on stills, the timeline scrubber, layer blend modes, alignment guides, device reflections, richer text effects, multi-page decks, projects, version history, live collaboration, Brand Kit, App Store screenshot sets, generative AI edits, and video.">
+    <meta name="description" content="Glint changelog. What shipped in each release, up to v40 Hindsight (a History panel with named steps, Pins, and look previews), v39 Glossifier (flip a screenshot between light and dark mode), v38 Focus (curves, levels and shareable looks), v37 Exposure (develop a whole roll of screenshots), v36 Darkroom (Meet Glint), v35 Contrast (Before / After), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (eyedropper, recent colors, distribute, undo from the toast, quick export), and v32 Open Canvas: lay every page on an infinite, pan-and-zoom board of cards you can arrange, connect, group, seed from a URL, drive by chat, and export as one image, on top of v31 Merge Studio (CSV to N designs), v30 Studio Intelligence, the AI Design Agent, AI Assets, Design Variations, color filters and palettes, vector shape tools, motion on stills, the timeline scrubber, layer blend modes, alignment guides, device reflections, richer text effects, multi-page decks, projects, version history, live collaboration, Brand Kit, App Store screenshot sets, generative AI edits, and video.">
     <title>Changelog · Glint</title>
     <meta property="og:type" content="website">
     <meta property="og:title" content="Glint Changelog">
-    <meta property="og:description" content="Every Glint release, up to v40 Hindsight (named undo steps, pins and looks you can preview), v39 Glossifier (light to dark mode in one click), v38 Focus (curves, levels and shareable looks), v37 Exposure (the Roll), v36 Darkroom (Meet Glint), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (quality of life), and v32 Open Canvas: an infinite board of cards for your whole project, seed it from a URL, drive it by chat, and export it as one image. Plus v31 Merge Studio (CSV to N on-brand designs) and the full trail back to a single HTML file.">
+    <meta property="og:description" content="Every Glint release, up to v40 Hindsight (named undo steps, Pins, and look previews), v39 Glossifier (light to dark mode in one click), v38 Focus (curves, levels and shareable looks), v37 Exposure (the Roll), v36 Darkroom (Meet Glint), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (quality of life), and v32 Open Canvas: an infinite board of cards for your whole project, seed it from a URL, drive it by chat, and export it as one image. Plus v31 Merge Studio (CSV to N on-brand designs) and the full trail back to a single HTML file.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
     <meta name="theme-color" content="#0d0d0f">
     <link rel="preload" href="/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
@@ -858,18 +858,6 @@
         .gl-stage img.shot { display: block; width: 100%; height: auto; border-radius: var(--r-card); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 30px 60px -18px rgba(0,0,0,0.6); }
         .gl-stage img.mk { position: absolute; left: -18px; bottom: -18px; width: 84px; height: 84px; border-radius: var(--r-card); box-shadow: 0 18px 40px rgba(232,97,58,0.3); }
         @media (max-width: 860px) { .gl-stage img.mk { left: 10px; bottom: -14px; width: 64px; height: 64px; } }
-        /* v39 Glossifier spotlight: one soft sheen sweeps across the shot as it
-           scrolls in, the codename's gloss. Transform only; off for reduced motion. */
-        .gl-gloss { position: relative; display: block; border-radius: 16px; }
-        .gl-sheen { position: absolute; inset: 0; border-radius: 16px; overflow: hidden; pointer-events: none; }
-        @media (prefers-reduced-motion: no-preference) {
-            .spotlight-gloss .gl-sheen::before {
-                content: ""; position: absolute; top: -10%; bottom: -10%; left: 0; width: 34%;
-                background: linear-gradient(100deg, transparent, rgba(255,255,255,0.16) 50%, transparent);
-                transform: translateX(-130%) skewX(-12deg);
-            }
-            .spotlight-gloss.in .gl-sheen::before { transform: translateX(330%) skewX(-12deg); transition: transform 1.5s var(--ease) 0.35s; }
-        }
         .spotlight-contrast {
             background:
                 radial-gradient(54% 80% at 94% 4%, rgba(236,72,153,0.20), transparent 56%),
@@ -980,7 +968,7 @@
      entry. Everything between the two SWAP markers is what changes. -->
 <section style="padding-bottom: clamp(48px, 7vw, 80px);">
     <div class="wrap">
-        <div class="spotlight spotlight-glint spotlight-gloss reveal">
+        <div class="spotlight spotlight-glint reveal">
             <!-- SWAP-START -->
             <div class="spot-copy">
                 <span class="spot-tag">Latest release</span>
@@ -1008,7 +996,7 @@
             </div>
             <div class="spot-visual">
                 <div class="gl-stage">
-                    <img class="shot" src="/shots/hindsight-steps.webp" alt="One design at three steps of its history: framed, with a warm look, and flipped to dark" width="1280" height="380" loading="eager">
+                    <img class="shot" src="/shots/hindsight-steps.webp" alt="One design at three steps of its history: framed, with a warm look, and flipped to dark" width="1200" height="1560" loading="eager">
                 </div>
             </div>
             <!-- SWAP-END -->
@@ -1026,9 +1014,11 @@
                     <h2>Hindsight</h2>
                     <p class="entry-note">A clear look back at every change you make, and looks you can see before you pick one.</p>
                     <ul class="changes">
-                        <li><b>Every step, named.</b> Open History in the Project tab to see each change with its name and a picture. Click a step to go back, or hold the eye to peek.</li>
+                        <li><b>Every step, named.</b> History in the Project tab shows each change with its name and a picture.</li>
+                        <li><b>Go back or peek.</b> Click a step to go back to it, or hold its eye to look without leaving.</li>
                         <li><b>Pins that stay.</b> Pin a step and it stays with the project, long after the undo list moves on.</li>
-                        <li><b>Looks you can see.</b> Look chips preview your own screenshot. Open a Roll shot in This shot scope to give it its own look. The Design Agent can apply looks and flip light and dark.</li>
+                        <li><b>Looks you can see.</b> Look chips preview your own screenshot. With a Roll shot open in This shot scope, a look stays with that shot.</li>
+                        <li><b>Design Agent.</b> Ask the agent to apply a look, or to flip a screenshot between light and dark.</li>
                         <li><b>Project timeline.</b> The History button in the Projects panel is now called Project timeline. It still lists saved versions of the whole project.</li>
                     </ul>
                 </div>
