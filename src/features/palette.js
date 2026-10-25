@@ -38,6 +38,7 @@ import { canInstallApp, installApp } from './install-app.js';
 import { formatKeys } from './shortcuts.js';
 import { getFrequencyBoost, getRecent, recordUse } from './command-usage.js';
 import { getUiMode, setUiMode } from './ui-mode.js';
+import { openHistory } from './history-panel.js';
 import { pickBeforeImage, useCurrentAsBefore, swapBeforeAfter, toggleCompare } from './compare-ui.js';
 import { flipLightDark, turnOffLightDark, makeLightDarkPair, openLightDark } from './mode-flip-ui.js';
 import { openCurves, resetCurves } from './curves-ui.js';
@@ -72,7 +73,7 @@ function groupFor(id) {
       id.startsWith('tour-') || id === 'code-studio' || id.startsWith('merge-') || id.startsWith('roll-') || id === 'compare-export-html') return 'File';
   if (id === 'undo' || id === 'redo' || id === 'duplicate-selection' || id === 'select-all-objects' ||
       id.startsWith('distribute-') || id.startsWith('match-') || id === 'hide-selection' ||
-      id === 'lock-selection' || id === 'unlock-all') return 'Edit';
+      id === 'lock-selection' || id === 'unlock-all' || id.startsWith('history-')) return 'Edit';
   if (id.startsWith('bg-') || id.startsWith('mesh-') || id.startsWith('scene-') ||
       id.startsWith('tilt-') || id === 'reset-tilt' || id.startsWith('style-') ||
       id === 'toggle-layers' || id.startsWith('zoom') || id.startsWith('theme') ||
@@ -216,6 +217,8 @@ export function registerCommands() {
     { id: 'light-dark-pair', label: 'Light / Dark: Make a light and dark pair (Before / After)', icon: '◑',
       run: () => { openLightDark(); makeLightDarkPair(); }, when: () => !!state.image && !state.modeFlip?.enabled },
     { id: 'light-dark-open', label: 'Light / Dark: Open', icon: '◑', run: openLightDark },
+    // v40 — Hindsight
+    { id: 'history-open', label: 'History: Open', icon: '↺', run: openHistory },
     { id: 'color-tools-open', label: 'Curves & Levels: Open', icon: '◐', run: openCurves },
     { id: 'color-tools-reset', label: 'Curves & Levels: Reset all', icon: '◐', run: resetCurves },
     { id: 'look-save', label: 'Looks: Save current look', icon: '◐', run: saveLook },

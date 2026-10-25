@@ -58,6 +58,7 @@ export function render(forExport) {
   if (!forExport) window.__rollRefresh?.();
   if (!forExport) window.__colorToolsImageCheck?.();   // v38: redraw the histogram for a new image
   if (!forExport) window.__modeFlipImageCheck?.();     // v39: Light / Dark button label for a new image
+  if (!forExport) window.__historyPanelCheck?.();      // v40: refresh the current History thumbnail
 }
 
 // Render the current global state into an arbitrary canvas. `render()` targets

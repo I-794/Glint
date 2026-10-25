@@ -22,7 +22,7 @@ import { bindColorTools } from './features/color-tools.js';
 import { bindMergeStudio } from './features/merge-studio.js';
 import { bindRoll } from './features/roll.js';
 import { bindLayersEvents, renderLayersPanel } from './features/layers.js';
-import { bindHistoryTimeline, renderHistoryTimeline } from './features/history-timeline.js';
+import { bindHistoryPanel, renderHistoryPanel } from './features/history-panel.js';   // v40
 import { bindZoomPan, applyTransform } from './features/zoom-pan.js';
 import { renderMeshPad } from './features/mesh-pad.js';
 import { bindTiltEvents } from './features/tilt.js';
@@ -120,8 +120,7 @@ function init() {
   initElements();
   loadSavedTheme();
 
-  // History listeners (renders timeline + layers after every snapshot)
-  onHistoryChange(renderHistoryTimeline);
+  // History listeners (renders layers after every snapshot; the History panel registers its own)
   onHistoryChange(renderLayersPanel);
 
   bindHeader();
@@ -139,7 +138,7 @@ function init() {
   bindMergeStudio();    // v31 — Merge Studio (data-driven batch: CSV → N designs)
   bindRoll();           // v37 — Exposure: the Roll (batch develop)
   bindLayersEvents();
-  bindHistoryTimeline();
+  bindHistoryPanel();     // v40 — Hindsight: History panel
   bindZoomPan();
   bindTiltEvents();
   bindStickerEvents();
@@ -213,7 +212,7 @@ function init() {
 
   setInitialActivePresets();
   renderMeshPad();
-  renderHistoryTimeline();
+  renderHistoryPanel();
   renderLayersPanel();
   updateUIFromState();
   applyTransform();

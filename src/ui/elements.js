@@ -157,7 +157,7 @@ const IDS = [
   'layers-panel', 'layers-list', 'layers-toggle-btn',
   'layers-footer', 'layer-blend', 'layer-opacity', 'layer-opacity-value',
   'layer-entrance-preset', 'layer-entrance-easing', 'layer-entrance-easing-row',
-  'history-track', 'history-position', 'history-undo-btn', 'history-redo-btn',
+  'history-section', 'history-list', 'history-count',   // v40 History panel
   'palette-overlay', 'palette-input', 'palette-results',
   'canvas-viewport', 'zoom-controls', 'zoom-label', 'zoom-in', 'zoom-out', 'zoom-fit',
   'minimap', 'minimap-canvas', 'minimap-viewport',
