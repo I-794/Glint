@@ -84,7 +84,7 @@ export async function edit(imageBlob, maskBlob, prompt, size) {
 
 export async function applyResultAsImage(b64) {
   const img = await loadImage('data:image/png;base64,' + b64);
-  saveStateToHistory();
+  saveStateToHistory('AI edit');
   state.image = img;
   render();
 }

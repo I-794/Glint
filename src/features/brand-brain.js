@@ -131,7 +131,7 @@ export async function extractBrandFromUrl(url) {
 export function applyBrand() {
   const b = state.brand;
   if (!b || !b.enabled) { showNotification('Extract a brand first.', 'error'); return; }
-  saveStateToHistory();
+  saveStateToHistory('Applied brand');
 
   // 1) Register the brand palette so the color-map can reference it by id.
   let paletteId = null;

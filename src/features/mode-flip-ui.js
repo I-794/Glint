@@ -91,7 +91,7 @@ export async function flipLightDark(opts = options()) {
   const target = other(from);
   if (opts.engine === 'ai') { await flipWithAi(from, target, opts); return; }
 
-  saveStateToHistory();
+  saveStateToHistory(`Flipped to ${target}`);
   if (opts.pair) adoptCurrentAsBefore({ before: NAMES[from], after: NAMES[target], enabled: true });
   state.modeFlip = { ...normalizeModeFlip(state.modeFlip), enabled: true, target };
   if (opts.scene) flipScene(target, state.modeFlip.surface);
@@ -108,7 +108,7 @@ export async function flipLightDark(opts = options()) {
 export function turnOffLightDark() {
   const mf = normalizeModeFlip(state.modeFlip);
   if (!mf.enabled) return;
-  saveStateToHistory();
+  saveStateToHistory('Light / Dark off');
   state.modeFlip = { ...mf, enabled: false };
   if (lastScene && lastScene.after === sceneOf()) SCENE_KEYS.forEach((k, i) => { state[k] = lastScene.before[i]; });
   lastScene = null;
@@ -160,7 +160,7 @@ async function flipWithAi(from, target, opts) {
     ctx.drawImage(raw, 0, 0, w, h);
     const result = await loadImage(out.toDataURL('image/png'));
 
-    saveStateToHistory();
+    saveStateToHistory(`Flipped to ${target} with AI`);
     // AI may redraw text, so its result always comes with the original as Before.
     adoptCurrentAsBefore({ before: NAMES[from], after: NAMES[target], enabled: true });
     state.image = result;

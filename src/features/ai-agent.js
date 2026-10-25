@@ -84,7 +84,7 @@ async function send() {
   addLine('user', text);
   running = true; stopFlag = false;
   const stopBtn = el('agent-stop'); if (stopBtn) stopBtn.style.display = 'inline-block';
-  saveStateToHistory();   // whole turn = one undo step
+  saveStateToHistory('Design Agent');   // whole turn = one undo step
 
   try {
     let iters = 0;

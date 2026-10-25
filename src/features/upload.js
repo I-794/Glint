@@ -22,7 +22,7 @@ export function loadImageFromSrc(src) {
     el.canvasWrapper.style.display = 'block';
     el.annotationToolbar.style.display = 'flex';
     if (el.zoomControls) el.zoomControls.style.display = 'flex';
-    saveStateToHistory();
+    saveStateToHistory('New screenshot');
     render();
     showNotification('Image loaded successfully!', 'success');
   };

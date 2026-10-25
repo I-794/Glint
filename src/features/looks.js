@@ -37,7 +37,7 @@ function currentLook(name) {
 export function applyLook(look) {
   const n = normalizeLook(look);
   if (!n) return;
-  saveStateToHistory();
+  saveStateToHistory(`Look: ${n.name}`);
   state.imageFilters = normalizeFilters(n.imageFilters);
   state.colorTools = normalizeColorTools(n.colorTools);
   window.__updateUIFromState?.();

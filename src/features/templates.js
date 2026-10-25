@@ -59,7 +59,7 @@ export function loadTemplate() {
   const all = loadAll();
   const snap = all[name];
   if (!snap) { showNotification('Template not found.', 'error'); return; }
-  saveStateToHistory();   // so Undo restores the design the template replaced
+  saveStateToHistory(`Template: ${name}`);   // so Undo restores the design the template replaced
   Object.assign(state, snap);
   // v38 — a template saved before v38 has no curves: it gets none, not the current ones.
   state.colorTools = normalizeColorTools(snap.colorTools);

@@ -10,7 +10,7 @@ import { colorToolsDefaults } from '../render/curves-core.js';
 import { modeFlipDefaults } from '../render/mode-flip-core.js';
 
 export function resetToDefaults() {
-  saveStateToHistory();
+  saveStateToHistory('Reset');
 
   state.imageTransform = { rotation: 0, flipH: false, flipV: false };
   state.imageFilters = { brightness: 100, contrast: 100, saturation: 100, blur: 0, grayscale: 0, sepia: 0 };
