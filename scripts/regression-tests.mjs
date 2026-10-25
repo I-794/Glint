@@ -8,7 +8,7 @@ import { normalizeCompare, wipeSplit, splitFromPoint, hitDivider, fitRect } from
 import { applyDesignToState } from '../src/features/document.js';
 import { migrateLocalStorage, MIGRATED_FLAG } from '../src/state/brand-migrate.js';
 import { normalizeCrop, cropRect, cropKey } from '../src/render/crop-core.js';
-import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS } from '../src/render/curves-core.js';
+import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS, normalizeFilters } from '../src/render/curves-core.js';
 import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
 import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, surfaceMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
 import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, withSnapshot, clearHistory } from '../src/state/history.js';
@@ -248,6 +248,16 @@ function testRollOverrides() {
   assert.equal(target.textOverlay.content, 'Shot caption');
   assert.equal(target.textOverlay.size, 48);
   assert.equal(target.not, undefined);
+}
+
+function testRollPerShotLooks() {
+  const plain = { imageFilters: normalizeFilters({}), colorTools: colorToolsDefaults() };
+  const graded = normalizeColorTools(STARTER_LOOKS[0].colorTools);
+  const diff = diffOverrides(captureOverrideFields(plain), captureOverrideFields({ ...plain, colorTools: graded }));
+  assert.deepEqual(Object.keys(diff), ['colorTools'], 'a look on one shot is that shot\'s override');
+  const target = { imageFilters: normalizeFilters({}), colorTools: colorToolsDefaults() };
+  applyOverrides(target, diff);
+  assert.deepEqual(target.colorTools, graded);
 }
 
 function testRollMigratesAndPersists() {
@@ -632,6 +642,7 @@ const tests = [
   testRollAspectAndSmartFit,
   testRollFileNamesAndSizes,
   testRollOverrides,
+  testRollPerShotLooks,
   testRollMigratesAndPersists,
   testCropNormalizeAndPersist,
   testColorToolsLuts,

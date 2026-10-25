@@ -17,6 +17,8 @@ export const ROLL_OVERRIDE_FIELDS = [
   'compare.beforeSrc',
   'deviceFrame.type',
   'modeFlip.enabled',   // v39: a shot that is already dark can skip the flip
+  'imageFilters',       // v40: a look (filters + curves) can belong to one shot
+  'colorTools',
 ];
 
 const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));

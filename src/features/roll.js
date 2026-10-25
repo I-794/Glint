@@ -352,7 +352,7 @@ function syncShotBar() {
     b.classList.toggle('active', b.dataset.rollScope === scope));
   if (el.rollScopeHint) {
     el.rollScopeHint.textContent = scope === 'shot'
-      ? 'Crop, caption, annotations, redactions, rotation, Before image and frame changes apply to this shot only. Every other change styles the whole roll.'
+      ? 'Crop, caption, annotations, redactions, rotation, Before image, frame, filters, curves and looks apply to this shot only. Every other change styles the whole roll.'
       : 'Every change styles the whole roll.';
   }
 }
