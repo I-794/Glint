@@ -6,7 +6,7 @@ import { state } from '../state/state.js';
 import { el } from '../ui/elements.js';
 import { render } from '../render/render.js';
 import { commitStep, currentSnapshot, applySnapshot } from '../state/history.js';
-import { makeVersion, MAX_VERSIONS, cleanName } from '../state/versions-core.js';
+import { makeVersion, MAX_VERSIONS, cleanName, isSafeThumb } from '../state/versions-core.js';
 import { renderStepThumb } from '../render/history-thumbs.js';
 import { ensureCompareImage } from '../render/compare.js';
 import { notifyDocumentChange } from './pages.js';
@@ -141,7 +141,7 @@ export function renderVersions() {
     const day = new Date(v.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     return `<li class="hx-version">
       <button type="button" class="hx-jump" data-version="${id}" title="Restore ${name}">
-        <span class="hx-thumb">${v.thumb ? `<img src="${v.thumb}" alt="">` : ''}</span>
+        <span class="hx-thumb">${isSafeThumb(v.thumb) ? `<img src="${escapeHTML(v.thumb)}" alt="">` : ''}</span>
         <span class="hx-label">${name}</span>
         <span class="hx-time">${escapeHTML(day)}</span>
       </button>

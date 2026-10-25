@@ -6,6 +6,12 @@ export const MAX_VERSIONS = 12;
 const NAME_MAX = 40;
 const THUMB_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
 
+// A pin thumbnail is only ever a plain base64 image dataURL. Checked again at
+// render, since state.versions can arrive from payloads that skip normalizeVersions.
+export function isSafeThumb(s) {
+  return typeof s === 'string' && THUMB_RE.test(s);
+}
+
 export function cleanName(name, fallback = 'Pin') {
   return String(name ?? '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX) || fallback;
 }
@@ -23,7 +29,7 @@ export function makeVersion({ id, name, at, snap, thumb }) {
     name: cleanName(name),
     at: Number.isFinite(at) ? at : Date.now(),
     snap: versionSnap(snap),
-    thumb: typeof thumb === 'string' && THUMB_RE.test(thumb) ? thumb : null,
+    thumb: isSafeThumb(thumb) ? thumb : null,
   };
 }
 

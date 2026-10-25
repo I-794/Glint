@@ -78,7 +78,11 @@ function clearCursors() {
 function applyRemoteState(payload) {
   applyingRemote = true;
   try {
-    Object.assign(state, payload);
+    // v40 — pins are per-page project data and never travel in collab
+    // updates; a peer's payload is not trusted to set them.
+    const next = { ...(payload || {}) };
+    delete next.versions;
+    Object.assign(state, next);
     render();
     if (typeof window.__updateUIFromState === 'function') window.__updateUIFromState();
   } finally {

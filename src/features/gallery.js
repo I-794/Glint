@@ -131,7 +131,11 @@ async function applyItem(id) {
     applyKitObject(data.payload);
   } else {
     saveStateToHistory();
-    Object.assign(state, data.payload);
+    // v40 — pins are per-page project data and never travel in a gallery
+    // item; a row carrying them is not trusted to set them.
+    const payload = { ...(data.payload || {}) };
+    delete payload.versions;
+    Object.assign(state, payload);
     state.colorTools = normalizeColorTools(data.payload && data.payload.colorTools);   // v38: older items carry no curves
     state.modeFlip = normalizeModeFlip(data.payload && data.payload.modeFlip);         // v39: or no flip
     render();

@@ -13,7 +13,7 @@ import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFie
 import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, surfaceMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
 import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, peekSnapshot, withSnapshot, clearHistory, commitStep, onHistoryChange } from '../src/state/history.js';
 import { describeChange } from '../src/state/history-labels.js';
-import { makeVersion, normalizeVersions, MAX_VERSIONS } from '../src/state/versions-core.js';
+import { makeVersion, normalizeVersions, MAX_VERSIONS, isSafeThumb } from '../src/state/versions-core.js';
 
 function mockRes() {
   return {
@@ -103,9 +103,13 @@ function testGalleryTemplateApplySnapshotsHistory() {
   assert.match(source, /import\s+\{\s*saveStateToHistory\s*\}\s+from\s+['"]\.\.\/state\/history\.js['"]/);
   assert.match(
     source,
-    /else\s*\{[\s\S]*saveStateToHistory\(\);[\s\S]*Object\.assign\(state,\s*data\.payload\)/,
+    /else\s*\{[\s\S]*saveStateToHistory\(\);[\s\S]*Object\.assign\(state,\s*payload\)/,
     'gallery template apply should snapshot before mutating state'
   );
+  // v40 — a gallery row never sets pins (their thumbnails go into innerHTML).
+  assert.match(source, /delete payload\.versions;[\s\S]*Object\.assign\(state,\s*payload\)/);
+  const collab = fs.readFileSync('src/features/collab.js', 'utf8');
+  assert.match(collab, /delete next\.versions;[\s\S]*Object\.assign\(state,\s*next\)/, 'nor does a collab update');
 }
 
 // v35 — Before / After Compare: migration + geometry.
@@ -649,6 +653,10 @@ function testVersionsNormalizeAndPersist() {
   assert.deepEqual(v, { id: '7', name: 'Client v1', at: 5, snap: { padding: 9 }, thumb: 'data:image/jpeg;base64,AAAA' }, 'trimmed name, no roll');
   assert.equal(makeVersion({ id: 1, snap: {}, thumb: 'data:image/png" onerror="x' }).thumb, null, 'only plain base64 image data');
   assert.equal(makeVersion({ id: 1, snap: {}, name: '' }).name, 'Pin');
+  assert.equal(isSafeThumb('x" onerror="y'), false, 'markup is never a thumbnail');
+  assert.equal(isSafeThumb('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ=='), true);
+  assert.equal(isSafeThumb('data:image/svg+xml;base64,PHN2Zz4='), false);
+  assert.equal(isSafeThumb(null), false);
   const many = Array.from({ length: 20 }, (_, i) => ({ id: `v${i}`, name: `V${i}`, at: i, snap: { padding: i } }));
   assert.equal(normalizeVersions(many).length, MAX_VERSIONS);
   assert.deepEqual(normalizeVersions([null, { id: 'a' }, { id: 'b', snap: [] }, 'x']), [], 'junk dropped');
