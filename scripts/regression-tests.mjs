@@ -11,6 +11,7 @@ import { normalizeCrop, cropRect, cropKey } from '../src/render/crop-core.js';
 import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS } from '../src/render/curves-core.js';
 import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
 import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, surfaceMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
+import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, withSnapshot, clearHistory } from '../src/state/history.js';
 
 function mockRes() {
   return {
@@ -463,6 +464,106 @@ function testModeFlipMigratesAndPersists() {
   }
 }
 
+function testHistoryStepsStayPaired() {
+  const savedPadding = state.padding;
+  try {
+    clearHistory();
+    state.padding = 10;
+    saveStateToHistory('Padding 20');
+    state.padding = 20;
+    saveStateToHistory();
+    state.padding = 30;
+    let tl = historyTimeline();
+    assert.equal(tl.length, 3);
+    assert.deepEqual(tl.map(e => e.current), [false, false, true]);
+    assert.deepEqual(tl.map(e => e.snap.padding), [10, 20, 30]);
+    assert.equal(tl[1].step.label, 'Padding 20');
+    assert.equal(tl[0].step.label, null);
+    const ids = tl.map(e => e.step.id);
+
+    undo(); undo();
+    assert.equal(state.padding, 10);
+    tl = historyTimeline();
+    assert.deepEqual(tl.map(e => e.step.id), ids, 'step records keep their order through undo');
+    assert.equal(tl[0].current, true);
+    assert.deepEqual(tl.map(e => e.snap.padding), [10, 20, 30]);
+
+    assert.equal(goToStep(2), true);
+    assert.equal(state.padding, 30);
+    assert.deepEqual(historyTimeline().map(e => e.step.id), ids, 'and through a jump forward');
+    assert.equal(goToStep(1), true);
+    assert.equal(state.padding, 20);
+    assert.equal(goToStep(1), false, 'jumping to the current step does nothing');
+    assert.equal(goToStep(9), false);
+
+    redo();
+    assert.equal(state.padding, 30);
+
+    // Saving after an undo drops the future, records included.
+    undo();
+    saveStateToHistory('Branch');
+    tl = historyTimeline();
+    assert.equal(tl.length, 3);
+    assert.equal(tl[2].step.label, 'Branch');
+    assert.equal(history.future.length, 0);
+
+    // Trimming at maxSize keeps the two stacks paired.
+    for (let i = 0; i < history.maxSize + 5; i++) { state.padding = i; saveStateToHistory(); }
+    tl = historyTimeline();
+    assert.equal(history.past.length, history.maxSize);
+    assert.equal(tl.length, history.maxSize + 1);
+    assert.ok(tl.every(e => e.step && typeof e.step.id === 'number'));
+    assert.equal(history.trimmed, true);
+
+    // A listener that passes its Event straight through does not set a label.
+    saveStateToHistory({ type: 'change' });
+    assert.equal(historyTimeline().at(-1).step.label, null);
+  } finally {
+    clearHistory();
+    state.padding = savedPadding;
+  }
+}
+
+function testHistoryPeekPutsLiveStateBack() {
+  const savedPadding = state.padding;
+  const liveRoll = state.roll;
+  const liveShadow = state.shadow;
+  try {
+    clearHistory();
+    state.padding = 50;
+    saveStateToHistory();
+    state.padding = 60;
+
+    assert.equal(peekStep(1), false, 'the current step is not a peek');
+    assert.equal(peekStep(0), true);
+    assert.equal(isPeeking(), true);
+    assert.equal(state.padding, 50);
+    assert.notEqual(state.shadow, liveShadow, 'a peek works on a copy');
+    assert.equal(endPeek(), true);
+    assert.equal(isPeeking(), false);
+    assert.equal(state.padding, 60);
+    assert.equal(state.roll, liveRoll, 'live objects come back by reference');
+    assert.equal(state.shadow, liveShadow);
+    assert.equal(endPeek(), false);
+
+    // A save during a peek ends it first, so the live state is what is saved.
+    peekStep(0);
+    saveStateToHistory();
+    assert.equal(isPeeking(), false);
+    assert.equal(history.past.at(-1).padding, 60);
+
+    // withSnapshot runs a function on a step and always puts the state back.
+    assert.equal(withSnapshot(history.past[0], () => state.padding), 50);
+    assert.equal(state.padding, 60);
+    assert.throws(() => withSnapshot(history.past[0], () => { throw new Error('boom'); }), /boom/);
+    assert.equal(state.padding, 60);
+  } finally {
+    endPeek();
+    clearHistory();
+    state.padding = savedPadding;
+  }
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -481,7 +582,9 @@ const tests = [
   testColorToolsLuts,
   testLooksAndColorToolsPersist,
   testModeFlipCore,
-  testModeFlipMigratesAndPersists
+  testModeFlipMigratesAndPersists,
+  testHistoryStepsStayPaired,
+  testHistoryPeekPutsLiveStateBack
 ];
 
 for (const test of tests) {

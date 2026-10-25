@@ -1,6 +1,14 @@
 import { state } from './state.js';
 
-export const history = { past: [], future: [], maxSize: 50 };
+export const history = { past: [], future: [], maxSize: 50, trimmed: false };
+
+// v40 — Hindsight: one small record per state, kept in step with history.past
+// and history.future (same length, same order), so the History panel can name
+// steps and cache their thumbnails across undo, redo and jumps. `current` is
+// the live state's record. A label names the state its step leads to.
+let stepSeq = 0;
+const newStep = (label = null) => ({ id: ++stepSeq, label, at: Date.now() });
+const steps = { past: [], current: newStep(), future: [] };
 
 // Subscribers (e.g. layers panel, history timeline) call onChange after every snapshot/undo/redo.
 const listeners = [];
@@ -92,7 +100,10 @@ function snapshot() {
   }));
 }
 
-function restore(snap) {
+// v40 — the live state as an undo snapshot (Versions save one).
+export function currentSnapshot() { return snapshot(); }
+
+export function applySnapshot(snap) {
   Object.assign(state, snap);
   // Sidebar controls mirror state; without this, sliders kept showing the
   // undone value. window hook avoids an import cycle with ui/bindings.js.
@@ -128,29 +139,130 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export function saveStateToHistory() {
+export function saveStateToHistory(label) {
+  endPeek();
   const usePending = pendingEdit && changeTarget && pendingEdit.target === changeTarget;
   history.past.push(usePending ? pendingEdit.snap : snapshot());
+  steps.past.push(steps.current);
+  steps.current = newStep(typeof label === 'string' ? label : null);
   pendingEdit = null;
-  if (history.past.length > history.maxSize) history.past.shift();
+  if (history.past.length > history.maxSize) {
+    history.past.shift();
+    steps.past.shift();
+    history.trimmed = true;
+  }
   history.future = [];
+  steps.future = [];
   emit();
 }
 
 export function undo(rerender) {
+  endPeek();
   pendingEdit = null;
   if (history.past.length === 0) return;
   history.future.push(snapshot());
-  restore(history.past.pop());
+  steps.future.push(steps.current);
+  applySnapshot(history.past.pop());
+  steps.current = steps.past.pop();
   rerender && rerender();
   emit();
 }
 
 export function redo(rerender) {
+  endPeek();
   pendingEdit = null;
   if (history.future.length === 0) return;
   history.past.push(snapshot());
-  restore(history.future.pop());
+  steps.past.push(steps.current);
+  applySnapshot(history.future.pop());
+  steps.current = steps.future.pop();
   rerender && rerender();
   emit();
 }
+
+// v40 — every state, oldest first. The live state's snap is taken now; the
+// future is a stack, so it is read backwards.
+export function historyTimeline() {
+  const out = history.past.map((snap, i) => ({ step: steps.past[i], snap, index: i, current: false }));
+  out.push({ step: steps.current, snap: snapshot(), index: out.length, current: true });
+  for (let i = history.future.length - 1; i >= 0; i--) {
+    out.push({ step: steps.future[i], snap: history.future[i], index: out.length, current: false });
+  }
+  return out;
+}
+
+// v40 — go straight to a step (an index from historyTimeline). Walks the
+// stacks one step at a time so snapshots and records stay paired, but applies
+// state, re-renders and notifies listeners once.
+export function goToStep(index, rerender) {
+  endPeek();
+  pendingEdit = null;
+  const cur = history.past.length;
+  const total = cur + 1 + history.future.length;
+  if (!Number.isInteger(index) || index < 0 || index >= total || index === cur) return false;
+  let snapNow = snapshot();
+  while (history.past.length > index) {
+    history.future.push(snapNow);
+    steps.future.push(steps.current);
+    snapNow = history.past.pop();
+    steps.current = steps.past.pop();
+  }
+  while (history.past.length < index) {
+    history.past.push(snapNow);
+    steps.past.push(steps.current);
+    snapNow = history.future.pop();
+    steps.current = steps.future.pop();
+  }
+  applySnapshot(snapNow);
+  rerender && rerender();
+  emit();
+  return true;
+}
+
+export function clearHistory() {
+  endPeek();
+  pendingEdit = null;
+  history.past = [];
+  history.future = [];
+  history.trimmed = false;
+  steps.past = [];
+  steps.future = [];
+  steps.current = newStep();
+}
+
+// v40 — look at a step without changing history. Its values are copied into
+// state; the live objects are kept by reference and put back exactly, so
+// runtime fields (roll.activeShot, timeline._driving) survive. state.image and
+// state.lastImageRect ride along: a crop rebuild or a render can replace them.
+function swapIn(snap) {
+  const saved = { image: state.image, lastImageRect: state.lastImageRect };
+  for (const k of Object.keys(snap)) saved[k] = state[k];
+  Object.assign(state, JSON.parse(JSON.stringify(snap)));
+  return saved;
+}
+
+export function withSnapshot(snap, fn) {
+  const saved = swapIn(snap);
+  try { return fn(); } finally { Object.assign(state, saved); }
+}
+
+let peeking = null;
+
+export function peekStep(index, rerender) {
+  endPeek();
+  const entry = historyTimeline()[index];
+  if (!entry || entry.current) return false;
+  peeking = swapIn(entry.snap);
+  rerender && rerender();
+  return true;
+}
+
+export function endPeek(rerender) {
+  if (!peeking) return false;
+  Object.assign(state, peeking);
+  peeking = null;
+  rerender && rerender();
+  return true;
+}
+
+export function isPeeking() { return !!peeking; }
