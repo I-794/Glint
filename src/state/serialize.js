@@ -14,6 +14,7 @@ import { normalizeRoll, serializeRoll, rollRuntime, applyOverrides } from '../re
 import { cropSource, ensureCropDefaults } from '../render/crop-core.js';
 import { ensureColorToolsDefaults } from '../render/curves-core.js';
 import { ensureModeFlipDefaults } from '../render/mode-flip-core.js';
+import { ensureVersionsDefaults } from './versions-core.js';
 
 export const SERIALIZED_FIELDS = [
   'imageTransform', 'imageCrop', 'imageFilters', 'imageLayer', 'textOverlay', 'watermark', 'gradient',
@@ -87,7 +88,7 @@ export function snapshotProject() {
 // restores the artwork — unlike snapshotProject(), which stays deliberately
 // lean for realtime collab/gallery payloads. Bump SCHEMA_VERSION whenever the
 // field set changes so normalizeProject() can migrate older saves.
-export const SCHEMA_VERSION = 24;
+export const SCHEMA_VERSION = 25;
 
 // SERIALIZED_FIELDS + the rest of the design-defining state. Kept separate from
 // SERIALIZED_FIELDS so collab/gallery stay small; projects want full fidelity.
@@ -112,7 +113,10 @@ export const PROJECT_FIELDS = [
   // v35 — Before / After Compare (carries the Before dataURL, so project-only).
   'compare',
   // v37 — the Roll (carries every shot's dataURL, so project-only).
-  'roll'
+  'roll',
+  // v40 — saved versions (each carries a design snapshot and a thumbnail
+  // dataURL, so project-only like `compare`).
+  'versions'
 ];
 
 // v25 — guarantee every applied design carries a `tour` block. Because
@@ -261,14 +265,16 @@ export function normalizeProject(payload) {
     return { schemaVersion: SCHEMA_VERSION, design: {}, image: null, svgCode: null };
   }
   const migrate = (d) => ensureModeFlipDefaults(ensureColorToolsDefaults(ensureCropDefaults(ensureRollDefaults(ensureCompareDefaults(ensureBokehDefaults(migrateSpotlightV20(ensureBrandDefaults(migrateTimelineV18(ensureTourDefaults(sanitizeMotionRuntime(d)))))))))));
+  // v40 — versions are migrated with the same chain, one snapshot at a time.
+  const migrateDesign = (d) => ensureVersionsDefaults(migrate(d), migrate);
   if (payload.design) {
     return {
       schemaVersion: payload.schemaVersion || SCHEMA_VERSION,
-      design: migrate(payload.design),
+      design: migrateDesign(payload.design),
       image: payload.image || null,
       svgCode: payload.svgCode || null
     };
   }
   // Legacy flat design payload (pre-v12): the whole object is the design.
-  return { schemaVersion: 11, design: migrate(payload), image: null, svgCode: payload.svgCode || null };
+  return { schemaVersion: 11, design: migrateDesign(payload), image: null, svgCode: payload.svgCode || null };
 }

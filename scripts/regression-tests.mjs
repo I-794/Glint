@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 import fetchUrlHandler from '../api/fetch-url.js';
 import { state } from '../src/state/state.js';
-import { serializeFull, normalizeProject } from '../src/state/serialize.js';
+import { serializeFull, normalizeProject, SCHEMA_VERSION } from '../src/state/serialize.js';
 import { normalizeCompare, wipeSplit, splitFromPoint, hitDivider, fitRect } from '../src/render/compare-core.js';
 import { applyDesignToState } from '../src/features/document.js';
 import { migrateLocalStorage, MIGRATED_FLAG } from '../src/state/brand-migrate.js';
@@ -13,6 +13,7 @@ import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFie
 import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, surfaceMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
 import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, withSnapshot, clearHistory } from '../src/state/history.js';
 import { describeChange } from '../src/state/history-labels.js';
+import { makeVersion, normalizeVersions, MAX_VERSIONS } from '../src/state/versions-core.js';
 
 function mockRes() {
   return {
@@ -135,7 +136,7 @@ function testCompareMigratesAndPersists() {
     assert.equal(back.beforeSrc, 'data:image/png;base64,AAAA');
     assert.equal(back.split, 0.3);
     assert.equal(back.orientation, 'horizontal');
-    assert.equal(payload.schemaVersion, 24);
+    assert.equal(payload.schemaVersion, SCHEMA_VERSION);
   } finally {
     state.compare = saved;
   }
@@ -262,7 +263,7 @@ function testRollMigratesAndPersists() {
     state.roll = normalizeRoll({ shots: [{ id: 's1', name: 'x.png', src: 'data:image/jpeg;base64,AA', w: 1, h: 2,
       overrides: { 'textOverlay.content': 'hi' } }], naming: '{name}', activeShot: 's1' });
     const payload = serializeFull();
-    assert.equal(payload.schemaVersion, 24);
+    assert.equal(payload.schemaVersion, SCHEMA_VERSION);
     const back = normalizeProject(payload).design.roll;
     assert.equal(back.shots[0].overrides['textOverlay.content'], 'hi');
     assert.equal(back.naming, '{name}');
@@ -341,7 +342,7 @@ function testLooksAndColorToolsPersist() {
   try {
     state.colorTools = normalizeColorTools({ curves: { rgb: [[0, 10], [255, 245]] }, levels: { r: { gamma: 1.5 } } });
     const payload = serializeFull();
-    assert.equal(payload.schemaVersion, 24);
+    assert.equal(payload.schemaVersion, SCHEMA_VERSION);
     const design = normalizeProject(payload).design;
     assert.deepEqual(design.colorTools.curves.rgb, [[0, 10], [255, 245]]);
     assert.equal(design.colorTools.levels.r.gamma, 1.5);
@@ -458,7 +459,7 @@ function testModeFlipMigratesAndPersists() {
   try {
     state.modeFlip = normalizeModeFlip({ enabled: true, target: 'dark', surface: 24, protect: 80 });
     const payload = serializeFull();
-    assert.equal(payload.schemaVersion, 24);
+    assert.equal(payload.schemaVersion, SCHEMA_VERSION);
     assert.deepEqual(normalizeProject(payload).design.modeFlip, { enabled: true, target: 'dark', surface: 24, protect: 80 });
   } finally {
     state.modeFlip = saved;
@@ -590,6 +591,34 @@ function testHistoryLabels() {
   assert.equal(describeChange({ someNewKey: 1 }, { someNewKey: 2 }), 'Some new key');
 }
 
+function testVersionsNormalizeAndPersist() {
+  const v = makeVersion({ id: 7, name: '  Client   v1 ', at: 5, snap: { padding: 9, roll: { shots: [1] } }, thumb: 'data:image/jpeg;base64,AAAA' });
+  assert.deepEqual(v, { id: '7', name: 'Client v1', at: 5, snap: { padding: 9 }, thumb: 'data:image/jpeg;base64,AAAA' }, 'trimmed name, no roll');
+  assert.equal(makeVersion({ id: 1, snap: {}, thumb: 'data:image/png" onerror="x' }).thumb, null, 'only plain base64 image data');
+  assert.equal(makeVersion({ id: 1, snap: {}, name: '' }).name, 'Version');
+  const many = Array.from({ length: 20 }, (_, i) => ({ id: `v${i}`, name: `V${i}`, at: i, snap: { padding: i } }));
+  assert.equal(normalizeVersions(many).length, MAX_VERSIONS);
+  assert.deepEqual(normalizeVersions([null, { id: 'a' }, { id: 'b', snap: [] }, 'x']), [], 'junk dropped');
+  assert.deepEqual(normalizeVersions('nope'), []);
+
+  const old = normalizeProject({ schemaVersion: 24, design: { padding: 3 }, image: null });
+  assert.deepEqual(old.design.versions, [], 'a pre-v40 design gets no versions');
+
+  const saved = state.versions;
+  try {
+    state.versions = [makeVersion({ id: 'k', name: 'Keep', at: 1, snap: { padding: 42 } })];
+    const payload = serializeFull();
+    assert.equal(payload.schemaVersion, 25);
+    const back = normalizeProject(payload).design.versions;
+    assert.equal(back.length, 1);
+    assert.equal(back[0].name, 'Keep');
+    assert.equal(back[0].snap.padding, 42);
+    assert.equal('roll' in back[0].snap, false, 'migrating a version never adds a roll');
+  } finally {
+    state.versions = saved;
+  }
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -611,7 +640,8 @@ const tests = [
   testModeFlipMigratesAndPersists,
   testHistoryStepsStayPaired,
   testHistoryPeekPutsLiveStateBack,
-  testHistoryLabels
+  testHistoryLabels,
+  testVersionsNormalizeAndPersist
 ];
 
 for (const test of tests) {

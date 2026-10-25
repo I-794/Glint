@@ -84,6 +84,7 @@ export const state = {
   colorTools: colorToolsDefaults(),
   // v39 — Glossifier: light to dark mode flip (see render/mode-flip.js).
   modeFlip: modeFlipDefaults(),
+  versions: [],   // v40 — Hindsight saved versions (not undoable; saved with the project)
   // v35 — Before / After Compare. beforeSrc is the Before screenshot's dataURL;
   // the main screenshot (state.image) is After. See render/compare.js.
   compare: compareDefaults(),
