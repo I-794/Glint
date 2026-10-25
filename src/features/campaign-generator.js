@@ -119,10 +119,13 @@ export async function generateCampaign({ name, prompt, includeAppStore = true, i
 
   // 5) Cache full bytes for this session; persist the recipe + thumbnails.
   sessionAssets.set(id, files);
+  const payload = serializeFull();
+  // v40 — pins (with their thumbnails) belong to the project, not a campaign record.
+  if (payload.design) delete payload.design.versions;
   const ok = saveCampaign({
     id, name: name || 'Campaign', createdAt: Date.now(),
     brandName: (state.brand && state.brand.name) || '',
-    payload: serializeFull(),
+    payload,
     targets: CAMPAIGN_TARGETS.slice(),
     appStore, hasTeaser, thumbs
   });
