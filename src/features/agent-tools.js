@@ -142,7 +142,10 @@ export const TOOLS = [
       const looks = allLooks();
       const want = String(args.name || '').trim().toLowerCase();
       const look = want && looks.find((l) => l.name.toLowerCase() === want);
-      if (!look) return `Looks available: ${looks.map((l) => l.name).join(', ')}.`;
+      if (!look) {
+        const list = `Looks available: ${looks.map((l) => l.name).join(', ')}.`;
+        return want ? `No look named "${String(args.name).trim()}". ${list}` : list;
+      }
       if (!setLook(look)) return `The look "${look.name}" could not be read.`;
       return `Applied the look "${look.name}".`;
     }
@@ -159,14 +162,24 @@ export const TOOLS = [
       const { normalizeModeFlip, sceneFlip } = await import('../render/mode-flip-core.js');
       const { detectImageMode } = await import('../render/mode-flip.js');
       const mf = normalizeModeFlip(state.modeFlip);
-      if (args.mode === 'off') { state.modeFlip = { ...mf, enabled: false }; return 'Turned Light / Dark off.'; }
+      if (args.mode === 'off') {
+        if (!mf.enabled) return 'Light / Dark is already off.';
+        state.modeFlip = { ...mf, enabled: false };
+        return 'Turned Light / Dark off.';
+      }
       if (args.mode !== 'dark' && args.mode !== 'light') return 'mode must be dark, light or off.';
       if (mf.enabled && mf.target === args.mode) return `The screenshot is already flipped to ${args.mode}.`;
       if (!state.image) return 'There is no screenshot to flip.';
       if (state.video && state.video.loaded) return 'Light / Dark works on still images, not video.';
       const from = detectImageMode(state.image);
       if (!from) return 'This screenshot comes from another site, so it cannot be flipped.';
-      if (from === args.mode) return `The screenshot is already ${args.mode}.`;
+      // detectImageMode reads the unflipped source, so an active flip always
+      // targets the opposite mode: asking for the source's mode turns it off.
+      if (from === args.mode) {
+        if (!mf.enabled) return `The screenshot is already ${args.mode}.`;
+        state.modeFlip = { ...mf, enabled: false };
+        return `Turned the flip off, so the screenshot is back to its original ${args.mode}.`;
+      }
       state.modeFlip = { ...mf, enabled: true, target: args.mode };
       const scene = args.match_scene !== false;
       if (scene) sceneFlip(state, args.mode, state.modeFlip.surface);
