@@ -139,7 +139,7 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export function saveStateToHistory(label) {
+function pushStep(label) {
   endPeek();
   const usePending = pendingEdit && changeTarget && pendingEdit.target === changeTarget;
   history.past.push(usePending ? pendingEdit.snap : snapshot());
@@ -153,6 +153,10 @@ export function saveStateToHistory(label) {
   }
   history.future = [];
   steps.future = [];
+}
+
+export function saveStateToHistory(label) {
+  pushStep(label);
   emit();
 }
 
@@ -230,10 +234,11 @@ export function clearHistory() {
   steps.current = newStep();
 }
 
-// v40 — look at a step without changing history. Its values are copied into
-// state; the live objects are kept by reference and put back exactly, so
-// runtime fields (roll.activeShot, timeline._driving) survive. state.image and
+// v40 — run fn on a step's values. They are copied into state; the live
+// objects are kept by reference and put back exactly, so runtime fields
+// (roll.activeShot, timeline._driving) survive. state.image and
 // state.lastImageRect ride along: a crop rebuild or a render can replace them.
+// fn must be synchronous: nothing else may see the swapped-in values.
 function swapIn(snap) {
   const saved = { image: state.image, lastImageRect: state.lastImageRect };
   for (const k of Object.keys(snap)) saved[k] = state[k];
@@ -246,23 +251,30 @@ export function withSnapshot(snap, fn) {
   try { return fn(); } finally { Object.assign(state, saved); }
 }
 
+// v40 — look at a step without changing history. A peek only records which
+// snapshot to show: state keeps the live values the whole time, and the
+// preview render (render/render.js) draws the peeked snapshot inside one
+// synchronous withSnapshot. So autosave, the Roll, collab, the Design Agent,
+// page switches and playback never read or write the peeked design.
 let peeking = null;
 
 export function peekStep(index, rerender) {
   endPeek();
   const entry = historyTimeline()[index];
   if (!entry || entry.current) return false;
-  peeking = swapIn(entry.snap);
+  peeking = entry.snap;
   rerender && rerender();
   return true;
 }
 
 export function endPeek(rerender) {
   if (!peeking) return false;
-  Object.assign(state, peeking);
   peeking = null;
   rerender && rerender();
   return true;
 }
 
 export function isPeeking() { return !!peeking; }
+
+// The snapshot being peeked at, or null.
+export function peekSnapshot() { return peeking; }

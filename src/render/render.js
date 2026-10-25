@@ -27,6 +27,7 @@ import { drawReflection } from './reflection.js';
 import { withLayer } from './blend.js';
 import { getGradedImage } from './color-grade.js';
 import { ensureCrop } from './crop-image.js';
+import { peekSnapshot, withSnapshot } from '../state/history.js';
 
 function getFrameInsets() {
   const t = state.deviceFrame.type;
@@ -49,9 +50,15 @@ export function render(forExport) {
     renderBoard();
     return;
   }
-  renderInto(el.previewCanvas, forExport);
-  // v34 — spotlight region selection chrome is preview-only.
-  if (!forExport) drawSpotlightChrome(el.previewCanvas.getContext('2d'), el.previewCanvas);
+  // v40 — a History peek draws the peeked step on the preview only, inside one
+  // synchronous swap; state keeps the live design, and export renders
+  // (forExport) always use it.
+  const peek = forExport ? null : peekSnapshot();
+  if (peek) renderPeek(peek);
+  else renderInto(el.previewCanvas, forExport);
+  // v34 — spotlight region selection chrome is preview-only (and follows the
+  // live regions, so it stays off while a past step is shown).
+  if (!forExport && !peek) drawSpotlightChrome(el.previewCanvas.getContext('2d'), el.previewCanvas);
   // v35 — the floating selection toolbar follows the selection (HTML, preview-only).
   if (!forExport) window.__syncFloatingToolbar?.();
   // v37 — the Roll's contact sheet re-renders after design changes.
@@ -61,6 +68,21 @@ export function render(forExport) {
   if (!forExport) window.__modeFlipImageCheck?.();     // v39: Light / Dark button label for a new image
   if (!forExport) window.__historyPanelCheck?.();      // v40: refresh the current History thumbnail
   if (!forExport) window.__versionsCheck?.();          // v40: versions list follows page / project loads
+}
+
+// The selection belongs to the live design, so the peeked picture is drawn
+// without selection chrome (ids can match objects in the past step).
+function renderPeek(snap) {
+  const sel = {
+    canvasSelection: state.canvasSelection,
+    selectedAnnotation: state.selectedAnnotation,
+    selectedRedaction: state.selectedRedaction,
+    selectedExtraImage: state.selectedExtraImage,
+  };
+  withSnapshot(snap, () => {
+    Object.assign(state, { canvasSelection: [], selectedAnnotation: null, selectedRedaction: null, selectedExtraImage: null });
+    try { renderInto(el.previewCanvas, false); } finally { Object.assign(state, sel); }
+  });
 }
 
 // Render the current global state into an arbitrary canvas. `render()` targets

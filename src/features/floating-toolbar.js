@@ -15,7 +15,7 @@
 import { state } from '../state/state.js';
 import { el } from '../ui/elements.js';
 import { render } from '../render/render.js';
-import { saveStateToHistory } from '../state/history.js';
+import { saveStateToHistory, isPeeking } from '../state/history.js';
 import { resolveRef, selectionBounds, duplicateSelection } from './selection.js';
 import { deleteSelected } from './canvas-tools.js';
 import { openContextMenuAt } from './context-menu.js';
@@ -254,6 +254,8 @@ function canShow() {
   if (!enabled || !bar) return false;
   if (state.mode !== 'single' || !state.image) return false;
   if (!state.canvasSelection.length || gesture.canvasBusy) return false;
+  // v40 — a History peek shows a past step; the bar belongs to the live selection.
+  if (isPeeking()) return false;
   const wrap = el.canvasWrapper || document.getElementById('canvas-wrapper');
   if (wrap && wrap.style.display === 'none') return false;
   return true;

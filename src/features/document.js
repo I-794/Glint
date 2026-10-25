@@ -8,7 +8,8 @@
 
 import { state } from '../state/state.js';
 import { el } from '../ui/elements.js';
-import { render } from '../render/render.js';
+import { render, renderInto } from '../render/render.js';
+import { isPeeking } from '../state/history.js';
 import { normalizeProject } from '../state/serialize.js';
 import { releaseMaskOwner, ensureBokehMask } from '../render/bokeh.js';
 import { ensureCompareImage } from '../render/compare.js';
@@ -95,9 +96,13 @@ export function makeThumb() {
   // v32.1 — on the board the preview canvas isn't redrawn (render() routes to
   // renderBoard), so it holds a stale frame; callers keep the existing thumb.
   if (state.mode === 'board') return null;
-  const src = el.previewCanvas;
+  let src = el.previewCanvas;
   if (!src || !src.width) return null;
   try {
+    // v40 — during a History peek the preview shows a past step; the saved
+    // thumbnail is of the live design.
+    if (isPeeking() && state.image) { src = document.createElement('canvas'); renderInto(src, true); }
+    if (!src.width) return null;
     const W = 320;
     const scale = W / src.width;
     const H = Math.max(1, Math.round(src.height * scale));

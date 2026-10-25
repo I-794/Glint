@@ -11,7 +11,7 @@ import { normalizeCrop, cropRect, cropKey } from '../src/render/crop-core.js';
 import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS, normalizeFilters } from '../src/render/curves-core.js';
 import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
 import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, surfaceMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
-import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, withSnapshot, clearHistory } from '../src/state/history.js';
+import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, peekSnapshot, withSnapshot, clearHistory } from '../src/state/history.js';
 import { describeChange } from '../src/state/history-labels.js';
 import { makeVersion, normalizeVersions, MAX_VERSIONS } from '../src/state/versions-core.js';
 
@@ -547,22 +547,42 @@ function testHistoryPeekPutsLiveStateBack() {
     state.padding = 60;
 
     assert.equal(peekStep(1), false, 'the current step is not a peek');
+    assert.equal(peekSnapshot(), null);
     assert.equal(peekStep(0), true);
     assert.equal(isPeeking(), true);
-    assert.equal(state.padding, 50);
-    assert.notEqual(state.shadow, liveShadow, 'a peek works on a copy');
+    // A peek is render-only: state keeps the live values and objects, so
+    // autosave, the Roll, collab and playback never see the past step.
+    assert.equal(state.padding, 60, 'state keeps the live value during a peek');
+    assert.equal(state.shadow, liveShadow, 'and the live objects');
+    assert.equal(state.roll, liveRoll);
+    assert.equal(peekSnapshot().padding, 50, 'the peeked step is held aside');
+    assert.equal(withSnapshot(peekSnapshot(), () => state.padding), 50, 'the preview draws it in a swap');
+    assert.equal(state.padding, 60);
     assert.equal(endPeek(), true);
     assert.equal(isPeeking(), false);
+    assert.equal(peekSnapshot(), null);
     assert.equal(state.padding, 60);
-    assert.equal(state.roll, liveRoll, 'live objects come back by reference');
+    assert.equal(state.roll, liveRoll, 'live objects stay by reference');
     assert.equal(state.shadow, liveShadow);
     assert.equal(endPeek(), false);
 
-    // A save during a peek ends it first, so the live state is what is saved.
+    // An edit during a peek goes to the live state and survives the release.
+    peekStep(0);
+    state.padding = 65;
+    endPeek();
+    assert.equal(state.padding, 65);
+    state.padding = 60;
+
+    // A save during a peek ends it, and the live state is what is saved.
     peekStep(0);
     saveStateToHistory();
     assert.equal(isPeeking(), false);
     assert.equal(history.past.at(-1).padding, 60);
+    // Undo ends a peek too.
+    peekStep(0);
+    undo();
+    assert.equal(isPeeking(), false);
+    assert.equal(state.padding, 60);
 
     // withSnapshot runs a function on a step and always puts the state back.
     assert.equal(withSnapshot(history.past[0], () => state.padding), 50);
