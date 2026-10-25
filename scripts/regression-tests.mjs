@@ -595,7 +595,7 @@ function testVersionsNormalizeAndPersist() {
   const v = makeVersion({ id: 7, name: '  Client   v1 ', at: 5, snap: { padding: 9, roll: { shots: [1] } }, thumb: 'data:image/jpeg;base64,AAAA' });
   assert.deepEqual(v, { id: '7', name: 'Client v1', at: 5, snap: { padding: 9 }, thumb: 'data:image/jpeg;base64,AAAA' }, 'trimmed name, no roll');
   assert.equal(makeVersion({ id: 1, snap: {}, thumb: 'data:image/png" onerror="x' }).thumb, null, 'only plain base64 image data');
-  assert.equal(makeVersion({ id: 1, snap: {}, name: '' }).name, 'Version');
+  assert.equal(makeVersion({ id: 1, snap: {}, name: '' }).name, 'Pin');
   const many = Array.from({ length: 20 }, (_, i) => ({ id: `v${i}`, name: `V${i}`, at: i, snap: { padding: i } }));
   assert.equal(normalizeVersions(many).length, MAX_VERSIONS);
   assert.deepEqual(normalizeVersions([null, { id: 'a' }, { id: 'b', snap: [] }, 'x']), [], 'junk dropped');

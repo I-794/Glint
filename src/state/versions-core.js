@@ -6,7 +6,7 @@ export const MAX_VERSIONS = 12;
 const NAME_MAX = 40;
 const THUMB_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
 
-export function cleanName(name, fallback = 'Version') {
+export function cleanName(name, fallback = 'Pin') {
   return String(name ?? '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX) || fallback;
 }
 
