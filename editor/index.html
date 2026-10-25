@@ -811,14 +811,14 @@
             <p class="info-text" style="margin-bottom:8px;">Click a step to go back to it. Hold the eye to peek, then let go.</p>
             <div class="hx-head">
                 <span class="info-text" id="history-count"></span>
-                <button type="button" class="btn btn-secondary" id="history-version-btn">Save as version</button>
+                <button type="button" class="btn btn-secondary" id="history-version-btn">Pin this step</button>
             </div>
             <ol class="hx-list" id="history-list" aria-label="Edit history"></ol>
-            <label class="control-label" style="margin-top:12px;">Versions</label>
-            <p class="info-text" id="versions-empty">Save a version to keep it after the undo list moves on. Versions keep the design, not the screenshot.</p>
-            <ul class="hx-versions" id="versions-list" aria-label="Saved versions"></ul>
+            <label class="control-label" style="margin-top:12px;">Pinned</label>
+            <p class="info-text" id="versions-empty">Pin a step to keep it after the undo list moves on. Pins keep the design, not the screenshot.</p>
+            <ul class="hx-versions" id="versions-list" aria-label="Pinned steps"></ul>
             <div class="looks-field" id="versions-field" hidden>
-                <label class="control-label" id="versions-field-label" for="versions-field-input">Name this version</label>
+                <label class="control-label" id="versions-field-label" for="versions-field-input">Name this pin</label>
                 <input type="text" class="control-input" id="versions-field-input" maxlength="40" autocomplete="off" spellcheck="false">
                 <div class="ct-actions">
                     <button type="button" class="btn btn-primary" id="versions-field-ok">Save</button>
@@ -1354,7 +1354,7 @@
             <div style="display:flex;gap:8px;margin:8px 0;">
                 <button class="btn btn-secondary" style="flex:1;" id="projects-new-btn">＋ New</button>
                 <button class="btn btn-primary" style="flex:1;" id="projects-save-version-btn">💾 Save version</button>
-                <button class="btn btn-secondary" style="flex:1;" id="projects-history-btn">🕘 History</button>
+                <button class="btn btn-secondary" style="flex:1;" id="projects-history-btn">🕘 Project timeline</button>
             </div>
             <div id="projects-list"></div>
         </div>

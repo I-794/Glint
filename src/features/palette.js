@@ -220,7 +220,7 @@ export function registerCommands() {
     { id: 'light-dark-open', label: 'Light / Dark: Open', icon: '◑', run: openLightDark },
     // v40 — Hindsight
     { id: 'history-open', label: 'History: Open', icon: '↺', run: openHistory },
-    { id: 'history-save-version', label: 'History: Save as version', icon: '↺', run: () => { openHistory(); saveVersion(); },
+    { id: 'history-pin', label: 'History: Pin this step', icon: '↺', run: () => { openHistory(); saveVersion(); },
       when: () => state.mode === 'single' },
     { id: 'color-tools-open', label: 'Curves & Levels: Open', icon: '◐', run: openCurves },
     { id: 'color-tools-reset', label: 'Curves & Levels: Reset all', icon: '◐', run: resetCurves },
