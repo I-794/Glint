@@ -131,6 +131,48 @@ export const TOOLS = [
       return 'Adjusted the image filters.';
     }
   },
+  // v40 — Looks and Light / Dark for the agent. The agent loop saves one history
+  // entry for the whole turn, so these set state without their own entry.
+  {
+    name: 'apply_look',
+    description: 'Apply a named color look (a grade of filters, curves and levels). Call with no name to list the looks.',
+    input_schema: { type: 'object', properties: { name: { type: 'string' } } },
+    async run(args) {
+      const { allLooks, setLook } = await import('./looks.js');
+      const looks = allLooks();
+      const want = String(args.name || '').trim().toLowerCase();
+      const look = want && looks.find((l) => l.name.toLowerCase() === want);
+      if (!look) return `Looks available: ${looks.map((l) => l.name).join(', ')}.`;
+      if (!setLook(look)) return `The look "${look.name}" could not be read.`;
+      return `Applied the look "${look.name}".`;
+    }
+  },
+  {
+    name: 'set_light_dark',
+    description: 'Flip the screenshot to dark or light mode, or turn the flip off. match_scene (default true) also flips the background, frame color and caption.',
+    input_schema: {
+      type: 'object',
+      properties: { mode: { type: 'string', enum: ['dark', 'light', 'off'] }, match_scene: { type: 'boolean' } },
+      required: ['mode']
+    },
+    async run(args) {
+      const { normalizeModeFlip, sceneFlip } = await import('../render/mode-flip-core.js');
+      const { detectImageMode } = await import('../render/mode-flip.js');
+      const mf = normalizeModeFlip(state.modeFlip);
+      if (args.mode === 'off') { state.modeFlip = { ...mf, enabled: false }; return 'Turned Light / Dark off.'; }
+      if (args.mode !== 'dark' && args.mode !== 'light') return 'mode must be dark, light or off.';
+      if (mf.enabled && mf.target === args.mode) return `The screenshot is already flipped to ${args.mode}.`;
+      if (!state.image) return 'There is no screenshot to flip.';
+      if (state.video && state.video.loaded) return 'Light / Dark works on still images, not video.';
+      const from = detectImageMode(state.image);
+      if (!from) return 'This screenshot comes from another site, so it cannot be flipped.';
+      if (from === args.mode) return `The screenshot is already ${args.mode}.`;
+      state.modeFlip = { ...mf, enabled: true, target: args.mode };
+      const scene = args.match_scene !== false;
+      if (scene) sceneFlip(state, args.mode, state.modeFlip.surface);
+      return `Flipped the screenshot to ${args.mode}${scene ? ' and matched the scene' : ''}.`;
+    }
+  },
   {
     name: 'look_at_canvas',
     description: 'See the current design and get a critique. Call this when you are unsure whether the result looks good (contrast, balance, readability).',
