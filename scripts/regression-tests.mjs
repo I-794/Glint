@@ -608,7 +608,7 @@ function testVersionsNormalizeAndPersist() {
   try {
     state.versions = [makeVersion({ id: 'k', name: 'Keep', at: 1, snap: { padding: 42 } })];
     const payload = serializeFull();
-    assert.equal(payload.schemaVersion, 25);
+    assert.equal(payload.schemaVersion, SCHEMA_VERSION);
     const back = normalizeProject(payload).design.versions;
     assert.equal(back.length, 1);
     assert.equal(back[0].name, 'Keep');

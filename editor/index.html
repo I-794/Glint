@@ -811,8 +811,20 @@
             <p class="info-text" style="margin-bottom:8px;">Click a step to go back to it. Hold the eye to peek, then let go.</p>
             <div class="hx-head">
                 <span class="info-text" id="history-count"></span>
+                <button type="button" class="btn btn-secondary" id="history-version-btn">Save as version</button>
             </div>
             <ol class="hx-list" id="history-list" aria-label="Edit history"></ol>
+            <label class="control-label" style="margin-top:12px;">Versions</label>
+            <p class="info-text" id="versions-empty">Save a version to keep it after the undo list moves on. Versions keep the design, not the screenshot.</p>
+            <ul class="hx-versions" id="versions-list" aria-label="Saved versions"></ul>
+            <div class="looks-field" id="versions-field" hidden>
+                <label class="control-label" id="versions-field-label" for="versions-field-input">Name this version</label>
+                <input type="text" class="control-input" id="versions-field-input" maxlength="40" autocomplete="off" spellcheck="false">
+                <div class="ct-actions">
+                    <button type="button" class="btn btn-primary" id="versions-field-ok">Save</button>
+                    <button type="button" class="btn btn-secondary" id="versions-field-cancel">Cancel</button>
+                </div>
+            </div>
         </div>
 
         <div class="sidebar-section" data-group="project">

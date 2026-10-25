@@ -23,6 +23,7 @@ import { bindMergeStudio } from './features/merge-studio.js';
 import { bindRoll } from './features/roll.js';
 import { bindLayersEvents, renderLayersPanel } from './features/layers.js';
 import { bindHistoryPanel, renderHistoryPanel } from './features/history-panel.js';   // v40
+import { bindVersions } from './features/versions.js';   // v40
 import { bindZoomPan, applyTransform } from './features/zoom-pan.js';
 import { renderMeshPad } from './features/mesh-pad.js';
 import { bindTiltEvents } from './features/tilt.js';
@@ -139,6 +140,7 @@ function init() {
   bindRoll();           // v37 — Exposure: the Roll (batch develop)
   bindLayersEvents();
   bindHistoryPanel();     // v40 — Hindsight: History panel
+  bindVersions();     // v40 — Hindsight: saved versions
   bindZoomPan();
   bindTiltEvents();
   bindStickerEvents();

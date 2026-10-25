@@ -39,6 +39,7 @@ import { formatKeys } from './shortcuts.js';
 import { getFrequencyBoost, getRecent, recordUse } from './command-usage.js';
 import { getUiMode, setUiMode } from './ui-mode.js';
 import { openHistory } from './history-panel.js';
+import { saveVersion } from './versions.js';   // v40
 import { pickBeforeImage, useCurrentAsBefore, swapBeforeAfter, toggleCompare } from './compare-ui.js';
 import { flipLightDark, turnOffLightDark, makeLightDarkPair, openLightDark } from './mode-flip-ui.js';
 import { openCurves, resetCurves } from './curves-ui.js';
@@ -219,6 +220,8 @@ export function registerCommands() {
     { id: 'light-dark-open', label: 'Light / Dark: Open', icon: '◑', run: openLightDark },
     // v40 — Hindsight
     { id: 'history-open', label: 'History: Open', icon: '↺', run: openHistory },
+    { id: 'history-save-version', label: 'History: Save as version', icon: '↺', run: () => { openHistory(); saveVersion(); },
+      when: () => state.mode === 'single' },
     { id: 'color-tools-open', label: 'Curves & Levels: Open', icon: '◐', run: openCurves },
     { id: 'color-tools-reset', label: 'Curves & Levels: Reset all', icon: '◐', run: resetCurves },
     { id: 'look-save', label: 'Looks: Save current look', icon: '◐', run: saveLook },

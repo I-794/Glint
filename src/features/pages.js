@@ -146,6 +146,9 @@ export function addPage({ duplicate = false } = {}) {
   syncActive();
   const base = JSON.parse(JSON.stringify(pages[active].payload));
   if (!duplicate) { base.image = null; base.svgCode = null; }
+  // v40 — versions belong to the page they were saved on (a duplicate starts
+  // with none too, so their snapshots and pictures are never stored twice).
+  if (base.design) base.design.versions = [];
   pages.splice(active + 1, 0, { id: uid(), payload: base, thumb: duplicate ? pages[active].thumb : null });
   active += 1;
   applyPayload(pages[active].payload);
@@ -168,7 +171,7 @@ export function addPageWithImage(img) {
   const thumb = imageToDataUrl(img, 320, 'image/jpeg', 0.6) || dataUrl;
   // Inherit the current design, but size the canvas to the image's aspect.
   const cur = serializeFull();
-  const design = { ...cur.design, canvas: { width: img.width, height: img.height } };
+  const design = { ...cur.design, canvas: { width: img.width, height: img.height }, versions: [] };   // v40: no versions carried over
   const payload = { schemaVersion: cur.schemaVersion, design, image: dataUrl, svgCode: null };
   const page = { id: uid(), payload, thumb };
   pages.push(page);

@@ -700,7 +700,7 @@ kbd {
 .hx-peek.active { background: var(--accent-primary); color: var(--on-accent); border-color: var(--accent-primary); }
 .hx-peek svg { width: 15px; height: 15px; }
 .hx-note { margin: 0 0 6px; }
-.hx-list.hx-locked { opacity: 0.5; pointer-events: none; }
+.hx-list.hx-locked, .hx-versions.hx-locked { opacity: 0.5; pointer-events: none; }
 
 /* ─── Canvas Viewport ─── */
 .canvas-viewport {
