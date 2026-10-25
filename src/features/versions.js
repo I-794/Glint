@@ -5,7 +5,7 @@
 import { state } from '../state/state.js';
 import { el } from '../ui/elements.js';
 import { render } from '../render/render.js';
-import { saveStateToHistory, currentSnapshot, applySnapshot } from '../state/history.js';
+import { commitStep, currentSnapshot, applySnapshot } from '../state/history.js';
 import { makeVersion, MAX_VERSIONS, cleanName } from '../state/versions-core.js';
 import { renderStepThumb } from '../render/history-thumbs.js';
 import { ensureCompareImage } from '../render/compare.js';
@@ -91,8 +91,8 @@ export function restoreVersion(id) {
   if (state.mode !== 'single') { showNotification(SINGLE_ONLY, 'error'); return; }
   const v = list().find((x) => x.id === id);
   if (!v) return;
-  saveStateToHistory(`Restored ${v.name}`);
-  applySnapshot(JSON.parse(JSON.stringify(v.snap)));
+  // Listeners hear about the step after the pin is applied, as with undo.
+  commitStep(`Restored ${v.name}`, () => applySnapshot(JSON.parse(JSON.stringify(v.snap))));
   ensureCompareImage(state.compare && state.compare.beforeSrc).then(() => render());
   window.__motionStudioRefresh?.();
   render();

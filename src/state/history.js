@@ -160,6 +160,14 @@ export function saveStateToHistory(label) {
   emit();
 }
 
+// v40 — save a step whose change apply() makes, and tell listeners only after
+// it ran, the way undo, redo and goToStep do. Listeners such as the code
+// snippet raster, the layers panel and collab then read the new state.
+export function commitStep(label, apply) {
+  pushStep(label);
+  try { if (apply) apply(); } finally { emit(); }
+}
+
 export function undo(rerender) {
   endPeek();
   pendingEdit = null;

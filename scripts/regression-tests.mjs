@@ -11,7 +11,7 @@ import { normalizeCrop, cropRect, cropKey } from '../src/render/crop-core.js';
 import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS, normalizeFilters } from '../src/render/curves-core.js';
 import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
 import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, surfaceMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
-import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, peekSnapshot, withSnapshot, clearHistory } from '../src/state/history.js';
+import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, peekSnapshot, withSnapshot, clearHistory, commitStep, onHistoryChange } from '../src/state/history.js';
 import { describeChange } from '../src/state/history-labels.js';
 import { makeVersion, normalizeVersions, MAX_VERSIONS } from '../src/state/versions-core.js';
 
@@ -596,6 +596,29 @@ function testHistoryPeekPutsLiveStateBack() {
   }
 }
 
+function testCommitStepEmitsAfterApply() {
+  const savedPadding = state.padding;
+  let seen = null;
+  let armed = false;
+  onHistoryChange(() => { if (armed) seen = state.padding; });
+  try {
+    clearHistory();
+    state.padding = 10;
+    armed = true;
+    commitStep('Restored Pin', () => { state.padding = 77; });
+    armed = false;
+    assert.equal(seen, 77, 'listeners see the state after apply ran');
+    assert.equal(history.past.at(-1).padding, 10, 'the step saved the state before apply');
+    assert.equal(historyTimeline().at(-1).step.label, 'Restored Pin');
+    undo();
+    assert.equal(state.padding, 10);
+  } finally {
+    armed = false;
+    clearHistory();
+    state.padding = savedPadding;
+  }
+}
+
 function testHistoryLabels() {
   assert.equal(describeChange({ padding: 10 }, { padding: 20 }), 'Padding');
   assert.equal(describeChange({ padding: 10 }, { padding: 10 }), 'Edit');
@@ -671,6 +694,7 @@ const tests = [
   testModeFlipMigratesAndPersists,
   testHistoryStepsStayPaired,
   testHistoryPeekPutsLiveStateBack,
+  testCommitStepEmitsAfterApply,
   testHistoryLabels,
   testVersionsNormalizeAndPersist
 ];
