@@ -106,6 +106,22 @@ function seoFiles() {
   };
 }
 
+// v41 — /s/<id> is rewritten to api/share-page.js on Vercel. Under `vite` and
+// `vite preview` there is no API, so serve the static viewer page for that path
+// and let it fetch the manifest itself.
+function shareRoutes() {
+  const rewrite = (req, _res, next) => {
+    const m = req.url && req.url.match(/^\/s\/[A-Za-z0-9]{12}\/?(\?.*)?$/);
+    if (m) req.url = '/s/index.html' + (m[1] || '');
+    next();
+  };
+  return {
+    name: 'share-routes',
+    configureServer(server) { server.middlewares.use(rewrite); },
+    configurePreviewServer(server) { server.middlewares.use(rewrite); }
+  };
+}
+
 export default defineConfig({
   root: '.',
   build: {
@@ -141,7 +157,9 @@ export default defineConfig({
         faq: resolve(__dirname, 'faq/index.html'),
         roadmap: resolve(__dirname, 'roadmap/index.html'),
         terms: resolve(__dirname, 'terms/index.html'),
-        glint: resolve(__dirname, 'glint/index.html')
+        glint: resolve(__dirname, 'glint/index.html'),
+        // v41 — share viewer, served at /s/<id> (vercel.json rewrite).
+        share: resolve(__dirname, 's/index.html')
       },
       output: {
         manualChunks: {
@@ -160,6 +178,7 @@ export default defineConfig({
     open: true,
   },
   plugins: [
+    shareRoutes(),
     htmlPartials(),
     ogBase(),
     seoFiles(),
@@ -200,7 +219,8 @@ export default defineConfig({
         // left out and cached by the runtime rule below the first time they're used.
         globPatterns: ['**/*.{js,css,html,svg,ico,woff2}'],
         manifestTransforms: [async (entries) => ({
-          manifest: entries.filter((e) => !(/^assets\/.*\.js$/.test(e.url) && !/^assets\/editor-/.test(e.url) && e.size > 100 * 1024)),
+          // v41 — the share viewer is opened from links, never offline; keep it out.
+          manifest: entries.filter((e) => e.url !== 's/index.html' && !(/^assets\/.*\.js$/.test(e.url) && !/^assets\/editor-/.test(e.url) && e.size > 100 * 1024)),
           warnings: []
         })],
         // v23 — share-target POST handler layered onto the generated SW, so

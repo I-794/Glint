@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#0d0d0f">
+    <title>Shared from Glint</title>
+    <!--SHARE_META-->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preload" href="/fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
+</head>
+<body>
+<!--PARTIAL:mark-->
+<header class="sv-head">
+    <a class="sv-brand" href="/" aria-label="Glint home">
+        <svg class="sv-mark" aria-hidden="true"><use href="#mark"/></svg>
+        <span class="sv-word">Glint</span>
+    </a>
+    <h1 class="sv-title" id="sv-title"></h1>
+    <a class="sv-cta" href="/editor/">Make your own</a>
+</header>
+<div class="sv-owner" id="sv-owner" hidden>
+    <p>You made this link. Anyone who has it can see it.</p>
+    <button type="button" class="sv-btn-line" id="sv-delete">Delete link</button>
+</div>
+<main class="sv-main" id="share-app" aria-live="polite">
+    <div class="sv-skeleton" aria-hidden="true"></div>
+</main>
+<footer class="sv-foot" id="sv-foot">
+    <p class="sv-kind" id="sv-kind"></p>
+    <nav class="sv-links" id="sv-links" aria-label="Link actions"></nav>
+</footer>
+<a class="sv-badge" id="sv-badge" href="/" target="_blank" rel="noopener">
+    <svg class="sv-mark" aria-hidden="true"><use href="#mark"/></svg>
+    <span>Made with Glint</span>
+</a>
+<script type="application/json" id="share-data"><!--SHARE_DATA--></script>
+<script type="module" src="/src/share/viewer.js"></script>
+</body>
+</html>

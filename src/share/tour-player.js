@@ -32,7 +32,7 @@ export function mountTour(root, steps, opts) {
   var prev = root.querySelector('.gt-prev');
   var next = root.querySelector('.gt-next');
   var auto = root.querySelector('.gt-auto');
-  var i = 0, timer = null, rafId = 0;
+  var i = 0, timer = null, rafId = 0, placed = [];
 
   function srcOf(s) { return s.img || s.src; }
 
@@ -46,8 +46,13 @@ export function mountTour(root, steps, opts) {
     dots.appendChild(d);
   });
 
+  // Callouts are measured against the window, so they are placed again once
+  // the step's image has its real size, and whenever the window resizes.
+  function placeAll() { placed.forEach(function (pair) { place(pair[0], pair[1]); }); }
+
   function clearOverlays() {
     [].slice.call(stage.querySelectorAll('.gt-hs,.gt-callout')).forEach(function (e) { e.remove(); });
+    placed = [];
     if (timer) { clearTimeout(timer); timer = null; }
     if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
     auto.style.width = '0';
@@ -63,10 +68,21 @@ export function mountTour(root, steps, opts) {
     else if (side === 'left' && hs.x < 0.3) side = 'right';
     callout.className = 'gt-callout ' + side;
     var st = callout.style;
+    st.marginLeft = '';
+    st.removeProperty('--gt-arrow-shift');
     if (side === 'top') { st.left = (cx * 100) + '%'; st.top = (hs.y * 100) + '%'; st.transform = 'translate(-50%,calc(-100% - 12px))'; }
     else if (side === 'bottom') { st.left = (cx * 100) + '%'; st.top = ((hs.y + hs.h) * 100) + '%'; st.transform = 'translate(-50%,12px)'; }
     else if (side === 'left') { st.left = (hs.x * 100) + '%'; st.top = (cy * 100) + '%'; st.transform = 'translate(calc(-100% - 12px),-50%)'; }
     else { st.left = ((hs.x + hs.w) * 100) + '%'; st.top = (cy * 100) + '%'; st.transform = 'translate(12px,-50%)'; }
+    // On narrow screens a callout can run past the window edge. Slide it back
+    // inside and move its arrow the other way so it still points at the hotspot.
+    if (side === 'top' || side === 'bottom') {
+      var r = callout.getBoundingClientRect(), vw = doc.documentElement.clientWidth, pad = 8, dx = 0;
+      if (!callout.isConnected || !r.width) return;
+      if (r.left < pad) dx = pad - r.left;
+      else if (r.right > vw - pad) dx = (vw - pad) - r.right;
+      if (dx) { st.marginLeft = dx + 'px'; st.setProperty('--gt-arrow-shift', (-dx) + 'px'); }
+    }
   }
 
   function go(n) {
@@ -91,6 +107,7 @@ export function mountTour(root, steps, opts) {
         if (hs.callout.title) { var t = doc.createElement('b'); t.textContent = hs.callout.title; c.appendChild(t); }
         if (hs.callout.body) { var p = doc.createElement('span'); p.textContent = hs.callout.body; c.appendChild(p); }
         stage.appendChild(c);
+        placed.push([c, hs]);
         place(c, hs);
       }
     });
@@ -130,6 +147,9 @@ export function mountTour(root, steps, opts) {
 
   prev.onclick = function () { go(i - 1); };
   next.onclick = function () { advance(); };
+  frame.addEventListener('load', placeAll);
+  var win = doc.defaultView;
+  win.addEventListener('resize', placeAll);
   keyTarget.addEventListener('keydown', onKey);
   go(0);
 
@@ -138,6 +158,7 @@ export function mountTour(root, steps, opts) {
     destroy: function () {
       clearOverlays();
       keyTarget.removeEventListener('keydown', onKey);
+      win.removeEventListener('resize', placeAll);
       root.innerHTML = '';
       root.classList.remove('glint-tour');
     }
