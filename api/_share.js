@@ -64,7 +64,8 @@ export function siteOrigin(req) {
 
 const memory = new Map();   // pathname -> { body: Buffer, contentType, size, uploadedAt }
 export function memoryStoreEntries() { return memory; }
-const MEMORY_BASE = 'https://memory.blob.test/';
+// Under the Blob domain so the share page's content policy lets tests load it.
+const MEMORY_BASE = 'https://memory.public.blob.vercel-storage.com/';
 
 const memoryStore = {
   async put(pathname, body, { contentType } = {}) {
@@ -84,7 +85,15 @@ const memoryStore = {
     if (!e) return null;
     return { data: JSON.parse(e.body.toString('utf8')), url: MEMORY_BASE + pathname };
   },
-  async clientToken({ pathname }) { return `memory:${pathname}`; },
+  // Real client tokens from a dummy store key, so the browser's Blob client
+  // accepts them; a local test server catches the upload requests.
+  async clientToken({ pathname, type, maxBytes, validUntil }) {
+    return generateClientTokenFromReadWriteToken({
+      token: 'vercel_blob_rw_memory_localonly', pathname,
+      allowedContentTypes: [type], maximumSizeInBytes: maxBytes, validUntil,
+      addRandomSuffix: false, allowOverwrite: false,
+    });
+  },
 };
 
 function blobStore(token) {

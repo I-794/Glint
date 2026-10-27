@@ -186,7 +186,7 @@ const IDS = [
   'ai-enhance-btn', 'style-reset-btn',
 
   // v7 — share
-  'share-btn', 'embed-container', 'embed-codes', 'qr-btn', 'qr-container'
+  'share-section', 'share-create-btn', 'share-title', 'share-result', 'share-url', 'share-list', 'embed-container', 'embed-codes', 'qr-btn', 'qr-container'
 ];
 
 export function initElements() {

@@ -1,109 +1,34 @@
+// Share helpers. v41: links are made by share-links.js (Vercel Blob, no
+// account); this module keeps the embed snippets, the QR code and the social
+// size presets.
 import { state } from '../state/state.js';
-import { el } from '../ui/elements.js';
-import { showNotification } from '../ui/notification.js';
-import { getClient, getUser } from './auth.js';
+import { escapeHTML } from '../utils/dom.js';
 
-const SHARE_BUCKET = 'shares';
-
-async function ensureBucket(client) {
-  const { data } = await client.storage.getBucket(SHARE_BUCKET);
-  if (!data) {
-    await client.storage.createBucket(SHARE_BUCKET, { public: true, fileSizeLimit: 10485760 });
-  }
-}
-
-function canvasToBlob() {
-  return new Promise(resolve => {
-    el.previewCanvas.toBlob(blob => resolve(blob), 'image/png');
-  });
-}
-
-export async function shareImage() {
-  if (!state.image) { showNotification('Upload an image first.', 'error'); return null; }
-  const client = await getClient();
-  const user = getUser();
-  if (!client || !user) {
-    showNotification('Sign in and connect Supabase to share.', 'error');
-    return null;
-  }
-
-  showNotification('Uploading...', 'success');
-
-  try {
-    await ensureBucket(client);
-    const blob = await canvasToBlob();
-    const filename = `${user.id}/${Date.now()}.png`;
-    const { error: uploadError } = await client.storage
-      .from(SHARE_BUCKET)
-      .upload(filename, blob, { contentType: 'image/png', upsert: true });
-
-    if (uploadError) throw uploadError;
-
-    const { data: urlData } = client.storage
-      .from(SHARE_BUCKET)
-      .getPublicUrl(filename);
-
-    const shareUrl = urlData.publicUrl;
-    await navigator.clipboard.writeText(shareUrl);
-    showNotification('Share link copied to clipboard!', 'success');
-    return shareUrl;
-  } catch (err) {
-    showNotification('Share failed: ' + err.message, 'error');
-    return null;
-  }
-}
-
-export function generateEmbedCode(url, format) {
-  if (!url) return '';
+// rec: a share-links.js record ({ url, kind, title, imageUrl, posterUrl, w, h }).
+export function generateEmbedCode(rec, format) {
+  if (!rec || !rec.url) return '';
+  const title = rec.title || 'Made with Glint';
+  const picture = rec.imageUrl || rec.posterUrl;
   switch (format) {
-    case 'html': return `<img src="${url}" alt="Glint export" style="max-width:100%;border-radius:8px;">`;
-    case 'iframe': return `<iframe src="${url}" width="800" height="450" style="border:none;border-radius:8px;" loading="lazy"></iframe>`;
-    case 'markdown': return `![Glint export](${url})`;
-    default: return url;
+    case 'iframe':
+      return `<iframe src="${escapeHTML(rec.url)}?embed=1" width="100%" height="560" style="border:0;border-radius:6px" loading="lazy" title="${escapeHTML(title)}" allowfullscreen></iframe>`;
+    case 'html':
+      return picture
+        ? `<a href="${escapeHTML(rec.url)}"><img src="${escapeHTML(picture)}" alt="${escapeHTML(title)}" style="max-width:100%;height:auto;border-radius:6px"></a>`
+        : rec.url;
+    case 'markdown':
+      return picture ? `[![${title.replace(/[[\]]/g, '')}](${picture})](${rec.url})` : rec.url;
+    default:
+      return rec.url;
   }
 }
 
-async function generateQR(url) {
+export async function generateQR(url) {
   const { default: QRCode } = await import('qrcode');
-  return QRCode.toDataURL(url, { width: 256, margin: 1, color: { dark: '#e8eaed', light: '#111318' } });
+  return QRCode.toDataURL(url, { width: 256, margin: 1, color: { dark: '#141416', light: '#f2f2f0' } });
 }
 
 export function bindShare() {
-  const shareBtn = document.getElementById('share-btn');
-  const embedContainer = document.getElementById('embed-container');
-  const qrBtn = document.getElementById('qr-btn');
-  const qrContainer = document.getElementById('qr-container');
-
-  let lastShareUrl = null;
-
-  if (shareBtn) {
-    shareBtn.addEventListener('click', async () => {
-      lastShareUrl = await shareImage();
-      if (lastShareUrl && embedContainer) {
-        embedContainer.style.display = 'block';
-        renderEmbedCodes(lastShareUrl);
-      }
-    });
-  }
-
-  if (qrBtn) {
-    qrBtn.addEventListener('click', async () => {
-      if (!lastShareUrl) {
-        showNotification('Share your image first to generate a QR code.', 'error');
-        return;
-      }
-      try {
-        const dataUrl = await generateQR(lastShareUrl);
-        if (qrContainer) {
-          qrContainer.style.display = 'block';
-          qrContainer.innerHTML = `<img src="${dataUrl}" alt="QR Code" style="width:128px;height:128px;border-radius:8px;image-rendering:pixelated;">`;
-        }
-      } catch (err) {
-        showNotification('QR generation failed. Install qrcode package.', 'error');
-      }
-    });
-  }
-
   document.querySelectorAll('.size-preset-btn[data-size]').forEach(btn => {
     btn.addEventListener('click', () => {
       const sizes = {
@@ -127,31 +52,4 @@ export function bindShare() {
       }
     });
   });
-
-  const embedCopyBtns = document.querySelectorAll('[data-copy-embed]');
-  embedCopyBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const format = btn.dataset.copyEmbed;
-      if (!lastShareUrl) return;
-      const code = generateEmbedCode(lastShareUrl, format);
-      navigator.clipboard.writeText(code).then(() => {
-        showNotification(`${format.toUpperCase()} embed copied!`, 'success');
-      });
-    });
-  });
-}
-
-function renderEmbedCodes(url) {
-  const container = document.getElementById('embed-codes');
-  if (!container) return;
-  container.innerHTML = `
-    <div style="margin-bottom:6px;">
-      <label class="control-label" style="font-size:10px;">IMG TAG</label>
-      <code style="display:block;font-size:10px;color:var(--text-secondary);word-break:break-all;padding:6px;background:var(--bg-tertiary);border-radius:4px;margin-top:2px;">${generateEmbedCode(url, 'html').replace(/</g, '&lt;')}</code>
-    </div>
-    <div style="margin-bottom:6px;">
-      <label class="control-label" style="font-size:10px;">MARKDOWN</label>
-      <code style="display:block;font-size:10px;color:var(--text-secondary);word-break:break-all;padding:6px;background:var(--bg-tertiary);border-radius:4px;margin-top:2px;">${generateEmbedCode(url, 'markdown')}</code>
-    </div>
-  `;
 }

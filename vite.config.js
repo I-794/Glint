@@ -168,7 +168,9 @@ export default defineConfig({
           'vendor-anthropic': ['@anthropic-ai/sdk'],
           'vendor-three': ['three'],
           // v24 — Code Snippet Studio's syntax highlighter, lazy-loaded on first use.
-          'vendor-hljs': ['highlight.js']
+          'vendor-hljs': ['highlight.js'],
+          // v41 — the Blob upload client, loaded only when a link is made.
+          'vendor-blob': ['@vercel/blob/client']
         }
       }
     }
@@ -218,9 +220,13 @@ export default defineConfig({
         // big lazy chunks (three.js, onnxruntime, jspdf, html2canvas, AI SDKs) are
         // left out and cached by the runtime rule below the first time they're used.
         globPatterns: ['**/*.{js,css,html,svg,ico,woff2}'],
+        // v41 — the worker answers unknown navigations with the cached homepage.
+        // Share links (/s/<id>) and API routes must always reach the network, or
+        // a returning visitor opening a link would see the homepage instead.
+        navigateFallbackDenylist: [/^\/s\//, /^\/api\//],
         manifestTransforms: [async (entries) => ({
           // v41 — the share viewer is opened from links, never offline; keep it out.
-          manifest: entries.filter((e) => e.url !== 's/index.html' && !(/^assets\/.*\.js$/.test(e.url) && !/^assets\/editor-/.test(e.url) && e.size > 100 * 1024)),
+          manifest: entries.filter((e) => e.url !== 's/index.html' && !/^assets\/(share|vendor-blob)-/.test(e.url) && !(/^assets\/.*\.js$/.test(e.url) && !/^assets\/editor-/.test(e.url) && e.size > 100 * 1024)),
           warnings: []
         })],
         // v23 — share-target POST handler layered onto the generated SW, so

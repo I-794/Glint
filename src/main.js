@@ -73,6 +73,7 @@ import { bindGallery } from './features/gallery.js';
 import { bindCrop } from './features/crop.js';
 import { bindResetButton } from './features/reset.js';
 import { bindShare } from './features/share.js';
+import { bindShareLinks } from './features/share-links.js';
 import { bindCollab } from './features/collab.js';
 import { bindAiEnhance } from './features/ai-enhance.js';
 import { bindAnimation } from './features/animation.js';
@@ -189,6 +190,7 @@ function init() {
   bindCrop();
   bindResetButton();
   bindShare();
+  bindShareLinks();
   bindCollab();
   bindAiEnhance();
   bindAnimation();

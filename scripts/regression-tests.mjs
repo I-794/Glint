@@ -826,6 +826,11 @@ async function testShareRoutesRoundTrip() {
     const missing = await callRoute(shareCommitRoute, shareReq('POST', { id, key, manifest }));
     assert.equal(missing.statusCode, 400);
     assert.match(missing.body.error, /poster\.webp/);
+    await shareStore().put(`shares/${id}/poster.webp`, Buffer.alloc(0), { contentType: 'image/webp' });
+    const empty = await callRoute(shareCommitRoute, shareReq('POST', { id, key, manifest }));
+    assert.equal(empty.statusCode, 400);
+    assert.match(empty.body.error, /Empty upload/);
+    memoryStoreEntries().delete(`shares/${id}/poster.webp`);
     await uploadPlanned(uploads, ['poster.webp']);
     const committed = await callRoute(shareCommitRoute, shareReq('POST', { id, key, manifest }));
     assert.equal(committed.statusCode, 201);
@@ -841,7 +846,7 @@ async function testShareRoutesRoundTrip() {
     assert.equal((await callRoute(shareManifestRoute, shareReq('GET', null, { query: { id: '../etc' } }))).statusCode, 400);
 
     const meta = shareMeta({ manifest: got.body.manifest, base: got.body.base, origin: 'https://glint.test', id });
-    assert.match(meta, /og:image" content="https:\/\/memory\.blob\.test\/shares\/[A-Za-z0-9]{12}\/poster\.webp"/);
+    assert.match(meta, /og:image" content="https:\/\/memory\.public\.blob\.vercel-storage\.com\/shares\/[A-Za-z0-9]{12}\/poster\.webp"/);
     const html = fillTemplate('<head><title>x</title><!--SHARE_META--></head><script id="d"><!--SHARE_DATA--></script>', meta, { manifest: { title: '</script><b>$\'' } });
     assert.ok(!html.includes('</script><b>'));
     assert.ok(html.includes('Launch $&amp; day · Glint'));

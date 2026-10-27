@@ -17,7 +17,9 @@ import tourPlayerSrc from '../share/tour-player.js?raw';
 import tourCss from '../share/tour-player.css?raw';
 
 // ── Render every step offscreen, pairing each frame with its hotspots ─────────
-export async function collectTourSteps(onProgress) {
+// v41: `encode(canvas, index)` turns each rendered step into what the caller
+// needs (a data URL for the .html export, a WebP Blob for share links).
+export async function collectTourSteps(onProgress, encode = (c) => c.toDataURL('image/jpeg', 0.92)) {
   const doc = serializeDocument();          // {docVersion, active, pages:[{id,payload,thumb}]}
   const steps = [];
   const off = document.createElement('canvas');
@@ -29,7 +31,7 @@ export async function collectTourSteps(onProgress) {
     renderInto(off, true);
     const tour = norm.design.tour || { hotspots: [], autoAdvanceMs: 0 };
     steps.push({
-      img: off.toDataURL('image/jpeg', 0.92),
+      img: await encode(off, steps.length),
       w: off.width, h: off.height,
       hotspots: Array.isArray(tour.hotspots) ? tour.hotspots : [],
       autoAdvanceMs: tour.autoAdvanceMs | 0

@@ -158,6 +158,7 @@
                 <div class="toggle-switch"><span class="toggle-label">Drag handle</span><label class="switch"><input type="checkbox" id="compare-handle" checked><span class="slider"></span></label></div>
                 <div class="toggle-switch"><span class="toggle-label">Animate a wipe (Motion Studio)</span><label class="switch"><input type="checkbox" id="compare-wipe"><span class="slider"></span></label></div>
                 <button class="btn btn-secondary" style="width:100%;margin-top:12px;" id="compare-export-html-btn">Export interactive slider (HTML)</button>
+                <button class="btn btn-secondary" style="width:100%;margin-top:8px;" id="compare-share-btn">Share link</button>
             </div>
         </div>
 
@@ -1284,6 +1285,7 @@
                 <div class="divider"></div>
                 <button class="btn btn-primary" style="width:100%;margin-bottom:8px;" id="tour-preview-btn">▶ Preview tour</button>
                 <button class="btn btn-primary" style="width:100%;margin-bottom:8px;" id="tour-export-btn">⬇ Export tour (HTML)</button>
+                <button class="btn btn-secondary" style="width:100%;margin-bottom:8px;" id="tour-share-btn">Share link</button>
                 <button class="btn btn-secondary" style="width:100%;" id="tour-embed-btn">&lt;/&gt; Copy embed code</button>
                 <p class="info-text" id="tour-status" style="min-height:14px;margin-top:6px;"></p>
             </div>
@@ -1315,22 +1317,50 @@
             <button class="btn btn-secondary" style="width:100%;margin-top:8px;" id="export-html-btn">🌐 Export as HTML Card</button>
         </div>
 
-        <div class="sidebar-section" data-group="export" data-simple>
+        <div class="sidebar-section" data-group="export" data-simple id="share-section">
             <h3 class="section-title">Share</h3>
-            <button class="btn btn-primary" style="width:100%;margin-bottom:8px;" id="share-btn">&#128279; Share Image</button>
-            <p class="info-text" style="margin-bottom:8px;">Upload to Supabase Storage and get a shareable link. Requires cloud setup.</p>
-            <div id="embed-container" style="display:none;">
-                <label class="control-label">Embed Codes</label>
-                <div id="embed-codes"></div>
-                <div style="display:flex;gap:5px;margin-top:6px;">
-                    <button class="btn btn-secondary" data-copy-embed="html" style="flex:1;font-size:11px;padding:6px;">Copy HTML</button>
-                    <button class="btn btn-secondary" data-copy-embed="markdown" style="flex:1;font-size:11px;padding:6px;">Copy MD</button>
-                    <button class="btn btn-secondary" data-copy-embed="iframe" style="flex:1;font-size:11px;padding:6px;">Copy Iframe</button>
+            <p class="info-text" id="share-links-off" hidden>Links are not set up on this site. Downloads still work.</p>
+            <div id="share-links-on" hidden>
+                <p class="info-text" style="margin:0 0 10px;">Make a link anyone can open. No account needed to view it.</p>
+                <span class="control-label" id="share-kind-label">What to share</span>
+                <div class="share-kind" role="radiogroup" aria-labelledby="share-kind-label">
+                    <button type="button" class="share-kind-btn active" data-kind="image" role="radio" aria-checked="true">Design</button>
+                    <button type="button" class="share-kind-btn" data-kind="tour" role="radio" aria-checked="false" tabindex="-1">Tour</button>
+                    <button type="button" class="share-kind-btn" data-kind="compare" role="radio" aria-checked="false" tabindex="-1">Before / after</button>
                 </div>
+                <label class="control-label" for="share-title">Title</label>
+                <input type="text" class="control-input" id="share-title" maxlength="120" placeholder="Shown on the page and in previews">
+                <button type="button" class="btn btn-primary" style="width:100%;margin-top:10px;" id="share-create-btn">Create link</button>
+                <div class="share-progress" id="share-progress" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" hidden>
+                    <div class="share-progress-track"><span id="share-progress-fill"></span></div>
+                    <button type="button" class="btn btn-secondary share-cancel" id="share-cancel-btn">Cancel</button>
+                </div>
+                <p class="info-text" id="share-status" aria-live="polite" style="min-height:14px;margin-top:6px;"></p>
+                <div class="share-result" id="share-result" hidden>
+                    <div class="share-url-row">
+                        <input type="text" class="control-input" id="share-url" readonly aria-label="Share link">
+                        <button type="button" class="btn btn-primary" id="share-copy-btn">Copy</button>
+                    </div>
+                    <div class="share-actions">
+                        <button type="button" class="btn btn-secondary" id="share-open-btn">Open</button>
+                        <button type="button" class="btn btn-secondary" id="qr-btn">QR code</button>
+                        <button type="button" class="btn btn-secondary" id="share-manage-btn" title="Copy a link that can delete this share">Manage link</button>
+                    </div>
+                    <p class="info-text">The manage link can delete this share. Keep it private.</p>
+                    <div id="qr-container" class="share-qr-box" hidden></div>
+                    <div id="embed-container">
+                        <div id="embed-codes"></div>
+                        <div class="share-actions">
+                            <button type="button" class="btn btn-secondary" data-copy-embed="iframe">Copy embed</button>
+                            <button type="button" class="btn btn-secondary" data-copy-embed="html">Copy HTML</button>
+                            <button type="button" class="btn btn-secondary" data-copy-embed="markdown">Copy Markdown</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <span class="control-label">Your links</span>
+                <div class="share-list" id="share-list"></div>
             </div>
-            <div class="divider"></div>
-            <button class="btn btn-secondary" style="width:100%;" id="qr-btn">QR Code</button>
-            <div id="qr-container" style="display:none;margin-top:8px;text-align:center;"></div>
             <div class="divider"></div>
             <label class="control-label">👥 Live collaboration</label>
             <p class="info-text" style="margin:4px 0 8px;">Start a session and share the link; edits and cursors sync live. Requires cloud setup.</p>

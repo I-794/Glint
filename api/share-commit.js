@@ -22,7 +22,9 @@ export default async function handler(req, res) {
     const byName = new Map(files.map((f) => [f.pathname.slice(prefix.length), f]));
     if (byName.has(MANIFEST_NAME)) throw new ApiError(409, 'This link was already published');
     for (const name of manifestAssets(manifest)) {
-      if (!byName.has(name)) throw new ApiError(400, `Missing upload: ${name}`);
+      const f = byName.get(name);
+      if (!f) throw new ApiError(400, `Missing upload: ${name}`);
+      if (!(f.size > 0)) throw new ApiError(400, `Empty upload: ${name}`);
     }
     const total = files.reduce((s, f) => s + (f.size || 0), 0);
     if (total > LIMITS.shareBytes) throw new ApiError(400, 'This share is too large');
