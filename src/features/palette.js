@@ -27,9 +27,9 @@ import { focusUrlLoad } from './url-load.js';
 import { openCodeStudio } from './code-snippet.js';
 import { toggleTourMode } from './tours.js';
 import { previewTour, exportTour } from './tour-export.js';
-import { addPage } from './pages.js';
+import { addPage, pageCount } from './pages.js';
 import { toggleBoardMode, enterBoardMode } from './board.js';
-import { setGroup } from './studio-nav.js';
+import { setGroup, revealSection } from './studio-nav.js';
 import { seedFromUrl } from './seed.js';
 import { openGalleryBrowse } from './gallery.js';
 import { exportVideoMp4, exportVideoGif } from './video-export.js';
@@ -237,8 +237,12 @@ export function registerCommands() {
     { id: 'style-cyber',      label: 'Style: Cyberpunk',     icon: '🌆', run: () => document.querySelector('[data-style-preset="cyber"]')?.click() },
     { id: 'style-noir',       label: 'Style: Noir',          icon: '🖤', run: () => document.querySelector('[data-style-preset="noir"]')?.click() },
     { id: 'style-reset',      label: 'Reset Filters',        icon: '⟲',  run: () => document.getElementById('style-reset-btn')?.click() },
-    { id: 'share-image',      label: 'Share Image',          icon: '🔗', run: () => document.getElementById('share-btn')?.click() },
-    { id: 'generate-qr',      label: 'Generate QR Code',     icon: '📱', run: () => document.getElementById('qr-btn')?.click() },
+    // v41 — share links
+    { id: 'share-link-design',  label: 'Share: Create a link to this design', icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('image')), when: () => !!state.image },
+    { id: 'share-link-tour',    label: 'Share: Create a link to the tour',    icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('tour')), when: () => pageCount() >= 2 },
+    { id: 'share-link-compare', label: 'Share: Create a link to the before / after', icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('compare')), when: () => !!(state.compare?.beforeSrc && state.image) },
+    { id: 'share-links-open',   label: 'Share: Your links',  icon: '🔗', run: () => { const s = document.getElementById('share-section'); if (s) { revealSection(s); s.scrollIntoView({ block: 'start', behavior: 'smooth' }); } } },
+    { id: 'generate-qr',      label: 'Generate QR Code for the last link', icon: '📱', run: () => document.getElementById('qr-btn')?.click(), when: () => !document.getElementById('share-result')?.hidden },
     { id: 'export-gif',       label: 'Export as GIF',         icon: '🎬', run: () => document.getElementById('gif-export-btn')?.click() },
     { id: 'anim-play',        label: 'Play/Pause Animation', icon: '▶',  run: () => document.getElementById('animation-play-btn')?.click() },
     { id: 'mode-single',      label: 'Mode: Single',         icon: '🖼', run: () => setMode('single') },

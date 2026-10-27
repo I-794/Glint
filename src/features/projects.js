@@ -400,6 +400,12 @@ function getActive() {
   return loadStore()[activeId] || null;
 }
 
+// v41 — the open project's name (share links use it as the default title).
+export function activeProjectName() {
+  const p = getActive();
+  return p && typeof p.name === 'string' ? p.name : '';
+}
+
 // ── Saving ───────────────────────────────────────────────────────────────────
 function newProject(name) {
   const store = loadStore();

@@ -1,0 +1,37 @@
+{
+  "rewrites": [
+    {
+      "source": "/s/:id([A-Za-z0-9]{12})",
+      "destination": "/api/share?op=page&id=:id"
+    },
+    {
+      "source": "/api/share-:op(status|create|upload|commit|manifest|delete|sweep)",
+      "destination": "/api/share?op=:op"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/s/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; img-src 'self' data: https://*.public.blob.vercel-storage.com; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-ancestors *; base-uri 'none'; form-action 'none'"
+        }
+      ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/share-sweep",
+      "schedule": "17 4 * * *"
+    }
+  ]
+}

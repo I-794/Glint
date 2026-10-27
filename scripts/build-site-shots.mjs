@@ -682,4 +682,70 @@ for (const m of MULTI) {
   save(HERO.file, b64);
 }
 
+// v41 Iris: the share viewer (/s/<id>) showing real renders. The designs are
+// rendered by the editor, then served to the real viewer page through
+// intercepted requests (the manifest API and a stand-in Blob host), so the
+// page, the players and the chrome are exactly what a link opens.
+const IRIS = {
+  tour: { file: 'share-viewer', id: 'IrisTourDemo', title: 'Lumen onboarding', viewport: { width: 1440, height: 900 } },
+  compare: { file: 'share-phone', id: 'IrisCmprDemo', title: 'Lumen, before and after', viewport: { width: 390, height: 844 } },
+  steps: [
+    { source: 'dashboard', recipe: 'amber-flare', hotspot: { x: 0.33, y: 0.354, w: 0.108, h: 0.114, label: 'Revenue', callout: { title: 'Revenue at a glance', body: 'Every number on the overview links to its report.', side: 'bottom' } } },
+    { source: 'kanban', recipe: 'aurora-mesh' },
+    { source: 'landing', recipe: 'frosted-panel' }
+  ]
+};
+{
+  const BLOB = 'https://shots.public.blob.vercel-storage.com';
+  const files = {};
+  const steps = [];
+  for (const [i, st] of IRIS.steps.entries()) {
+    await upload(st.source);
+    await applyState(RECIPES.find((r) => r.file === st.recipe).state);
+    const b64 = await exportWebp();
+    files[`${IRIS.tour.id}/${i}.webp`] = Buffer.from(b64, 'base64');
+    const dims = await page.evaluate(async (src) => { const im = new Image(); im.src = 'data:image/webp;base64,' + src; await im.decode(); return [im.width, im.height]; }, b64);
+    steps.push({ src: `${i}.webp`, w: dims[0], h: dims[1], autoAdvanceMs: 0, hotspots: st.hotspot ? [st.hotspot] : [] });
+  }
+  for (const [i, f] of ['compare-raw', 'compare-finished'].entries()) {
+    const r = RECIPES.find((x) => x.file === f);
+    await upload(r.source);
+    await applyState(r.state);
+    files[`${IRIS.compare.id}/${i}.webp`] = Buffer.from(await exportWebp(), 'base64');
+  }
+  const manifests = {
+    [IRIS.tour.id]: { v: 1, id: IRIS.tour.id, kind: 'tour', title: IRIS.tour.title, poster: null, tour: { steps } },
+    [IRIS.compare.id]: { v: 1, id: IRIS.compare.id, kind: 'compare', title: IRIS.compare.title, poster: null, compare: {
+      before: '0.webp', after: '1.webp', w: 1600, h: 1000, rect: { x: 0, y: 0, w: 1, h: 1 }, orientation: 'vertical', split: 0.42,
+      labels: { enabled: true, before: 'Raw', after: 'Glint', position: 'top' }, divider: { color: '#ffffff', width: 3, handle: true } } }
+  };
+  for (const shot of [IRIS.tour, IRIS.compare]) {
+    const vctx = await browser.newContext({ viewport: shot.viewport, deviceScaleFactor: 2 });
+    await vctx.route('**/api/share-manifest*', (r) => {
+      const id = new URL(r.request().url()).searchParams.get('id');
+      r.fulfill({ contentType: 'application/json', body: JSON.stringify({ manifest: manifests[id], base: `${BLOB}/shares/${id}/`, report: null }) });
+    });
+    await vctx.route(`${BLOB}/**`, (r) => {
+      const buf = files[new URL(r.request().url()).pathname.replace('/shares/', '')];
+      return buf ? r.fulfill({ body: buf, contentType: 'image/webp' }) : r.fulfill({ status: 404 });
+    });
+    const vp = await vctx.newPage();
+    vp.on('pageerror', (e) => console.warn('[viewer]', e.message));
+    await vp.goto(`${BASE}/s/${shot.id}`, { waitUntil: 'load' });
+    await vp.waitForSelector('.sv-enter');
+    await vp.evaluate(() => document.fonts.ready);
+    await vp.waitForFunction(() => [...document.images].filter((i) => i.closest('#share-app')).every((i) => i.complete && i.naturalWidth));
+    await vp.waitForTimeout(900);
+    const png = await vp.screenshot();
+    await vctx.close();
+    const b64 = await page.evaluate(async ({ src, q }) => {
+      const img = new Image(); img.src = 'data:image/png;base64,' + src; await img.decode();
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+      c.getContext('2d').drawImage(img, 0, 0);
+      return c.toDataURL('image/webp', q).split(',')[1];
+    }, { src: png.toString('base64'), q: QUALITY });
+    save(shot.file, b64);
+  }
+}
+
 await browser.close();

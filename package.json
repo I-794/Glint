@@ -25,6 +25,7 @@
     "@imgly/background-removal": "^1.6.0",
     "@supabase/supabase-js": "^2.45.4",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/blob": "^2.8.2",
     "fflate": "^0.8.3",
     "gif.js": "^0.2.0",
     "highlight.js": "^11.11.1",
