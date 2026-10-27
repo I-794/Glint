@@ -132,7 +132,6 @@ export function planUploads({ kind, files, poster } = {}) {
 
 function text(v, max) {
   if (typeof v !== 'string') return '';
-  // eslint-disable-next-line no-control-regex
   return v.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim().slice(0, max);
 }
 
