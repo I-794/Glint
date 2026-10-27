@@ -16,13 +16,14 @@ import { describeChange } from '../src/state/history-labels.js';
 import { makeVersion, normalizeVersions, MAX_VERSIONS, isSafeThumb } from '../src/state/versions-core.js';
 import { createHmac, randomBytes } from 'node:crypto';
 import { store as shareStore, memoryStoreEntries } from '../api/_share.js';
-import shareStatusRoute from '../api/share-status.js';
-import shareCreateRoute from '../api/share-create.js';
-import shareCommitRoute from '../api/share-commit.js';
-import shareManifestRoute from '../api/share-manifest.js';
-import shareDeleteRoute from '../api/share-delete.js';
-import shareSweepRoute from '../api/share-sweep.js';
-import { shareMeta, fillTemplate } from '../api/share-page.js';
+import shareStatusRoute from '../api/_share-status.js';
+import shareCreateRoute from '../api/_share-create.js';
+import shareCommitRoute from '../api/_share-commit.js';
+import shareManifestRoute from '../api/_share-manifest.js';
+import shareDeleteRoute from '../api/_share-delete.js';
+import shareSweepRoute from '../api/_share-sweep.js';
+import { shareMeta, fillTemplate } from '../api/_share-page.js';
+import shareRouter from '../api/share.js';
 import { LIMITS, newShareId, isShareId, isAssetName, shareKey, verifyKey, base64url, normalizeManifest, manifestAssets, describeShare, planUploads } from '../src/share/share-core.js';
 
 function mockRes() {
@@ -807,6 +808,10 @@ async function testShareRoutesRoundTrip() {
   process.env.SHARE_REPORT_EMAIL = 'help@glint.test';
   try {
     assert.equal((await callRoute(shareStatusRoute, shareReq('GET'))).body.enabled, true);
+    // The single deployed function dispatches on ?op= (vercel.json rewrites to it).
+    assert.equal((await callRoute(shareRouter, shareReq('GET', null, { query: { op: 'status' } }))).body.enabled, true);
+    assert.equal((await callRoute(shareRouter, shareReq('GET', null, { query: { op: 'toString' } }))).statusCode, 404);
+    assert.equal((await callRoute(shareRouter, shareReq('GET'))).statusCode, 404);
 
     const bad = await callRoute(shareCreateRoute, shareReq('POST', { kind: 'image', files: [{ type: 'image/svg+xml', size: 10 }] }));
     assert.equal(bad.statusCode, 400);

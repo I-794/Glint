@@ -30,8 +30,13 @@ the Vite frontend.
 | `POST /api/share-commit` | Checks the manifest and uploads, then publishes `manifest.json`. |
 | `GET /api/share-manifest?id=` | The published manifest plus the folder URL its images live in. |
 | `POST /api/share-delete` | Deletes a share. Needs the owner key. |
-| `GET /api/share-page?id=` | Serves `/s/<id>` (via the `vercel.json` rewrite) with link-preview tags. |
+| `GET /s/<id>` | Serves the share viewer with link-preview tags (rewritten to `/api/share?op=page`). |
 | `GET /api/share-sweep` | Daily cron. Removes uploads that were never published. |
+
+All share routes run in one function, `api/share.js`: `vercel.json` rewrites
+`/api/share-<op>` to `/api/share?op=<op>`, and the route code lives in
+`api/_share-<op>.js`. The Hobby plan allows 12 functions per deployment, and
+every file in `api/` without a leading underscore counts as one.
 
 ## Environment Variables
 
