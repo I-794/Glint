@@ -14,6 +14,8 @@ import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightne
 import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, peekSnapshot, withSnapshot, clearHistory, commitStep, onHistoryChange } from '../src/state/history.js';
 import { describeChange } from '../src/state/history-labels.js';
 import { makeVersion, normalizeVersions, MAX_VERSIONS, isSafeThumb } from '../src/state/versions-core.js';
+import { createHmac, randomBytes } from 'node:crypto';
+import { LIMITS, newShareId, isShareId, isAssetName, shareKey, verifyKey, base64url, normalizeManifest, manifestAssets, describeShare, planUploads } from '../src/share/share-core.js';
 
 function mockRes() {
   return {
@@ -680,6 +682,85 @@ function testVersionsNormalizeAndPersist() {
   }
 }
 
+function shareHmac(secret, msg) {
+  return createHmac('sha256', secret).update(msg).digest();
+}
+
+function shareFixture(kind) {
+  const base = { id: 'AbCdEfGh1234', kind, title: 'Launch', poster: 'poster.webp' };
+  if (kind === 'image') return { ...base, image: { src: '0.webp', w: 1600, h: 1000, alt: 'Dashboard' } };
+  if (kind === 'tour') {
+    return { ...base, tour: { steps: [
+      { src: '0.webp', w: 1200, h: 800, autoAdvanceMs: 0, hotspots: [{ x: 0.1, y: 0.2, w: 0.3, h: 0.1, label: 'Go', callout: { title: 'Start', body: 'Here', side: 'left' } }] },
+      { src: '1.webp', w: 1200, h: 800 }
+    ] } };
+  }
+  return { ...base, compare: { before: '0.webp', after: '1.webp', w: 1600, h: 1000, rect: { x: 0.1, y: 0.1, w: 0.8, h: 0.8 }, split: 0.4, labels: { enabled: true, before: 'Before', after: 'After' }, divider: { color: '#ff00aa', width: 4, handle: true } } };
+}
+
+async function testShareCoreIdsAndKeys() {
+  const id = newShareId((n) => randomBytes(n));
+  assert.equal(id.length, 12);
+  assert.ok(isShareId(id));
+  assert.ok(!isShareId('short'));
+  assert.ok(!isShareId('AbCdEfGh123!'));
+
+  for (const ok of ['0.webp', '29.jpg', 'poster.webp', 'poster.png']) assert.ok(isAssetName(ok), ok);
+  for (const bad of ['../x.webp', 'a.webp', '0.svg', '0.webp?x', 'https://x.test/0.webp', '100.webp', '', null]) assert.ok(!isAssetName(bad), String(bad));
+
+  const k1 = await shareKey(shareHmac, 'secret', 'AbCdEfGh1234');
+  assert.equal(k1, await shareKey(shareHmac, 'secret', 'AbCdEfGh1234'));
+  assert.notEqual(k1, await shareKey(shareHmac, 'secret', 'AbCdEfGh1235'));
+  assert.notEqual(k1, await shareKey(shareHmac, 'other', 'AbCdEfGh1234'));
+  assert.ok(await verifyKey(shareHmac, 'secret', 'AbCdEfGh1234', k1));
+  const flipped = (k1[0] === 'A' ? 'B' : 'A') + k1.slice(1);
+  assert.ok(!(await verifyKey(shareHmac, 'secret', 'AbCdEfGh1234', flipped)));
+  assert.ok(!(await verifyKey(shareHmac, 'secret', 'AbCdEfGh1234', undefined)));
+  assert.equal(base64url(new Uint8Array([251, 255])), '-_8');
+}
+
+function testShareCoreManifest() {
+  const img = normalizeManifest({ ...shareFixture('image'), evil: '<script>', tour: { steps: [] } }, { now: 0 });
+  assert.equal(img.evil, undefined);
+  assert.equal(img.tour, undefined);
+  assert.equal(img.createdAt, '1970-01-01T00:00:00.000Z');
+  assert.deepEqual(manifestAssets(img), ['poster.webp', '0.webp']);
+
+  const t = shareFixture('tour');
+  t.title = 'x'.repeat(500);
+  t.tour.steps[0].hotspots[0].x = 4;
+  const tour = normalizeManifest(t);
+  assert.equal(tour.title.length, 120);
+  assert.equal(tour.tour.steps[0].hotspots[0].x, 1);
+  assert.equal(tour.tour.steps[0].hotspots[0].w, 0);
+  assert.equal(tour.tour.steps[1].autoAdvanceMs, 0);
+  assert.equal(tour.tour.steps[0].hotspots[0].callout.side, 'left');
+  assert.equal(describeShare(tour), 'An interactive tour in 2 steps. Made with Glint.');
+
+  const long = shareFixture('tour');
+  long.tour.steps = Array.from({ length: 31 }, (_, i) => ({ src: `${i}.webp`, w: 10, h: 10 }));
+  assert.throws(() => normalizeManifest(long), /tour\.steps/);
+
+  const cmpUrl = shareFixture('compare');
+  cmpUrl.compare.before = 'https://evil.test/a.webp';
+  assert.throws(() => normalizeManifest(cmpUrl), /compare\.before/);
+
+  const cmp = shareFixture('compare');
+  cmp.compare.divider.color = 'red; background:url(x)';
+  const c = normalizeManifest(cmp);
+  assert.equal(c.compare.divider.color, '#ffffff');
+  assert.equal(c.compare.labels.position, 'top');
+
+  assert.throws(() => normalizeManifest({ ...shareFixture('image'), kind: 'html' }), /kind/);
+  assert.throws(() => normalizeManifest(shareFixture('image'), { id: '../../etc' }), /id/);
+
+  assert.equal(planUploads({ kind: 'tour', files: [{ type: 'image/webp', size: 10 }, { type: 'image/jpeg', size: 10 }], poster: { type: 'image/webp', size: 5 } }).map((p) => p.name).join(','), '0.webp,1.jpg,poster.webp');
+  assert.throws(() => planUploads({ kind: 'image', files: [{ type: 'image/svg+xml', size: 10 }] }), /type/);
+  assert.throws(() => planUploads({ kind: 'image', files: [{ type: 'image/png', size: LIMITS.fileBytes + 1 }] }), /size/);
+  assert.throws(() => planUploads({ kind: 'compare', files: [{ type: 'image/png', size: 1 }] }), /files/);
+  assert.throws(() => planUploads({ kind: 'tour', files: Array.from({ length: 31 }, () => ({ type: 'image/png', size: 1 })) }), /files/);
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -704,7 +785,9 @@ const tests = [
   testHistoryPeekPutsLiveStateBack,
   testCommitStepEmitsAfterApply,
   testHistoryLabels,
-  testVersionsNormalizeAndPersist
+  testVersionsNormalizeAndPersist,
+  testShareCoreIdsAndKeys,
+  testShareCoreManifest
 ];
 
 for (const test of tests) {
