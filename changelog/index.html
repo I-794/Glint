@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <meta name="description" content="Glint changelog. What shipped in each release, up to v40 Hindsight (a History panel with named steps, Pins, and look previews), v39 Glossifier (flip a screenshot between light and dark mode), v38 Focus (curves, levels and shareable looks), v37 Exposure (develop a whole roll of screenshots), v36 Darkroom (Meet Glint), v35 Contrast (Before / After), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (eyedropper, recent colors, distribute, undo from the toast, quick export), and v32 Open Canvas: lay every page on an infinite, pan-and-zoom board of cards you can arrange, connect, group, seed from a URL, drive by chat, and export as one image, on top of v31 Merge Studio (CSV to N designs), v30 Studio Intelligence, the AI Design Agent, AI Assets, Design Variations, color filters and palettes, vector shape tools, motion on stills, the timeline scrubber, layer blend modes, alignment guides, device reflections, richer text effects, multi-page decks, projects, version history, live collaboration, Brand Kit, App Store screenshot sets, generative AI edits, and video.">
+    <meta name="description" content="Glint changelog. What shipped in each release, up to v41 Iris (share links anyone can open), v40 Hindsight (a History panel with named steps, Pins, and look previews), v39 Glossifier (flip a screenshot between light and dark mode), v38 Focus (curves, levels and shareable looks), v37 Exposure (develop a whole roll of screenshots), v36 Darkroom (Meet Glint), v35 Contrast (Before / After), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (eyedropper, recent colors, distribute, undo from the toast, quick export), and v32 Open Canvas: lay every page on an infinite, pan-and-zoom board of cards you can arrange, connect, group, seed from a URL, drive by chat, and export as one image, on top of v31 Merge Studio (CSV to N designs), v30 Studio Intelligence, the AI Design Agent, AI Assets, Design Variations, color filters and palettes, vector shape tools, motion on stills, the timeline scrubber, layer blend modes, alignment guides, device reflections, richer text effects, multi-page decks, projects, version history, live collaboration, Brand Kit, App Store screenshot sets, generative AI edits, and video.">
     <title>Changelog · Glint</title>
     <meta property="og:type" content="website">
     <meta property="og:title" content="Glint Changelog">
-    <meta property="og:description" content="Every Glint release, up to v40 Hindsight (named undo steps, Pins, and look previews), v39 Glossifier (light to dark mode in one click), v38 Focus (curves, levels and shareable looks), v37 Exposure (the Roll), v36 Darkroom (Meet Glint), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (quality of life), and v32 Open Canvas: an infinite board of cards for your whole project, seed it from a URL, drive it by chat, and export it as one image. Plus v31 Merge Studio (CSV to N on-brand designs) and the full trail back to a single HTML file.">
+    <meta property="og:description" content="Every Glint release, up to v41 Iris (share a design, a tour or a before and after as a link), v40 Hindsight (named undo steps, Pins, and look previews), v39 Glossifier (light to dark mode in one click), v38 Focus (curves, levels and shareable looks), v37 Exposure (the Roll), v36 Darkroom (Meet Glint), v34 Bokeh (multi-region spotlight, background blur), v33 Aperture (quality of life), and v32 Open Canvas: an infinite board of cards for your whole project, seed it from a URL, drive it by chat, and export it as one image. Plus v31 Merge Studio (CSV to N on-brand designs) and the full trail back to a single HTML file.">
     <meta property="og:image" content="__OG_BASE__/og.png?v=2">
     <meta name="theme-color" content="#0d0d0f">
     <link rel="preload" href="/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
@@ -858,6 +858,9 @@
         .gl-stage img.shot { display: block; width: 100%; height: auto; border-radius: var(--r-card); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 30px 60px -18px rgba(0,0,0,0.6); }
         .gl-stage img.mk { position: absolute; left: -18px; bottom: -18px; width: 84px; height: 84px; border-radius: var(--r-card); box-shadow: 0 18px 40px rgba(232,97,58,0.3); }
         @media (max-width: 860px) { .gl-stage img.mk { left: 10px; bottom: -14px; width: 64px; height: 64px; } }
+        .iris-stage { padding: 0 0 12% 12%; }
+        .iris-stage img.iris-phone { position: absolute; left: 0; bottom: 0; width: 27%; height: auto; aspect-ratio: 390 / 600; object-fit: cover; object-position: top; border-radius: var(--r-card); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 2px 6px rgba(0,0,0,0.4), 0 30px 60px -18px rgba(0,0,0,0.7); }
+        @media (max-width: 860px) { .iris-stage { padding: 0 0 18% 0; } .iris-stage img.iris-phone { left: auto; right: 6%; width: 34%; } }
         .spotlight-contrast {
             background:
                 radial-gradient(54% 80% at 94% 4%, rgba(236,72,153,0.20), transparent 56%),
@@ -972,21 +975,21 @@
             <!-- SWAP-START -->
             <div class="spot-copy">
                 <span class="spot-tag">Latest release</span>
-                <div class="spot-ver">v40 · October 2026</div>
-                <h2>Hindsight.</h2>
-                <p class="spot-lede">Every change now has a name and a picture. Jump back to any step, pin the good ones, and preview looks on your own screenshot.</p>
+                <div class="spot-ver">v41 · October 2026</div>
+                <h2>Iris.</h2>
+                <p class="spot-lede">Send a link, not a file. Share a design, a tour, or a before and after as a page anyone can open.</p>
                 <div class="spot-feats">
                     <div class="spot-feat">
-                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l2 2"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg></span>
-                        <div><strong>Every step, named</strong><span>Open History in the Project tab to see each change with a picture. Click a step to go back, or hold the eye to peek.</span></div>
+                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+                        <div><strong>Send a link</strong><span>Open Share in the Export tab and press Create link. Anyone can open it, no account needed.</span></div>
                     </div>
                     <div class="spot-feat">
-                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 4.5-4 4-4 1.5-1.5 1.5 7 7 1.5-1.5 1.5-4 4-4"/><path d="M9 15l-4.5 4.5"/><path d="M14.5 4 20 9.5"/></svg></span>
-                        <div><strong>Pins that stay</strong><span>Pin a step and it stays with the project, long after the undo list moves on.</span></div>
+                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m18 8 4 4-4 4"/><path d="M2 12h20"/><path d="m6 8-4 4 4 4"/></svg></span>
+                        <div><strong>Tours and sliders, live</strong><span>Tours click through and sliders drag right on the page, and every link shows a preview card in chats.</span></div>
                     </div>
                     <div class="spot-feat">
-                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/></svg></span>
-                        <div><strong>Looks you can see</strong><span>Look chips show your own screenshot. Roll shots can each keep a look, and the Design Agent can apply looks and flip light and dark.</span></div>
+                        <span class="spot-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></span>
+                        <div><strong>Yours to take back</strong><span>Your links lists everything you shared. Delete one and it is gone for everyone.</span></div>
                     </div>
                 </div>
                 <div class="spot-actions">
@@ -995,8 +998,9 @@
                 </div>
             </div>
             <div class="spot-visual">
-                <div class="gl-stage">
-                    <img class="shot" src="/shots/hindsight-steps.webp" alt="One design at three steps of its history: framed, with a warm look, and flipped to dark" width="1200" height="1560" loading="eager">
+                <div class="gl-stage iris-stage">
+                    <div class="glint"><img class="shot" src="/shots/share-viewer.webp" alt="A shared onboarding tour open in the browser, with a callout on the revenue card" width="2880" height="1800" loading="eager"></div>
+                    <img class="iris-phone" src="/shots/share-phone.webp" alt="A shared before and after slider open on a phone" width="780" height="1688" loading="eager">
                 </div>
             </div>
             <!-- SWAP-END -->
@@ -1009,6 +1013,23 @@
         <h2 class="log-head reveal">Every release</h2>
         <ul class="log">
             <li class="entry latest reveal">
+                <div class="entry-meta"><span class="ver">v41.0</span><span class="entry-date">October 2026</span></div>
+                <div>
+                    <h2>Iris</h2>
+                    <p class="entry-note">Share links. Anything you make in Glint can now be a page anyone can open.</p>
+                    <ul class="changes">
+                        <li><b>Send a link.</b> Share in the Export tab makes a link to the design, the Interactive Tour, or the Before / After. Nobody needs an account to open it.</li>
+                        <li><b>Live on the page.</b> Tours click through and sliders drag, just like the exported files.</li>
+                        <li><b>Previews in chats.</b> Every link has its own preview image, so it shows a card when you paste it into a chat.</li>
+                        <li><b>Embed anywhere.</b> Copy an iframe, an HTML image or Markdown, or show a QR code.</li>
+                        <li><b>Yours to take back.</b> Your links lists everything you shared. Delete a link there, or from any browser with its manage link.</li>
+                        <li><b>Share from where you are.</b> The Tour and Before / After panels have their own Share link buttons, and Cmd-K has share commands.</li>
+                        <li><b>Callouts stay on screen.</b> Tour callouts near the edge now stay inside narrow screens, in shared links and in exported files.</li>
+                        <li><b>One less account.</b> The old Share Image button needed a cloud account. Links replace it.</li>
+                    </ul>
+                </div>
+            </li>
+            <li class="entry reveal">
                 <div class="entry-meta"><span class="ver">v40.0</span><span class="entry-date">October 2026</span></div>
                 <div>
                     <h2>Hindsight</h2>
