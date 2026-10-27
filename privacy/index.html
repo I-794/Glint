@@ -71,7 +71,7 @@
                 <h2>Cloud features</h2>
                 <ul>
                     <li>Cloud AI (alt text, captions, generative background, outpaint, magic eraser) sends the image and prompt to the AI provider</li>
-                    <li>Sharing and cloud projects upload the image to create a link or sync across devices</li>
+                    <li>Share links upload the rendered images, and cloud projects upload the project, to create a link or sync across devices</li>
                     <li>Each of these is an explicit action, never automatic</li>
                 </ul>
             </div>
@@ -87,8 +87,12 @@
             <h2>Your API keys</h2>
             <p>If you bring your own OpenAI or Anthropic key, it is stored only in your browser's local storage and used to call that provider directly from your machine. Your keys are never sent to or stored on our servers.</p>
 
-            <h2>Sharing and accounts</h2>
-            <p>The core editor needs no account. When you use Share or save a cloud project, the image or project is uploaded to our storage so it can be linked or synced; that only happens when you take the action. Sign-in (optional) exists solely to sync your projects across devices.</p>
+            <h2>Share links</h2>
+            <p>When you press Create link, Glint uploads the rendered images (the design, each tour step, or the before and after) to Glint's storage on Vercel, along with the title and tour callouts you wrote. Your project file is not uploaded. Anyone who has the link can open it, and link previews in chat apps can show it. Links are not listed anywhere or indexed by search engines.</p>
+            <p>You can delete a link from Your links in the editor, or from its manage link. Deleting removes the files from storage; copies cached along the way can take up to an hour to clear.</p>
+
+            <h2>Accounts</h2>
+            <p>The core editor needs no account, and neither do share links. When you save a cloud project, the project is uploaded to our storage so it can sync; that only happens when you take the action. Sign-in (optional) exists solely to sync your projects across devices.</p>
 
             <h2>Browser extension</h2>
             <p>The Glint Capture extension reads a tab only when you click its toolbar button and pick a capture (the <b>activeTab</b> permission); it has no standing access to your browsing and runs no tracking or analytics. The screenshot it takes is handed to the Glint studio and nowhere else: it is held in the extension's local storage for a moment in transit, then cleared once the editor loads it. The extension contains no remote code, and like the rest of the project its source is public.</p>
