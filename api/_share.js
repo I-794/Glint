@@ -53,6 +53,11 @@ export function sendError(res, error) {
     return;
   }
   console.error('[share]', error);
+  // A setup mistake the site owner can fix, so say what it is.
+  if (/private access|private store/i.test(String(error && error.message))) {
+    res.status(500).json({ error: 'Link storage is set to private. Share links need a public Blob store.' });
+    return;
+  }
   res.status(500).json({ error: 'Something went wrong. Try again.' });
 }
 

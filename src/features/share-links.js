@@ -454,6 +454,7 @@ function friendlyError(e) {
   if (e.name === 'UploadStalled') return e.message;
   if (e.name === 'BlobClientTokenExpiredError') return 'The upload took too long. Try again.';
   if (e.name === 'BlobFileTooLargeError') return 'One of the images is too large. Make the canvas smaller and try again.';
+  if (/private access|private store/i.test(String(e.message))) return 'Link storage is set to private. Share links need a public Blob store.';
   if (typeof e.name === 'string' && e.name.startsWith('Blob')) return 'The upload failed. Try again.';
   return e.message || 'Something went wrong.';
 }
