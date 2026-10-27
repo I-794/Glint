@@ -20,6 +20,7 @@ import { escapeHTML } from '../utils/dom.js';
 const STORE_KEY = 'glint_shares';
 const MAX_RECORDS = 50;
 const MAX_EDGE = 4096;
+const STALL_MS = 20000;
 const KIND_NAME = { image: 'Design', tour: 'Tour', compare: 'Before / after' };
 
 // ── status ───────────────────────────────────────────────────────────────────
@@ -201,8 +202,17 @@ export async function createShareLink(kind, { title = '', onProgress, onStage, s
   }, signal);
 
   const { put } = await import('@vercel/blob/client');
+  // The Blob client retries a failing request ten times with growing waits
+  // (minutes in all). If no bytes move for STALL_MS, stop and say so instead.
+  const uploadCtl = new AbortController();
+  const onUserAbort = () => uploadCtl.abort();
+  if (signal) signal.addEventListener('abort', onUserAbort);
+  let lastMove = Date.now(), stalled = false;
+  const watchdog = setInterval(() => {
+    if (Date.now() - lastMove > STALL_MS) { stalled = true; uploadCtl.abort(); }
+  }, 1000);
   const loaded = new Array(all.length).fill(0);
-  const report = () => onProgress && onProgress(Math.min(1, loaded.reduce((s, n) => s + n, 0) / total));
+  const report = () => { lastMove = Date.now(); onProgress && onProgress(Math.min(1, loaded.reduce((s, n) => s + n, 0) / total)); };
   const urls = new Array(all.length);
   // Three at a time keeps a long tour quick without flooding the connection.
   let next = 0;
@@ -214,7 +224,7 @@ export async function createShareLink(kind, { title = '', onProgress, onStage, s
         access: 'public',
         token: u.token,
         contentType: u.contentType,
-        abortSignal: signal,
+        abortSignal: uploadCtl.signal,
         onUploadProgress: (p) => { loaded[i] = p.loaded; report(); },
       });
       loaded[i] = all[i].size;
@@ -222,7 +232,19 @@ export async function createShareLink(kind, { title = '', onProgress, onStage, s
       report();
     }
   }
-  await Promise.all([worker(), worker(), worker()]);
+  try {
+    await Promise.all([worker(), worker(), worker()]);
+  } catch (e) {
+    if (stalled) {
+      const err = new Error('The upload stalled. Check your connection and try again.');
+      err.name = 'UploadStalled';
+      throw err;
+    }
+    throw e;
+  } finally {
+    clearInterval(watchdog);
+    if (signal) signal.removeEventListener('abort', onUserAbort);
+  }
 
   onStage && onStage('Publishing…');
   const names = created.uploads.map((u) => u.name);
@@ -418,6 +440,20 @@ function renderList() {
   });
 }
 
+// Turns network, server and Blob client errors into one plain sentence.
+function friendlyError(e) {
+  if (!e) return 'Something went wrong.';
+  if (e.status === 501) return 'Links are not set up on this site.';
+  if (e.status === 409) return 'That link was already published. Try again for a new one.';
+  if (e.status === 429) return 'Too many links in a short time. Wait a minute and try again.';
+  if (e instanceof TypeError || (typeof navigator !== 'undefined' && navigator.onLine === false)) return 'Could not reach Glint. Check your connection and try again.';
+  if (e.name === 'UploadStalled') return e.message;
+  if (e.name === 'BlobClientTokenExpiredError') return 'The upload took too long. Try again.';
+  if (e.name === 'BlobFileTooLargeError') return 'One of the images is too large. Make the canvas smaller and try again.';
+  if (typeof e.name === 'string' && e.name.startsWith('Blob')) return 'The upload failed. Try again.';
+  return e.message || 'Something went wrong.';
+}
+
 export async function startShare(kind = currentKind) {
   const section = $('share-section');
   if (section) revealSection(section);
@@ -453,7 +489,7 @@ export async function startShare(kind = currentKind) {
     if (controller.signal.aborted || (e && e.name === 'AbortError')) { setStatus('Cancelled.'); return null; }
     if (e && e.message === 'quiet') return null;   // the collector already said why
     console.error('[share] create failed', e);
-    const msg = e && e.status === 501 ? 'Links are not set up on this site.' : (e && e.message) || 'Something went wrong.';
+    const msg = friendlyError(e);
     setStatus(msg);
     showNotification(`Could not create the link. ${msg}`, 'error');
     return null;
