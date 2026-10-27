@@ -1,8 +1,9 @@
 // v41 — Share links (Iris). Turns the current design, the Interactive Tour, or
 // the Before / After compare into a public /s/<id> link: renders the frames,
-// uploads them straight to Vercel Blob with per-file tokens from
-// /api/share-create, publishes the manifest with /api/share-commit, and keeps a
-// "Your links" list (with each link's owner key) in glint_shares.
+// reserves an id and file plan with /api/share-create, uploads each file
+// straight to Vercel Blob through a presigned URL from /api/share-upload,
+// publishes the manifest with /api/share-commit, and keeps a "Your links" list
+// (with each link's owner key) in glint_shares.
 
 import { state } from '../state/state.js';
 import { renderInto } from '../render/render.js';
@@ -201,7 +202,7 @@ export async function createShareLink(kind, { title = '', onProgress, onStage, s
     poster: { type: posterBlob.type, size: posterBlob.size },
   }, signal);
 
-  const { put } = await import('@vercel/blob/client');
+  const { uploadPresigned } = await import('@vercel/blob/client');
   // The Blob client retries a failing request ten times with growing waits
   // (minutes in all). If no bytes move for STALL_MS, stop and say so instead.
   const uploadCtl = new AbortController();
@@ -220,9 +221,12 @@ export async function createShareLink(kind, { title = '', onProgress, onStage, s
     while (next < all.length) {
       const i = next++;
       const u = created.uploads[i];
-      const res = await put(u.pathname, all[i], {
+      // The Blob client asks /api/share-upload for a presigned PUT bound to
+      // this path, type and size, then sends the bytes straight to Blob.
+      const res = await uploadPresigned(u.pathname, all[i], {
         access: 'public',
-        token: u.token,
+        handleUploadUrl: '/api/share-upload',
+        clientPayload: JSON.stringify({ id: created.id, key: created.key }),
         contentType: u.contentType,
         abortSignal: uploadCtl.signal,
         onUploadProgress: (p) => { loaded[i] = p.loaded; report(); },

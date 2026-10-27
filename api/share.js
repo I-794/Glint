@@ -10,8 +10,9 @@ import manifest from './_share-manifest.js';
 import remove from './_share-delete.js';
 import page from './_share-page.js';
 import sweep from './_share-sweep.js';
+import upload from './_share-upload.js';
 
-const ROUTES = { status, create, commit, manifest, delete: remove, page, sweep };
+const ROUTES = { status, create, upload, commit, manifest, delete: remove, page, sweep };
 
 export default async function handler(req, res) {
   const raw = req.query && req.query.op;

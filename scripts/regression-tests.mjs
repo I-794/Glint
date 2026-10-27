@@ -24,6 +24,7 @@ import shareDeleteRoute from '../api/_share-delete.js';
 import shareSweepRoute from '../api/_share-sweep.js';
 import { shareMeta, fillTemplate } from '../api/_share-page.js';
 import shareRouter from '../api/share.js';
+import shareUploadRoute from '../api/_share-upload.js';
 import { LIMITS, newShareId, isShareId, isAssetName, shareKey, verifyKey, base64url, normalizeManifest, manifestAssets, describeShare, planUploads } from '../src/share/share-core.js';
 
 function mockRes() {
@@ -825,6 +826,18 @@ async function testShareRoutesRoundTrip() {
     assert.deepEqual(uploads.map((u) => u.pathname), [`shares/${id}/0.webp`, `shares/${id}/poster.webp`]);
     assert.ok(memoryStoreEntries().has(`shares-pending/${id}.json`));
 
+    // The Blob client's upload handshake: only planned paths, only with the key.
+    const ev = (pathname, cp) => ({ type: 'blob.generate-presigned-url', payload: { pathname, clientPayload: JSON.stringify(cp), multipart: false } });
+    const signed = await callRoute(shareUploadRoute, shareReq('POST', ev(uploads[0].pathname, { id, key })));
+    assert.equal(signed.statusCode, 200);
+    assert.equal(signed.body.type, 'blob.generate-presigned-url');
+    assert.ok(signed.body.presignedUrlPayload.delegationToken.includes('.'));
+    assert.equal((await callRoute(shareRouter, shareReq('POST', ev(uploads[1].pathname, { id, key }), { query: { op: 'upload' } }))).statusCode, 200);
+    assert.equal((await callRoute(shareUploadRoute, shareReq('POST', ev(uploads[0].pathname, { id, key: 'nope' })))).statusCode, 403);
+    assert.equal((await callRoute(shareUploadRoute, shareReq('POST', ev(`shares/${id}/7.webp`, { id, key })))).statusCode, 400);
+    assert.equal((await callRoute(shareUploadRoute, shareReq('POST', ev('shares/AAAAAAAAAAAA/0.webp', { id, key })))).statusCode, 400);
+    assert.equal((await callRoute(shareUploadRoute, shareReq('POST', { type: 'blob.upload-completed', payload: {} }))).statusCode, 400);
+
     const manifest = { kind: 'image', title: 'Launch $& day', poster: 'poster.webp', image: { src: '0.webp', w: 1600, h: 1000, alt: 'Dash' } };
     assert.equal((await callRoute(shareCommitRoute, shareReq('POST', { id, key: key.slice(1) + 'x', manifest }))).statusCode, 403);
     await uploadPlanned(uploads, ['0.webp']);
@@ -842,6 +855,7 @@ async function testShareRoutesRoundTrip() {
     assert.equal(committed.body.url, `https://glint.test/s/${id}`);
     assert.ok(!memoryStoreEntries().has(`shares-pending/${id}.json`));
     assert.equal((await callRoute(shareCommitRoute, shareReq('POST', { id, key, manifest }))).statusCode, 409);
+    assert.equal((await callRoute(shareUploadRoute, shareReq('POST', ev(uploads[0].pathname, { id, key })))).statusCode, 409);
 
     const got = await callRoute(shareManifestRoute, shareReq('GET', null, { query: { id } }));
     assert.equal(got.statusCode, 200);
@@ -879,11 +893,16 @@ async function testShareRoutesRoundTrip() {
     assert.ok(memoryStoreEntries().has(`shares/${b.id}/manifest.json`));
     assert.ok(!memoryStoreEntries().has(`shares-pending/${b.id}.json`));
 
+    // A store connected the newer way (OIDC + BLOB_STORE_ID, no read-write token) counts as set up.
+    delete process.env.SHARE_STORE;
+    process.env.BLOB_STORE_ID = 'store_abc';
+    assert.equal((await callRoute(shareStatusRoute, shareReq('GET'))).body.enabled, true);
+    process.env.SHARE_STORE = 'memory';
     delete process.env.SHARE_SIGNING_SECRET;
     assert.equal((await callRoute(shareCreateRoute, shareReq('POST', { kind: 'image', files: [{ type: 'image/png', size: 1 }] }))).statusCode, 501);
     assert.equal((await callRoute(shareStatusRoute, shareReq('GET'))).body.enabled, false);
   } finally {
-    for (const k of ['SHARE_STORE', 'SHARE_SIGNING_SECRET', 'CRON_SECRET', 'SHARE_REPORT_EMAIL']) {
+    for (const k of ['SHARE_STORE', 'SHARE_SIGNING_SECRET', 'CRON_SECRET', 'SHARE_REPORT_EMAIL', 'BLOB_STORE_ID']) {
       if (k in saved) process.env[k] = saved[k]; else delete process.env[k];
     }
   }

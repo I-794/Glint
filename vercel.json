@@ -5,7 +5,7 @@
       "destination": "/api/share?op=page&id=:id"
     },
     {
-      "source": "/api/share-:op(status|create|commit|manifest|delete|sweep)",
+      "source": "/api/share-:op(status|create|upload|commit|manifest|delete|sweep)",
       "destination": "/api/share?op=:op"
     }
   ],

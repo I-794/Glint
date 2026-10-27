@@ -26,7 +26,8 @@ the Vite frontend.
 | `POST /api/image-generate` | Generates a PNG. Returns `{ b64 }`. |
 | `POST /api/image-edit` | Inpaints/outpaints a PNG. Returns `{ b64 }`. |
 | `GET /api/share-status` | v41 share links. Returns `{ enabled }`. |
-| `POST /api/share-create` | Reserves a share id; returns the owner key and one Blob upload token per file. |
+| `POST /api/share-create` | Reserves a share id; returns the owner key and the planned file paths. |
+| `POST /api/share-upload` | The Blob client's upload handshake: a presigned PUT for one planned file. |
 | `POST /api/share-commit` | Checks the manifest and uploads, then publishes `manifest.json`. |
 | `GET /api/share-manifest?id=` | The published manifest plus the folder URL its images live in. |
 | `POST /api/share-delete` | Deletes a share. Needs the owner key. |
@@ -45,7 +46,7 @@ every file in `api/` without a leading underscore counts as one.
 | `OPENAI_API_KEY` | Yes for hosted AI | Server-side OpenAI key used by `/api/*` AI routes. |
 | `OPENAI_VISION_MODEL` | No | Overrides the default vision model for `/api/ai-vision`. |
 | `OPENAI_ENHANCE_MODEL` | No | Overrides the model for `/api/ai-enhance`. |
-| `BLOB_READ_WRITE_TOKEN` | Yes for share links | Added by Vercel when a Blob store is connected to the project. |
+| `BLOB_STORE_ID` or `BLOB_READ_WRITE_TOKEN` | Yes for share links | Added by Vercel when a Blob store is connected to the project. Newer stores add `BLOB_STORE_ID` (the SDK signs in with the deployment's OIDC token); older ones add `BLOB_READ_WRITE_TOKEN`. Either works. |
 | `SHARE_SIGNING_SECRET` | Yes for share links | 32+ random bytes (base64). Signs the owner key that lets someone delete their link. Changing it orphans every existing key. |
 | `SHARE_REPORT_EMAIL` | No | Shows a "Report this link" mailto on shared pages. |
 | `CRON_SECRET` | Set by Vercel | Authorizes the daily `/api/share-sweep` run. |
