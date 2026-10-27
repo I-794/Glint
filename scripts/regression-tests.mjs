@@ -15,6 +15,14 @@ import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, pee
 import { describeChange } from '../src/state/history-labels.js';
 import { makeVersion, normalizeVersions, MAX_VERSIONS, isSafeThumb } from '../src/state/versions-core.js';
 import { createHmac, randomBytes } from 'node:crypto';
+import { store as shareStore, memoryStoreEntries } from '../api/_share.js';
+import shareStatusRoute from '../api/share-status.js';
+import shareCreateRoute from '../api/share-create.js';
+import shareCommitRoute from '../api/share-commit.js';
+import shareManifestRoute from '../api/share-manifest.js';
+import shareDeleteRoute from '../api/share-delete.js';
+import shareSweepRoute from '../api/share-sweep.js';
+import { shareMeta, fillTemplate } from '../api/share-page.js';
 import { LIMITS, newShareId, isShareId, isAssetName, shareKey, verifyKey, base64url, normalizeManifest, manifestAssets, describeShare, planUploads } from '../src/share/share-core.js';
 
 function mockRes() {
@@ -773,6 +781,104 @@ function testSharePlayersInlineCleanly() {
   }
 }
 
+function shareReq(method, body, extra = {}) {
+  return { method, body, query: extra.query || {}, headers: { host: 'glint.test', 'x-forwarded-proto': 'https', ...(extra.headers || {}) } };
+}
+
+async function callRoute(handler, req) {
+  const res = mockRes();
+  await handler(req, res);
+  return res;
+}
+
+async function uploadPlanned(uploads, only) {
+  const st = shareStore();
+  for (const u of uploads) {
+    if (only && !only.includes(u.name)) continue;
+    await st.put(u.pathname, Buffer.from('img:' + u.name), { contentType: u.contentType });
+  }
+}
+
+async function testShareRoutesRoundTrip() {
+  const saved = { ...process.env };
+  process.env.SHARE_STORE = 'memory';
+  process.env.SHARE_SIGNING_SECRET = 'test-secret';
+  process.env.CRON_SECRET = 'cron';
+  process.env.SHARE_REPORT_EMAIL = 'help@glint.test';
+  try {
+    assert.equal((await callRoute(shareStatusRoute, shareReq('GET'))).body.enabled, true);
+
+    const bad = await callRoute(shareCreateRoute, shareReq('POST', { kind: 'image', files: [{ type: 'image/svg+xml', size: 10 }] }));
+    assert.equal(bad.statusCode, 400);
+    const tooMany = await callRoute(shareCreateRoute, shareReq('POST', { kind: 'tour', files: Array.from({ length: 31 }, () => ({ type: 'image/webp', size: 1 })) }));
+    assert.equal(tooMany.statusCode, 400);
+
+    const created = await callRoute(shareCreateRoute, shareReq('POST', { kind: 'image', files: [{ type: 'image/webp', size: 9 }], poster: { type: 'image/webp', size: 14 } }));
+    assert.equal(created.statusCode, 200);
+    const { id, key, uploads } = created.body;
+    assert.ok(isShareId(id));
+    assert.deepEqual(uploads.map((u) => u.pathname), [`shares/${id}/0.webp`, `shares/${id}/poster.webp`]);
+    assert.ok(memoryStoreEntries().has(`shares-pending/${id}.json`));
+
+    const manifest = { kind: 'image', title: 'Launch $& day', poster: 'poster.webp', image: { src: '0.webp', w: 1600, h: 1000, alt: 'Dash' } };
+    assert.equal((await callRoute(shareCommitRoute, shareReq('POST', { id, key: key.slice(1) + 'x', manifest }))).statusCode, 403);
+    await uploadPlanned(uploads, ['0.webp']);
+    const missing = await callRoute(shareCommitRoute, shareReq('POST', { id, key, manifest }));
+    assert.equal(missing.statusCode, 400);
+    assert.match(missing.body.error, /poster\.webp/);
+    await uploadPlanned(uploads, ['poster.webp']);
+    const committed = await callRoute(shareCommitRoute, shareReq('POST', { id, key, manifest }));
+    assert.equal(committed.statusCode, 201);
+    assert.equal(committed.body.url, `https://glint.test/s/${id}`);
+    assert.ok(!memoryStoreEntries().has(`shares-pending/${id}.json`));
+    assert.equal((await callRoute(shareCommitRoute, shareReq('POST', { id, key, manifest }))).statusCode, 409);
+
+    const got = await callRoute(shareManifestRoute, shareReq('GET', null, { query: { id } }));
+    assert.equal(got.statusCode, 200);
+    assert.ok(got.body.base.endsWith(`shares/${id}/`));
+    assert.equal(got.body.manifest.title, 'Launch $& day');
+    assert.equal(got.body.report, 'help@glint.test');
+    assert.equal((await callRoute(shareManifestRoute, shareReq('GET', null, { query: { id: '../etc' } }))).statusCode, 400);
+
+    const meta = shareMeta({ manifest: got.body.manifest, base: got.body.base, origin: 'https://glint.test', id });
+    assert.match(meta, /og:image" content="https:\/\/memory\.blob\.test\/shares\/[A-Za-z0-9]{12}\/poster\.webp"/);
+    const html = fillTemplate('<head><title>x</title><!--SHARE_META--></head><script id="d"><!--SHARE_DATA--></script>', meta, { manifest: { title: '</script><b>$\'' } });
+    assert.ok(!html.includes('</script><b>'));
+    assert.ok(html.includes('Launch $&amp; day · Glint'));
+    assert.equal((html.match(/<title>/g) || []).length, 1);
+
+    assert.equal((await callRoute(shareDeleteRoute, shareReq('POST', { id, key: 'nope' }))).statusCode, 403);
+    assert.equal((await callRoute(shareDeleteRoute, shareReq('POST', { id, key }))).statusCode, 204);
+    assert.equal((await callRoute(shareManifestRoute, shareReq('GET', null, { query: { id } }))).statusCode, 404);
+    assert.equal((await callRoute(shareDeleteRoute, shareReq('POST', { id, key }))).statusCode, 404);
+
+    // Sweep: an abandoned upload goes, a published share stays.
+    const a = (await callRoute(shareCreateRoute, shareReq('POST', { kind: 'image', files: [{ type: 'image/png', size: 9 }] }))).body;
+    await uploadPlanned(a.uploads);
+    const b = (await callRoute(shareCreateRoute, shareReq('POST', { kind: 'image', files: [{ type: 'image/png', size: 9 }] }))).body;
+    await uploadPlanned(b.uploads);
+    await callRoute(shareCommitRoute, shareReq('POST', { id: b.id, key: b.key, manifest: { kind: 'image', image: { src: '0.png', w: 10, h: 10 } } }));
+    await shareStore().put(`shares-pending/${b.id}.json`, '{}', { contentType: 'application/json' });
+    const old = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+    memoryStoreEntries().get(`shares-pending/${a.id}.json`).uploadedAt = old;
+    memoryStoreEntries().get(`shares-pending/${b.id}.json`).uploadedAt = old;
+    assert.equal((await callRoute(shareSweepRoute, shareReq('GET'))).statusCode, 401);
+    const swept = await callRoute(shareSweepRoute, shareReq('GET', null, { headers: { authorization: 'Bearer cron' } }));
+    assert.equal(swept.body.removed, 1);
+    assert.ok(![...memoryStoreEntries().keys()].some((k) => k.includes(a.id)));
+    assert.ok(memoryStoreEntries().has(`shares/${b.id}/manifest.json`));
+    assert.ok(!memoryStoreEntries().has(`shares-pending/${b.id}.json`));
+
+    delete process.env.SHARE_SIGNING_SECRET;
+    assert.equal((await callRoute(shareCreateRoute, shareReq('POST', { kind: 'image', files: [{ type: 'image/png', size: 1 }] }))).statusCode, 501);
+    assert.equal((await callRoute(shareStatusRoute, shareReq('GET'))).body.enabled, false);
+  } finally {
+    for (const k of ['SHARE_STORE', 'SHARE_SIGNING_SECRET', 'CRON_SECRET', 'SHARE_REPORT_EMAIL']) {
+      if (k in saved) process.env[k] = saved[k]; else delete process.env[k];
+    }
+  }
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -800,7 +906,8 @@ const tests = [
   testVersionsNormalizeAndPersist,
   testShareCoreIdsAndKeys,
   testShareCoreManifest,
-  testSharePlayersInlineCleanly
+  testSharePlayersInlineCleanly,
+  testShareRoutesRoundTrip
 ];
 
 for (const test of tests) {

@@ -25,6 +25,13 @@ the Vite frontend.
 | `POST /api/ai-enhance` | Suggests CSS filter values. Returns `{ filters }`. |
 | `POST /api/image-generate` | Generates a PNG. Returns `{ b64 }`. |
 | `POST /api/image-edit` | Inpaints/outpaints a PNG. Returns `{ b64 }`. |
+| `GET /api/share-status` | v41 share links. Returns `{ enabled }`. |
+| `POST /api/share-create` | Reserves a share id; returns the owner key and one Blob upload token per file. |
+| `POST /api/share-commit` | Checks the manifest and uploads, then publishes `manifest.json`. |
+| `GET /api/share-manifest?id=` | The published manifest plus the folder URL its images live in. |
+| `POST /api/share-delete` | Deletes a share. Needs the owner key. |
+| `GET /api/share-page?id=` | Serves `/s/<id>` (via the `vercel.json` rewrite) with link-preview tags. |
+| `GET /api/share-sweep` | Daily cron. Removes uploads that were never published. |
 
 ## Environment Variables
 
@@ -33,6 +40,16 @@ the Vite frontend.
 | `OPENAI_API_KEY` | Yes for hosted AI | Server-side OpenAI key used by `/api/*` AI routes. |
 | `OPENAI_VISION_MODEL` | No | Overrides the default vision model for `/api/ai-vision`. |
 | `OPENAI_ENHANCE_MODEL` | No | Overrides the model for `/api/ai-enhance`. |
+| `BLOB_READ_WRITE_TOKEN` | Yes for share links | Added by Vercel when a Blob store is connected to the project. |
+| `SHARE_SIGNING_SECRET` | Yes for share links | 32+ random bytes (base64). Signs the owner key that lets someone delete their link. Changing it orphans every existing key. |
+| `SHARE_REPORT_EMAIL` | No | Shows a "Report this link" mailto on shared pages. |
+| `CRON_SECRET` | Set by Vercel | Authorizes the daily `/api/share-sweep` run. |
+| `SHARE_STORE` | Tests only | `memory` swaps Blob for an in-process store. |
 
-Supabase is still used separately for accounts, cloud projects, templates, and
-share links.
+Share links (v41) are stored in Vercel Blob under `shares/<id>/`: the rendered
+images, a `poster.webp` for link previews, and a `manifest.json` that names its
+images by file name only. Shared files are cached for an hour, so a deleted
+link can take up to an hour to disappear from the CDN.
+
+Supabase is still used separately for accounts, cloud projects, templates,
+the community gallery, and live collaboration.
