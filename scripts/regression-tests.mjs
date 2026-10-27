@@ -761,6 +761,18 @@ function testShareCoreManifest() {
   assert.throws(() => planUploads({ kind: 'tour', files: Array.from({ length: 31 }, () => ({ type: 'image/png', size: 1 })) }), /files/);
 }
 
+function testSharePlayersInlineCleanly() {
+  for (const [file, fn] of [['src/share/tour-player.js', 'mountTour'], ['src/share/compare-player.js', 'mountCompare']]) {
+    const raw = fs.readFileSync(new URL('../' + file, import.meta.url), 'utf8');
+    assert.ok(!/^\s*import\s/m.test(raw), `${file} must not import anything`);
+    assert.ok(!/<\/script/i.test(raw), `${file} must not contain a closing script tag`);
+    const inlined = raw.replace(/^export /m, '');
+    assert.ok(!/^export /m.test(inlined), `${file} must export exactly one function`);
+    const get = new Function(`${inlined}\nreturn typeof ${fn};`);
+    assert.equal(get(), 'function');
+  }
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -787,7 +799,8 @@ const tests = [
   testHistoryLabels,
   testVersionsNormalizeAndPersist,
   testShareCoreIdsAndKeys,
-  testShareCoreManifest
+  testShareCoreManifest,
+  testSharePlayersInlineCleanly
 ];
 
 for (const test of tests) {

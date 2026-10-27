@@ -1,0 +1,41 @@
+/* v41 — Interactive Tour player styles (shared by the .html export and the viewer). */
+.glint-tour { --gt-accent: #f2a93b; --gt-ink: #0b0b0f; display: flex; flex-direction: column; align-items: center; gap: 16px; color: #fff; }
+.glint-tour * { box-sizing: border-box; }
+/* .gt-stage positions hotspots and callouts and does NOT clip, so a callout can
+   extend past a frame edge. The rounded corners live on .gt-screen. */
+.glint-tour .gt-stage { position: relative; line-height: 0; }
+.glint-tour .gt-screen { position: relative; max-width: var(--gt-max-w, min(94vw, 1100px)); max-height: var(--gt-max-h, 82vh);
+  border-radius: 14px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.55); }
+.glint-tour .gt-frame { display: block; max-width: 100%; max-height: var(--gt-max-h, 82vh); width: auto; height: auto; }
+.glint-tour .gt-hs { position: absolute; border: 2px solid #fff; border-radius: 8px; cursor: pointer; padding: 0;
+  background: rgba(242,169,59,0.16); box-shadow: 0 0 0 2px rgba(242,169,59,0.6); animation: gt-pulse 1.8s ease-in-out infinite; }
+.glint-tour .gt-hs:focus { outline: none; }
+.glint-tour .gt-hs:focus-visible { outline: 3px solid var(--gt-accent); outline-offset: 3px; }
+@keyframes gt-pulse {
+  0%,100% { box-shadow: 0 0 0 2px rgba(242,169,59,0.7), 0 0 0 0 rgba(242,169,59,0.5); }
+  50%     { box-shadow: 0 0 0 2px rgba(242,169,59,0.7), 0 0 0 14px rgba(242,169,59,0); }
+}
+@media (prefers-reduced-motion: reduce) { .glint-tour .gt-hs { animation: none; } }
+.glint-tour .gt-callout { position: absolute; z-index: 5; width: max-content; max-width: 260px; pointer-events: none;
+  background: #fff; color: var(--gt-ink); border-radius: 12px; padding: 12px 14px; line-height: 1.4;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.4); }
+.glint-tour .gt-callout b { display: block; font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.glint-tour .gt-callout span { display: block; font-size: 12.5px; color: #50505a; }
+.glint-tour .gt-callout::after { content: ''; position: absolute; width: 12px; height: 12px; background: #fff; transform: rotate(45deg); }
+.glint-tour .gt-callout.top::after    { bottom: -5px; left: 50%; margin-left: -6px; }
+.glint-tour .gt-callout.bottom::after { top: -5px; left: 50%; margin-left: -6px; }
+.glint-tour .gt-callout.left::after   { right: -5px; top: 50%; margin-top: -6px; }
+.glint-tour .gt-callout.right::after  { left: -5px; top: 50%; margin-top: -6px; }
+.glint-tour .gt-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.glint-tour .gt-bar button { border: 0; cursor: pointer; font: inherit; font-weight: 600; border-radius: 999px; padding: 9px 18px;
+  background: #fff; color: var(--gt-ink); transition: transform .12s, opacity .12s; }
+.glint-tour .gt-bar button:hover:not(:disabled) { transform: translateY(-1px); }
+.glint-tour .gt-bar button:disabled { opacity: .35; cursor: default; }
+.glint-tour .gt-bar button:focus-visible { outline: 3px solid var(--gt-accent); outline-offset: 2px; }
+.glint-tour .gt-bar .gt-prev { background: rgba(255,255,255,0.12); color: #fff; }
+.glint-tour .gt-dots { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 60vw; }
+.glint-tour .gt-dots .gt-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.28); padding: 0; }
+.glint-tour .gt-dots .gt-dot.on { background: var(--gt-accent); box-shadow: 0 0 0 3px rgba(242,169,59,0.25); }
+.glint-tour .gt-count { font-size: 13px; color: rgba(255,255,255,0.6); min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; }
+.glint-tour .gt-empty { color: rgba(255,255,255,0.6); font-size: 15px; }
+.glint-tour .gt-auto { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--gt-accent); }

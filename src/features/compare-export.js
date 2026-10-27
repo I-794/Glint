@@ -1,4 +1,4 @@
-// v35 — Before / After Compare: interactive slider export.
+// v35 — Before / After Compare: interactive slider export (v41: shared player).
 //
 // Renders the whole design twice offscreen through the normal pipeline (all
 // Before, then all After, both without the divider and labels), then writes a
@@ -13,6 +13,8 @@ import { ensureCompareImage } from '../render/compare.js';
 import { isDeviceMockup3d } from '../render/mockups-3d.js';
 import { isSurfaceMockup } from '../render/surfaces.js';
 import { escapeHTML } from '../utils/dom.js';
+import comparePlayerSrc from '../share/compare-player.js?raw';
+import compareCss from '../share/compare-player.css?raw';
 
 const MAX_EDGE = 2400;
 
@@ -33,18 +35,31 @@ function imageRectFrac(w, h) {
   return { x: clamp(r.x / w), y: clamp(r.y / h), w: clamp(r.w / w), h: clamp(r.h / h) };
 }
 
-function buildPage({ beforeUrl, afterUrl, w, h, rect, c }) {
-  const vertical = c.orientation !== 'horizontal';
-  const pct = (v) => (v * 100).toFixed(3) + '%';
-  const labels = c.labels.enabled ? {
-    before: escapeHTML((c.labels.before || '').trim()),
-    after: escapeHTML((c.labels.after || '').trim()),
-    bottom: c.labels.position === 'bottom',
-  } : null;
-  const title = labels && labels.before && labels.after ? `${labels.before} / ${labels.after}` : 'Before / After';
-  const color = /^#[0-9a-f]{6}$/i.test(c.divider.color) ? c.divider.color : '#ffffff';
-  const lineW = Math.max(0, Math.min(12, c.divider.width));
+// v41: the slider lives in src/share/compare-player.js (shared with the
+// /s/<id> viewer). Its raw text is inlined here, so the page still works with
+// no network and no dependencies.
+const inlineModule = (src) => src.replace(/^export /m, '');
 
+function playerData({ beforeUrl, afterUrl, w, h, rect, c }) {
+  return {
+    beforeUrl, afterUrl, w, h, rect,
+    orientation: c.orientation === 'horizontal' ? 'horizontal' : 'vertical',
+    split: Number(c.split.toFixed(4)),
+    labels: {
+      enabled: !!c.labels.enabled,
+      before: String(c.labels.before || '').trim(),
+      after: String(c.labels.after || '').trim(),
+      position: c.labels.position === 'bottom' ? 'bottom' : 'top',
+    },
+    divider: { color: c.divider.color, width: c.divider.width, handle: c.divider.handle !== false },
+  };
+}
+
+function buildPage(frames) {
+  const d = playerData(frames);
+  const l = d.labels;
+  const title = l.enabled && l.before && l.after ? `${escapeHTML(l.before)} / ${escapeHTML(l.after)}` : 'Before / After';
+  const data = JSON.stringify(d).replace(/</g, '\\u003c');
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -54,92 +69,30 @@ function buildPage({ beforeUrl, afterUrl, w, h, rect, c }) {
 <style>
   html, body { margin: 0; background: #0e0f13; }
   body { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
-  .cmp { position: relative; width: min(100%, ${w}px); aspect-ratio: ${w} / ${h}; user-select: none; -webkit-user-select: none; touch-action: ${vertical ? 'pan-y' : 'pan-x'}; }
-  .cmp img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
-  .cmp .before { clip-path: var(--clip); }
-  .zone { position: absolute; left: ${pct(rect.x)}; top: ${pct(rect.y)}; width: ${pct(rect.w)}; height: ${pct(rect.h)}; cursor: ${vertical ? 'ew-resize' : 'ns-resize'}; outline: none; }
-  .bar { position: absolute; background: ${color}; box-shadow: 0 0 8px rgba(0,0,0,.35); ${vertical
-    ? `top: 0; bottom: 0; width: ${lineW}px; transform: translateX(-50%);`
-    : `left: 0; right: 0; height: ${lineW}px; transform: translateY(-50%);`} }
-  .knob { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: ${color}; box-shadow: 0 2px 10px rgba(0,0,0,.35); transform: translate(-50%, -50%); display: ${c.divider.handle ? 'flex' : 'none'}; align-items: center; justify-content: center; }
-  .knob svg { width: 22px; height: 22px; stroke: #16171d; stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; ${vertical ? '' : 'transform: rotate(90deg);'} }
-  .zone:focus-visible .knob { outline: 3px solid #f2a93b; outline-offset: 3px; }
-  .tag { position: absolute; padding: 6px 11px; border-radius: 999px; background: rgba(12,13,18,.62); color: #fff; font-size: 14px; font-weight: 600; pointer-events: none; transition: opacity .15s; }
+${compareCss}
 </style>
 </head>
 <body>
-<div class="cmp" id="cmp">
-  <img class="after" src="${afterUrl}" alt="${labels && labels.after ? labels.after : 'After'}">
-  <img class="before" src="${beforeUrl}" alt="${labels && labels.before ? labels.before : 'Before'}">
-  <div class="zone" id="zone" role="slider" tabindex="0" aria-label="Comparison divider" aria-valuemin="0" aria-valuemax="100">
-    <div class="bar" id="bar"></div>
-    <div class="knob" id="knob"><svg viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></svg></div>
-    ${labels && labels.before ? `<span class="tag" id="tb">${labels.before}</span>` : ''}
-    ${labels && labels.after ? `<span class="tag" id="ta">${labels.after}</span>` : ''}
-  </div>
-</div>
+<div id="cmp"></div>
+<script id="cmp-data" type="application/json">${data}</script>
 <script>
-(function () {
-  var V = ${vertical}, R = ${JSON.stringify(rect)}, BOTTOM = ${!!(labels && labels.bottom)};
-  var cmp = document.getElementById('cmp'), zone = document.getElementById('zone');
-  var bar = document.getElementById('bar'), knob = document.getElementById('knob');
-  var tb = document.getElementById('tb'), ta = document.getElementById('ta');
-  var split = ${Number(c.split.toFixed(4))};
-  function place() {
-    var p = (split * 100).toFixed(3) + '%';
-    var cut = V ? (R.x + R.w * split) : (R.y + R.h * split);
-    cmp.style.setProperty('--clip', V
-      ? 'inset(' + (R.y * 100) + '% ' + ((1 - cut) * 100) + '% ' + ((1 - R.y - R.h) * 100) + '% ' + (R.x * 100) + '%)'
-      : 'inset(' + (R.y * 100) + '% ' + ((1 - R.x - R.w) * 100) + '% ' + ((1 - cut) * 100) + '% ' + (R.x * 100) + '%)');
-    if (V) { bar.style.left = p; knob.style.left = p; knob.style.top = '50%'; }
-    else { bar.style.top = p; knob.style.top = p; knob.style.left = '50%'; }
-    zone.setAttribute('aria-valuenow', Math.round(split * 100));
-    var zr = zone.getBoundingClientRect(), pad = 14;
-    if (tb) {
-      var bw = tb.offsetWidth, bh = tb.offsetHeight;
-      if (V) { tb.style.left = pad + 'px'; tb.style.top = BOTTOM ? '' : pad + 'px'; tb.style.bottom = BOTTOM ? pad + 'px' : ''; tb.style.opacity = split * zr.width > bw + pad * 2 ? 1 : 0; }
-      else { tb.style.top = pad + 'px'; tb.style[BOTTOM ? 'right' : 'left'] = pad + 'px'; tb.style.opacity = split * zr.height > bh + pad * 2 ? 1 : 0; }
-    }
-    if (ta) {
-      var aw = ta.offsetWidth, ah = ta.offsetHeight;
-      if (V) { ta.style.right = pad + 'px'; ta.style.top = BOTTOM ? '' : pad + 'px'; ta.style.bottom = BOTTOM ? pad + 'px' : ''; ta.style.opacity = (1 - split) * zr.width > aw + pad * 2 ? 1 : 0; }
-      else { ta.style.bottom = pad + 'px'; ta.style[BOTTOM ? 'right' : 'left'] = pad + 'px'; ta.style.opacity = (1 - split) * zr.height > ah + pad * 2 ? 1 : 0; }
-    }
-  }
-  function fromEvent(e) {
-    var r = zone.getBoundingClientRect();
-    var v = V ? (e.clientX - r.left) / r.width : (e.clientY - r.top) / r.height;
-    split = Math.max(0, Math.min(1, v)); place();
-  }
-  var dragging = false;
-  zone.addEventListener('pointerdown', function (e) { dragging = true; zone.setPointerCapture(e.pointerId); fromEvent(e); });
-  zone.addEventListener('pointermove', function (e) { if (dragging) fromEvent(e); });
-  zone.addEventListener('pointerup', function () { dragging = false; });
-  zone.addEventListener('pointercancel', function () { dragging = false; });
-  zone.addEventListener('keydown', function (e) {
-    var step = e.shiftKey ? 0.1 : 0.02, k = e.key;
-    if (k === 'ArrowLeft' || k === 'ArrowUp') split = Math.max(0, split - step);
-    else if (k === 'ArrowRight' || k === 'ArrowDown') split = Math.min(1, split + step);
-    else if (k === 'Home') split = 0;
-    else if (k === 'End') split = 1;
-    else return;
-    e.preventDefault(); place();
-  });
-  window.addEventListener('resize', place);
-  place();
-})();
+${inlineModule(comparePlayerSrc)}
+mountCompare(document.getElementById('cmp'), JSON.parse(document.getElementById('cmp-data').textContent));
 </script>
 </body>
 </html>`;
 }
 
-export async function exportCompareHTML() {
+// Renders the design twice offscreen (all Before, then all After, both without
+// the divider and labels). Returns the two canvases plus the geometry the
+// player needs, or null (with a toast) when Compare cannot export.
+export async function collectCompareFrames() {
   const c = state.compare;
   if (!state.image || !c || !c.beforeSrc) {
     showNotification('Add a Before image and load an After screenshot first.', 'error');
-    return false;
+    return null;
   }
-  if (state.video && state.video.loaded) { showNotification('Compare works with still images, not video.', 'error'); return false; }
+  if (state.video && state.video.loaded) { showNotification('Compare works with still images, not video.', 'error'); return null; }
   await ensureCompareImage(c.beforeSrc);
 
   // Hi-DPI-ish output, capped so the page stays a sensible size.
@@ -147,29 +100,39 @@ export async function exportCompareHTML() {
   const scale = Math.min(2, MAX_EDGE / Math.max(cw, ch));
   const w = Math.round(cw * scale), h = Math.round(ch * scale);
   const saved = state.compare;
-  const off = document.createElement('canvas');
-  let beforeUrl, afterUrl, rect;
+  const beforeCanvas = document.createElement('canvas');
+  const afterCanvas = document.createElement('canvas');
+  let rect;
   try {
     const plain = { ...saved, enabled: true, wipe: false, labels: { ...saved.labels, enabled: false }, divider: { ...saved.divider, width: 0, handle: false } };
     state.compare = { ...plain, split: 1 };
-    renderAtSize(off, { width: w, height: h });
+    renderAtSize(beforeCanvas, { width: w, height: h });
     // The layout at export size can differ from the preview (padding is in
     // pixels), so take the screenshot's rect from this render.
     rect = imageRectFrac(w, h);
-    beforeUrl = encode(off);
     state.compare = { ...plain, enabled: false };
-    renderAtSize(off, { width: w, height: h });
-    afterUrl = encode(off);
+    renderAtSize(afterCanvas, { width: w, height: h });
   } catch (e) {
     console.error('[compare] export failed:', e);
     showNotification('Export failed: ' + (e?.message || String(e)), 'error');
-    return false;
+    return null;
   } finally {
     state.compare = saved;
     render();
   }
+  return { beforeCanvas, afterCanvas, w, h, rect, c: saved };
+}
 
-  const html = buildPage({ beforeUrl, afterUrl, w, h, rect, c: saved });
+// The player settings for a set of frames (used by share links).
+export function comparePlayerSettings(frames) {
+  const { beforeUrl: _b, afterUrl: _a, ...rest } = playerData({ ...frames, beforeUrl: '', afterUrl: '' });
+  return rest;
+}
+
+export async function exportCompareHTML() {
+  const frames = await collectCompareFrames();
+  if (!frames) return false;
+  const html = buildPage({ ...frames, beforeUrl: encode(frames.beforeCanvas), afterUrl: encode(frames.afterCanvas) });
   const blob = new Blob([html], { type: 'text/html' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
