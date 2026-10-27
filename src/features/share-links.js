@@ -478,6 +478,11 @@ export async function startShare(kind = currentKind) {
     setBusy(false, '');
     showResult(rec);
     renderList();
+    // Storage full or blocked: the link works, but this browser cannot keep
+    // its delete key, so the manage link is the only way to remove it later.
+    if (!readShares().some((r) => r.id === rec.id)) {
+      setStatus('This browser could not save the link to Your links. Copy the manage link now if you may want to delete it later.');
+    }
     const copied = await navigator.clipboard.writeText(rec.url).then(() => true, () => false);
     showNotification(copied ? 'Link copied.' : 'Link ready.', 'success', {
       action: { label: 'Open', run: () => window.open(rec.url, '_blank', 'noopener') },
