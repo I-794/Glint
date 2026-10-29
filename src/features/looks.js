@@ -157,9 +157,17 @@ export function saveLook() {
 
 function deleteLook(id) {
   const list = loadAll();
-  const look = list.find(l => l.id === id);
-  if (!look || !confirm(`Delete the look "${look.name}"?`)) return;
-  if (persist(list.filter(l => l.id !== id))) renderList();
+  const index = list.findIndex(l => l.id === id);
+  if (index < 0) return;
+  const look = list[index];
+  if (!persist(list.filter(l => l.id !== id))) return;
+  renderList();
+  showNotification(`Deleted the look "${look.name}"`, 'success', { action: { label: 'Undo', run: () => {
+    const now = loadAll();
+    if (now.some(l => l.id === id)) return;
+    now.splice(Math.min(index, now.length), 0, look);
+    if (persist(now)) renderList();
+  } } });
 }
 
 function addImported(look) {

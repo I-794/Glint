@@ -8,6 +8,7 @@
 import { state } from '../state/state.js';
 import { renderInto } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
+import { askConfirm } from '../ui/dialog.js';
 import { revealSection } from './studio-nav.js';
 import { collectTourSteps } from './tour-export.js';
 import { collectCompareFrames, comparePlayerSettings } from './compare-export.js';
@@ -426,7 +427,7 @@ function renderList() {
       mk('Copy', 'Copy link', () => copyText(rec.url, 'Link copied.')),
       mk('Open', 'Open link', () => window.open(rec.url, '_blank', 'noopener')),
       mk('Delete', 'Delete link', async (e) => {
-        if (!confirm('Delete this link? Anyone who has it will see that it is gone. This cannot be undone.')) return;
+        if (!await askConfirm('Delete this link?', { message: 'Anyone who has it will see that it is gone. This cannot be undone.', okLabel: 'Delete', danger: true })) return;
         e.target.disabled = true;
         try {
           await deleteShareLink(rec.id);

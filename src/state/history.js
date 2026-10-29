@@ -240,6 +240,7 @@ export function clearHistory() {
   steps.past = [];
   steps.future = [];
   steps.current = newStep();
+  emit();
 }
 
 // v40 — run fn on a step's values. They are copied into state; the live

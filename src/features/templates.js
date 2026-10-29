@@ -70,10 +70,15 @@ export function loadTemplate() {
 }
 
 export function clearTemplates() {
-  if (!confirm('Delete all saved templates?')) return;
+  const saved = loadAll();
+  if (!Object.keys(saved).length) { showNotification('No saved templates to clear.', 'info'); return; }
   localStorage.removeItem(KEY);
   updateTemplateList();
-  showNotification('All templates cleared.', 'success');
+  showNotification('All templates cleared.', 'success', { action: { label: 'Undo', run: () => {
+    saveAll({ ...saved, ...loadAll() });   // keep any template saved since
+    updateTemplateList();
+    showNotification('Templates restored.', 'success');
+  } } });
 }
 
 export function updateTemplateList() {

@@ -1,4 +1,5 @@
 import { showNotification } from '../ui/notification.js';
+import { askConfirm } from '../ui/dialog.js';
 
 const CFG_KEY = 'glint_supabase_cfg';
 
@@ -100,8 +101,8 @@ async function saveCloudConfig() {
   openModal();
 }
 
-function disconnectCloud() {
-  if (!confirm('Disconnect Supabase cloud? Your local data stays, but sync will stop.')) return;
+async function disconnectCloud() {
+  if (!await askConfirm('Disconnect cloud sync?', { message: 'Your local data stays, but sync will stop.', okLabel: 'Disconnect', danger: true })) return;
   clearLocalConfig();
   supabaseClient = null;
   currentUser = null;

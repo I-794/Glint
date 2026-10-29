@@ -1,6 +1,7 @@
 import { state } from '../state/state.js';
 import { el } from '../ui/elements.js';
 import { showNotification } from '../ui/notification.js';
+import { askConfirm } from '../ui/dialog.js';
 import { render } from '../render/render.js';
 
 const KEY = 'glint_fonts';
@@ -102,8 +103,8 @@ async function handleFontFile(file) {
   showNotification(`Loaded font "${name}".`, 'success');
 }
 
-function removeFont(name) {
-  if (!confirm(`Remove custom font "${name}"?`)) return;
+async function removeFont(name) {
+  if (!await askConfirm(`Remove the font "${name}"?`, { message: 'Text that uses it switches to Arial.', okLabel: 'Remove', danger: true })) return;
   const all = loadAll();
   delete all[name];
   saveAll(all);

@@ -12,7 +12,7 @@
 import { state } from '../state/state.js';
 import { renderInto } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
-import { onHistoryChange } from '../state/history.js';
+import { onHistoryChange, clearHistory } from '../state/history.js';
 import { serializeFull, imageToDataUrl } from '../state/serialize.js';
 import { applyPayload, applyDesignToState, makeThumb, uid } from './document.js';
 
@@ -30,6 +30,13 @@ function emitChange() { changeListeners.forEach(fn => { try { fn(); } catch (e) 
 // v32.1 — board edits live in state.board (document level) without touching the
 // pages array; board.js calls this (debounced) so projects.js autosaves them.
 export function notifyDocumentChange() { emitChange(); }
+
+// Undo steps are snapshots of one page, so a different page (or document)
+// starts with a fresh history; Pins stay with their page. For changes that
+// may keep the same live page (delete, restore), clear only if it changed.
+function freshHistoryIf(prevRec) {
+  if (pages[active] !== prevRec) clearHistory();
+}
 
 export function pageCount() { return pages.length; }
 
@@ -127,6 +134,7 @@ export function applyDocument(doc) {
   state.boardSelection = [];
   trash = [];   // v33 — never restore another document's pages
   applyPayload(pages[active].payload);
+  clearHistory();
   renderFilmstrip();
 }
 
@@ -136,6 +144,7 @@ export function switchTo(index) {
   syncActive();
   active = index;
   applyPayload(pages[active].payload);
+  clearHistory();
   renderFilmstrip();
   emitChange();
 }
@@ -152,6 +161,7 @@ export function addPage({ duplicate = false } = {}) {
   pages.splice(active + 1, 0, { id: uid(), payload: base, thumb: duplicate ? pages[active].thumb : null });
   active += 1;
   applyPayload(pages[active].payload);
+  clearHistory();
   renderFilmstrip();
   emitChange();
   showNotification(duplicate ? 'Page duplicated.' : 'Page added.', 'success');
@@ -188,6 +198,7 @@ export function hasPageTrash() { return trash.length > 0; }
 export function restoreDeletedPages() {
   if (!trash.length) return 0;
   syncActive();
+  const prevRec = pages[active];
   let activeRec = pages[active];
   for (let i = trash.length - 1; i >= 0; i--) {
     const { rec, index, wasActive } = trash[i];
@@ -198,6 +209,7 @@ export function restoreDeletedPages() {
   trash = [];
   active = Math.max(0, pages.indexOf(activeRec));
   applyPayload(pages[active].payload);
+  freshHistoryIf(prevRec);
   renderFilmstrip();
   emitChange();
   return n;
@@ -207,11 +219,13 @@ export function deletePage(index, { recordTrash = true } = {}) {
   if (pages.length <= 1) { showNotification('A document needs at least one page.', 'error'); return; }
   if (index < 0 || index >= pages.length) return;
   if (index === active) syncActive();   // keep the latest edits for Undo
+  const prevRec = pages[active];
   if (recordTrash) trash.push({ rec: pages[index], index, wasActive: index === active });
   pages.splice(index, 1);
   if (active >= pages.length) active = pages.length - 1;
   else if (index < active) active -= 1;
   applyPayload(pages[active].payload);
+  freshHistoryIf(prevRec);
   renderFilmstrip();
   emitChange();
 }

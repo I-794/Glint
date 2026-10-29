@@ -18,6 +18,7 @@ import { stickers } from '../state/presets.js';
 import { addSticker } from './stickers.js';
 import { saveStateToHistory } from '../state/history.js';
 import { showStatus } from '../ui/notification.js';
+import { askText } from '../ui/dialog.js';
 import { setMode } from './set-ui.js';
 import { exportSet } from './batch-export.js';
 import { openMergeStudio, exportMerge } from './merge-studio.js';
@@ -155,9 +156,9 @@ export function registerCommands() {
         inp.click();
       } },
     { id: 'seedFromUrl', label: 'Board: add from URL', icon: 'link', group: 'View',
-      run: () => {
+      run: async () => {
         if (state.mode !== 'board') enterBoardMode();
-        const url = window.prompt('Paste a page URL to drop its images as cards');
+        const url = await askText('Add cards from a page', { message: 'Glint drops each image on the page as a card.', placeholder: 'https://', type: 'url', okLabel: 'Add' });
         if (url) seedFromUrl(url);
       },
       when: () => true },

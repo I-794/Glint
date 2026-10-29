@@ -37,7 +37,7 @@ async function ensureBucket(client) {
 function thumbnailBlob() {
   // Reuse the export render so the thumbnail matches what ships.
   render(true);
-  return new Promise((resolve) => el.previewCanvas.toBlob(resolve, 'image/png'));
+  return new Promise((resolve) => el.previewCanvas.toBlob((blob) => { render(); resolve(blob); }, 'image/png'));
 }
 
 // ---- publish --------------------------------------------------------------

@@ -3,6 +3,7 @@ import { el } from '../ui/elements.js';
 import { showNotification } from '../ui/notification.js';
 import { render } from '../render/render.js';
 import { exportGif } from './gif-export.js';
+import { escapeHTML } from '../utils/dom.js';
 
 export function exportImage() {
   if (!state.image) { showNotification('Please load an image first!', 'error'); return; }
@@ -47,8 +48,11 @@ export function copyToClipboard() {
 
 export function exportAsHTML() {
   if (!state.image) { showNotification('Please load an image first!', 'error'); return; }
+  const bracket = state.mode !== 'set';   // see exportImage
+  if (bracket) render(true);
   const dataURL = el.previewCanvas.toDataURL('image/png');
-  const title = state.watermark.text || 'Glint';
+  if (bracket) render();
+  const title = escapeHTML(state.watermark.text || 'Glint');
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#111;font-family:sans-serif;}img{max-width:100%;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.8);}</style></head><body><img src="${dataURL}"></body></html>`;
   const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);

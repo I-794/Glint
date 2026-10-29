@@ -1068,6 +1068,26 @@ kbd {
 .auth-modal-actions { display: flex; gap: 8px; margin-top: 12px; }
 .auth-modal-actions .btn { flex: 1; }
 
+/* ─── v41.0.1 in-app prompt / confirm (src/ui/dialog.js) ─── */
+.glint-dialog {
+    background: var(--bg-secondary); color: var(--text-primary);
+    border: 1px solid var(--glass-border); border-radius: var(--radius-lg);
+    margin: auto; padding: 22px; width: min(380px, calc(100vw - 32px));   /* the global reset zeroes the centering margin */
+    box-shadow: var(--shadow-lg), 0 0 80px rgba(0, 0, 0, 0.3);
+}
+.glint-dialog[open] { animation: modalIn 0.2s ease-out; }
+.glint-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.glint-dialog-title { margin: 0 0 8px; font-weight: 600; font-size: 15px; letter-spacing: -0.2px; }
+.glint-dialog-message { margin: 0 0 4px; font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
+.glint-dialog-input { margin-top: 6px; }
+.glint-dialog-actions { display: flex; gap: 8px; margin-top: 16px; }
+.glint-dialog-actions .btn { flex: 1; }
+.btn-danger { background: var(--error); color: var(--on-accent); }
+.btn-danger:hover:not(:disabled) { filter: brightness(1.08); }
+
 /* ─── v12 Projects & Version History ─── */
 .project-current {
     display: flex; align-items: center; justify-content: space-between; gap: 8px;

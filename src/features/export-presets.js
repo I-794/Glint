@@ -11,7 +11,7 @@ import { state } from '../state/state.js';
 import { el } from '../ui/elements.js';
 import { render } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
-import { clearSelection, setSelection } from './selection.js';
+import { askText } from '../ui/dialog.js';
 
 const LS_KEY = 'glint_export_presets';
 const LAST_KEY = 'glint_last_export_preset';   // v33 — quick export
@@ -64,22 +64,24 @@ export function upscaleCanvas(canvas, scale) {
   return out;
 }
 
-// Clean export of the composed canvas at `scale`×, with selection chrome
-// suppressed for the export and restored afterward.
+// Clean export of the composed canvas at `scale`×, without preview chrome.
 function exportScaled(scale, format, quality) {
   if (!state.image) { showNotification('Load an image first!', 'error'); return; }
-  const savedSel = state.canvasSelection.slice();
-  if (savedSel.length) clearSelection();
-  render();
+  // render(true) leaves out all preview chrome (selection, Spotlight handles);
+  // not in Set mode, see export.js exportImage. The preview is put back only
+  // after encoding, since at 1x upscaleCanvas returns the preview canvas itself.
+  const bracket = state.mode !== 'set';
+  if (bracket) render(true);
 
-  encodeCanvas(upscaleCanvas(el.previewCanvas, scale), format, quality).then(({ blob, ext }) => {
+  encodeCanvas(upscaleCanvas(el.previewCanvas, scale), format, quality).finally(() => {
+    if (bracket) render();
+  }).then(({ blob, ext }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `screenshot-${Date.now()}.${ext}`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
     showNotification(`Exported ${ext.toUpperCase()} @${scale}×`, 'success');
-    if (savedSel.length) { setSelection(savedSel); render(); }
   });
 }
 
@@ -108,8 +110,8 @@ export function quickExport() {
   if (p) applyExportPreset(p.id);
 }
 
-function saveCurrentAsPreset(scale) {
-  const name = prompt('Name this export preset:', `${state.exportSettings.format.toUpperCase()} · ${scale}×`);
+async function saveCurrentAsPreset(scale) {
+  const name = await askText('Name this export preset', { value: `${state.exportSettings.format.toUpperCase()} · ${scale}×` });
   if (!name) return;
   const list = read();
   list.push({

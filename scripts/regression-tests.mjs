@@ -9,7 +9,7 @@ import { applyDesignToState } from '../src/features/document.js';
 import { migrateLocalStorage, MIGRATED_FLAG } from '../src/state/brand-migrate.js';
 import { normalizeCrop, cropRect, cropKey } from '../src/render/crop-core.js';
 import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS, normalizeFilters } from '../src/render/curves-core.js';
-import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll } from '../src/render/roll-core.js';
+import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll, normalizeOverrides } from '../src/render/roll-core.js';
 import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, surfaceMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
 import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, peekSnapshot, withSnapshot, clearHistory, commitStep, onHistoryChange } from '../src/state/history.js';
 import { describeChange } from '../src/state/history-labels.js';
@@ -300,6 +300,23 @@ function testRollMigratesAndPersists() {
 }
 
 // v37 — non-destructive crop.
+function testRollRepairsGradeOverrides() {
+  const fixed = normalizeOverrides({
+    imageFilters: { brightness: 120, contrast: 'x' },
+    colorTools: { curves: { rgb: 'broken' } },
+    'modeFlip.enabled': 'yes',
+    'not.a.field': 1,
+  });
+  assert.equal(fixed.imageFilters.brightness, 120);
+  assert.equal(fixed.imageFilters.contrast, 100, 'a bad filter value falls back to its default');
+  assert.equal(fixed.imageFilters.temperature, 0, 'missing filters are filled in');
+  assert.ok(Array.isArray(fixed.colorTools.curves.rgb), 'colorTools is normalized');
+  assert.equal(fixed['modeFlip.enabled'], false);
+  assert.ok(!('not.a.field' in fixed), 'unknown paths are dropped');
+  const roll = normalizeRoll({ shots: [{ id: 'g', src: 'data:image/jpeg;base64,AA', w: 1, h: 1, overrides: { imageFilters: null } }] });
+  assert.equal(roll.shots[0].overrides.imageFilters.saturation, 100);
+}
+
 function testCropNormalizeAndPersist() {
   assert.equal(normalizeCrop(null), null);
   assert.equal(normalizeCrop({ x: 0, y: 0, w: 1, h: 1, angle: 0 }), null, 'a full-frame crop is no crop');
@@ -923,6 +940,7 @@ const tests = [
   testRollOverrides,
   testRollPerShotLooks,
   testRollMigratesAndPersists,
+  testRollRepairsGradeOverrides,
   testCropNormalizeAndPersist,
   testColorToolsLuts,
   testLooksAndColorToolsPersist,

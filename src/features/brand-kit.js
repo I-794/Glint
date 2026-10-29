@@ -172,12 +172,16 @@ function deleteKit() {
   const sel = $('brand-list');
   const name = sel?.value || '';
   if (!name) { showNotification('Select a brand kit to delete.', 'error'); return; }
-  if (!confirm(`Delete brand kit "${name}"?`)) return;
   const all = loadAll();
+  const kit = all[name];
   delete all[name];
   saveAll(all);
   refreshList('');
-  showNotification(`Deleted "${name}"`, 'success');
+  showNotification(`Deleted "${name}"`, 'success', { action: { label: 'Undo', run: () => {
+    const now = loadAll();
+    if (!(name in now)) { now[name] = kit; saveAll(now); }
+    refreshList(name);
+  } } });
 }
 
 // ---- logo upload + live controls ------------------------------------------

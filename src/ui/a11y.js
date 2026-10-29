@@ -174,7 +174,8 @@ export function bindA11y() {
       t.click();
       return;
     }
-    if (e.key === 'Escape') {
+    // v41.0.1 — an open ui/dialog.js prompt handles its own Escape.
+    if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
       const open = [...document.querySelectorAll(ESC_DIALOGS)].filter(isOpen);
       const top = open[open.length - 1];
       const close = top && top.querySelector('.welcome-close, [id$="-close"]');

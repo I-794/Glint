@@ -3,6 +3,7 @@
 // so nothing here may touch window/document.
 
 import { getByPath, setByPath, sanitize } from '../state/paths.js';
+import { normalizeColorTools } from './curves-core.js';
 
 // The fields one shot may change on top of the roll's shared design. Every
 // other edit always applies to the whole roll.
@@ -48,6 +49,30 @@ export function applyOverrides(target, overrides) {
     if (path in overrides) setByPath(target, path, clone(overrides[path]));
   }
   return target;
+}
+
+// Grade overrides come back from saved projects as plain JSON, so a missing or
+// broken field would reach the grade passes as undefined / NaN. Unknown paths
+// are dropped, imageFilters is filled in from the defaults, colorTools goes
+// through normalizeColorTools.
+const FILTER_DEFAULTS = { brightness: 100, contrast: 100, saturation: 100, blur: 0, grayscale: 0, sepia: 0, temperature: 0, tint: 0 };
+export function normalizeOverrides(overrides) {
+  const out = {};
+  if (!overrides || typeof overrides !== 'object') return out;
+  for (const path of ROLL_OVERRIDE_FIELDS) {
+    if (!(path in overrides)) continue;
+    const v = overrides[path];
+    if (path === 'imageFilters') {
+      const src = v && typeof v === 'object' ? v : {};
+      out[path] = {};
+      for (const k of Object.keys(FILTER_DEFAULTS)) {
+        out[path][k] = Number.isFinite(src[k]) ? src[k] : FILTER_DEFAULTS[k];
+      }
+    } else if (path === 'colorTools') out[path] = normalizeColorTools(v);
+    else if (path === 'modeFlip.enabled') out[path] = v === true;
+    else out[path] = v;
+  }
+  return out;
 }
 
 // Shape of a screenshot by height / width.
@@ -143,7 +168,7 @@ export function normalizeRoll(roll) {
       name: typeof s.name === 'string' ? s.name : 'shot',
       w: Number(s.w) > 0 ? Number(s.w) : 0,
       h: Number(s.h) > 0 ? Number(s.h) : 0,
-      overrides: s.overrides && typeof s.overrides === 'object' ? s.overrides : {},
+      overrides: normalizeOverrides(s.overrides),
     }));
   if (Array.isArray(roll.sizes)) {
     const sizes = roll.sizes

@@ -22,6 +22,7 @@
 
 import { state } from '../state/state.js';
 import { showNotification } from '../ui/notification.js';
+import { askText, askConfirm } from '../ui/dialog.js';
 import { escapeHTML } from '../utils/dom.js';
 import { onHistoryChange } from '../state/history.js';
 import { makeThumb, uid } from './document.js';
@@ -578,12 +579,14 @@ function forkVersion(versionId) {
 }
 
 // ── Project actions ──────────────────────────────────────────────────────────
-function renameProject(id) {
-  const store = loadStore();
+async function renameProject(id) {
+  const current = loadStore()[id];
+  if (!current) return;
+  const name = await askText('Rename project', { value: current.name, okLabel: 'Rename' });
+  if (name == null) return;
+  const store = loadStore();   // re-read: the store may have changed while the dialog was open
   const p = store[id];
   if (!p) return;
-  const name = prompt('Rename project:', p.name);
-  if (name == null) return;
   p.name = name.trim() || p.name;
   touch(p);
   writeStore(store);
@@ -608,11 +611,13 @@ function duplicateProject(id) {
   showNotification(`Duplicated "${p.name}".`, 'success');
 }
 
-function deleteProject(id) {
-  const store = loadStore();
+async function deleteProject(id) {
+  const current = loadStore()[id];
+  if (!current) return;
+  if (!await askConfirm(`Delete "${current.name}"?`, { message: 'This cannot be undone.', okLabel: 'Delete', danger: true })) return;
+  const store = loadStore();   // re-read after the dialog
   const p = store[id];
   if (!p) return;
-  if (!confirm(`Delete "${p.name}"? This can't be undone.`)) return;
   delete store[id];
   deletedIds.add(id);   // so the merge in persistIdb does not bring it back from IndexedDB
   dirtyIds.delete(id);
@@ -784,19 +789,19 @@ export function bindProjects() {
   const newBtn = document.getElementById('projects-new-btn');
   const saveVerBtn = document.getElementById('projects-save-version-btn');
   const historyBtn = document.getElementById('projects-history-btn');
-  if (newBtn) newBtn.addEventListener('click', () => whenReady(() => {
-    const name = prompt('New project name:', 'Untitled');
+  if (newBtn) newBtn.addEventListener('click', () => whenReady(async () => {
+    const name = await askText('New project', { value: 'Untitled', okLabel: 'Create' });
     if (name == null) return;
-    newProject(name.trim() || undefined);
+    newProject(name || undefined);
     renderPanel();
     showNotification('New project created.', 'success');
   }));
-  if (saveVerBtn) saveVerBtn.addEventListener('click', () => whenReady(() => {
+  if (saveVerBtn) saveVerBtn.addEventListener('click', () => whenReady(async () => {
     if (!state.image) { showNotification('Load an image first.', 'error'); return; }
-    if (!activeId) newProject();
-    const label = prompt('Name this version (optional):', '');
+    const label = await askText('Name this version', { placeholder: 'Optional', okLabel: 'Save version' });
     if (label == null) return;
-    const saved = saveActive({ versionLabel: label.trim() || 'Manual save' });
+    if (!activeId) newProject();
+    const saved = saveActive({ versionLabel: label || 'Manual save' });
     renderPanel();
     if (!saved) { showNotification('Could not save this version. Try again.', 'error'); return; }
     // Confirm only once the write has landed (localStorage resolves at once).

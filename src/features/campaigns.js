@@ -4,6 +4,7 @@
 // `payload` on download (deterministic), and cached in-session by the generator.
 
 import { showNotification } from '../ui/notification.js';
+import { askConfirm } from '../ui/dialog.js';
 import { getClient, getUser } from './auth.js';
 
 const KEY = 'glint_campaigns_v1';
@@ -224,8 +225,8 @@ export function refreshCampaigns() {
   list.querySelectorAll('.campaign-card').forEach(card => {
     const id = card.dataset.id;
     card.querySelector('.campaign-download')?.addEventListener('click', () => downloadCampaign(id));
-    card.querySelector('.campaign-delete')?.addEventListener('click', () => {
-      if (confirm('Delete this campaign?')) { deleteCampaign(id); refreshCampaigns(); }
+    card.querySelector('.campaign-delete')?.addEventListener('click', async () => {
+      if (await askConfirm('Delete this campaign?', { okLabel: 'Delete', danger: true })) { deleteCampaign(id); refreshCampaigns(); }
     });
   });
 }
