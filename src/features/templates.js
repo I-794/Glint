@@ -5,6 +5,7 @@ import { render } from '../render/render.js';
 import { saveStateToHistory } from '../state/history.js';
 import { normalizeColorTools } from '../render/curves-core.js';
 import { normalizeModeFlip } from '../render/mode-flip-core.js';
+import { escapeHTML } from '../utils/dom.js';
 
 const KEY = 'glint_templates';
 
@@ -86,7 +87,7 @@ export function updateTemplateList() {
   const names = Object.keys(all);
   if (el.templateList) {
     el.templateList.innerHTML = '<option value="">-- Select Template --</option>' +
-      names.map(n => `<option value="${n}">${n}</option>`).join('');
+      names.map(n => `<option value="${escapeHTML(n)}">${escapeHTML(n)}</option>`).join('');
   }
   if (el.templateInfo) {
     el.templateInfo.textContent = names.length ? `${names.length} template${names.length === 1 ? '' : 's'} saved` : 'No templates saved';

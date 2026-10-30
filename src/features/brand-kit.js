@@ -19,6 +19,7 @@ import { render } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
 import { saveStateToHistory } from '../state/history.js';
 import { syncFromGradientState } from './gradient-editor.js';
+import { escapeHTML } from '../utils/dom.js';
 
 const KEY = 'glint_brandkits';
 const MAX_LOGO = 1.5 * 1024 * 1024; // 1.5MB cap on the stored logo dataUrl
@@ -244,7 +245,7 @@ function refreshList(selectName) {
   const names = Object.keys(all);
   if (sel) {
     sel.innerHTML = '<option value="">-- Select Brand Kit --</option>' +
-      names.map((n) => `<option value="${n}"${n === selectName ? ' selected' : ''}>${n}</option>`).join('');
+      names.map((n) => `<option value="${escapeHTML(n)}"${n === selectName ? ' selected' : ''}>${escapeHTML(n)}</option>`).join('');
   }
   const info = $('brand-info');
   if (info) info.textContent = names.length ? `${names.length} brand kit${names.length === 1 ? '' : 's'} saved` : 'No brand kits saved';

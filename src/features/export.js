@@ -57,7 +57,7 @@ export function exportAsHTML() {
   const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `snapshot-${Date.now()}.html`;
+  a.href = url; a.download = `screenshot-${Date.now()}.html`;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
   showNotification('Exported as HTML card!', 'success');

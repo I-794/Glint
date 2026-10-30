@@ -146,8 +146,19 @@ function bindOwner(id) {
   $('sv-owner').hidden = false;
   document.body.classList.add('has-owner');
   const btn = $('sv-delete');
+  const dlg = $('sv-confirm');
+  // A native <dialog>; focus starts on "Keep it", so Enter alone never deletes.
+  const askDelete = () => new Promise((resolve) => {
+    if (!dlg || typeof dlg.showModal !== 'function') { resolve(confirm('Delete this link? This cannot be undone.')); return; }
+    const done = (ok) => { dlg.close(); resolve(ok); };
+    $('sv-confirm-cancel').onclick = () => done(false);
+    dlg.querySelector('form').onsubmit = (e) => { e.preventDefault(); done(true); };
+    dlg.oncancel = (e) => { e.preventDefault(); done(false); };
+    dlg.onclick = (e) => { if (e.target === dlg) done(false); };
+    dlg.showModal();
+  });
   btn.onclick = async () => {
-    if (!confirm('Delete this link? Anyone who has it will see that it is gone. This cannot be undone.')) return;
+    if (!await askDelete()) return;
     btn.disabled = true;
     btn.textContent = 'Deleting…';
     try {

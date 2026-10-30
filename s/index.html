@@ -25,6 +25,16 @@
     <p>You made this link. Anyone who has it can see it.</p>
     <button type="button" class="sv-btn-line" id="sv-delete">Delete link</button>
 </div>
+<dialog class="sv-dialog" id="sv-confirm" aria-labelledby="sv-confirm-title">
+    <form method="dialog">
+        <h2 class="sv-dialog-title" id="sv-confirm-title">Delete this link?</h2>
+        <p class="sv-dialog-text">Anyone who has it will see that it is gone. This cannot be undone.</p>
+        <div class="sv-dialog-actions">
+            <button type="button" class="sv-btn-line" id="sv-confirm-cancel" autofocus>Keep it</button>
+            <button type="submit" class="sv-btn-line sv-btn-danger" id="sv-confirm-ok">Delete link</button>
+        </div>
+    </form>
+</dialog>
 <main class="sv-main" id="share-app" aria-live="polite">
     <div class="sv-skeleton" aria-hidden="true"></div>
 </main>

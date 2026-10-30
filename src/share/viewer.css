@@ -119,6 +119,24 @@ a { color: inherit; }
 .sv-btn-line:hover { border-color: var(--ink-3); }
 .sv-btn-line:active { transform: scale(0.98); }
 .sv-btn-line:disabled { opacity: 0.5; cursor: default; }
+.sv-btn-danger { border-color: #f87171; color: #f87171; }
+.sv-btn-danger:hover { border-color: #f87171; background: rgba(248, 113, 113, 0.12); }
+
+/* ── delete confirmation (v41.0.1) ── */
+.sv-dialog {
+  margin: auto;
+  width: min(360px, calc(100vw - 32px));
+  padding: 22px;
+  background: var(--bg-raise);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+}
+.sv-dialog::backdrop { background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(6px); }
+.sv-dialog-title { margin: 0 0 8px; font: 600 16px var(--font); letter-spacing: -0.2px; }
+.sv-dialog-text { margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+.sv-dialog-actions { display: flex; gap: 8px; margin-top: 18px; }
+.sv-dialog-actions .sv-btn-line { flex: 1; }
 
 /* ── stage ── */
 .sv-main {

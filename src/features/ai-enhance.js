@@ -82,10 +82,20 @@ function applyEnhanceFilters(vals, message) {
   showNotification(message, 'success');
 }
 
+// The picture sent for analysis is rendered without preview chrome (selection
+// boxes, Spotlight handles), like the exports; see export.js exportImage.
+function previewJpeg() {
+  const bracket = state.mode !== 'set';
+  if (bracket) render(true);
+  const dataUrl = el.previewCanvas.toDataURL('image/jpeg', 0.6);
+  if (bracket) render();
+  return dataUrl;
+}
+
 async function autoEnhance() {
   if (!state.image) { showNotification('Upload an image first.', 'error'); return; }
 
-  const dataUrl = el.previewCanvas.toDataURL('image/jpeg', 0.6);
+  const dataUrl = previewJpeg();
   try {
     const hosted = await tryHostedEnhance(dataUrl);
     if (hosted) {
@@ -158,7 +168,7 @@ function autoEnhanceLocal() {
 async function autoEnhanceWithClaude(apiKey) {
   showNotification('Analyzing with Claude...', 'success');
   try {
-    const dataUrl = el.previewCanvas.toDataURL('image/jpeg', 0.6);
+    const dataUrl = previewJpeg();
     const base64 = dataUrl.split(',')[1];
 
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
@@ -197,7 +207,7 @@ async function autoEnhanceWithClaude(apiKey) {
 async function autoEnhanceWithOpenAI(apiKey) {
   showNotification('Analyzing with GPT-4 Vision...', 'success');
   try {
-    const dataUrl = el.previewCanvas.toDataURL('image/jpeg', 0.6);
+    const dataUrl = previewJpeg();
     const { default: OpenAI } = await import('openai');
     const client = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
 
