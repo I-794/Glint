@@ -10,7 +10,7 @@ import { migrateLocalStorage, MIGRATED_FLAG } from '../src/state/brand-migrate.j
 import { normalizeCrop, cropRect, cropKey } from '../src/render/crop-core.js';
 import { colorToolsDefaults, normalizeColorTools, isIdentity, curveLut, levelsLut, channelLuts, applyLuts, encodeLook, decodeLook, lookToJson, STARTER_LOOKS, normalizeFilters } from '../src/render/curves-core.js';
 import { classifyAspect, smartFrameFor, fileName, parseSizes, captureOverrideFields, diffOverrides, applyOverrides, normalizeRoll, normalizeOverrides } from '../src/render/roll-core.js';
-import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, surfaceMask, buildLut3d, applyFlip, flipColorHex, sceneFlip } from '../src/render/mode-flip-core.js';
+import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightness, detectMode, photoMask, surfaceMask, buildLut3d, applyFlip, flipColorHex, sceneFlip, matchScene, restoreScene, forgetScene, SCENE_KEYS } from '../src/render/mode-flip-core.js';
 import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, peekSnapshot, withSnapshot, clearHistory, commitStep, onHistoryChange } from '../src/state/history.js';
 import { describeChange } from '../src/state/history-labels.js';
 import { makeVersion, normalizeVersions, MAX_VERSIONS, isSafeThumb } from '../src/state/versions-core.js';
@@ -406,10 +406,22 @@ function testModeFlipCore() {
     const back = oklabToSrgb(...srgbToOklab(...c));
     back.forEach((v, i) => assert.ok(Math.abs(v - c[i]) <= 1, `round trip ${c} -> ${back}`));
   }
-  // Dark: white becomes the surface level, black becomes soft ink; light is the inverse.
-  assert.ok(Math.abs(flipLightness(1, 'dark', 20) - 0.20) < 1e-9);
+  // Dark: a light-gray page becomes the surface level, a white card sits a
+  // little above it (v41.0.1 raised cards), black becomes soft ink; light is
+  // the inverse of the straight flip (below the fold they round-trip exactly).
+  assert.ok(Math.abs(flipLightness(0.97, 'dark', 20) - 0.20) < 1e-9, 'a light-gray page lands on the surface');
+  assert.ok(Math.abs(flipLightness(1, 'dark', 20) - 0.25) < 1e-9, 'white is raised above the surface');
+  assert.ok(Math.abs(flipLightness(1, 'dark', 20, false) - 0.20) < 1e-9, 'without raise, white is the surface');
+  assert.ok(flipLightness(0.93, 'dark', 20) > flipLightness(0.97, 'dark', 20), 'the fold is continuous: just below it is lighter than the page');
   assert.ok(Math.abs(flipLightness(0, 'dark', 20) - 0.93) < 1e-9);
   assert.ok(Math.abs(flipLightness(flipLightness(0.7, 'dark', 20), 'light', 20) - 0.7) < 1e-9);
+  // A white card on an #f5f5f5 page is lighter than the page after the flip.
+  const L = (rgb) => srgbToOklab(...rgb)[0];
+  const cardLut = buildLut3d('dark', 20, 60);
+  const flipL = (rgb) => L([...applyFlip(flat(1, 1, rgb), cardLut, null, 60).slice(0, 3)]);
+  assert.ok(flipL([255, 255, 255]) > flipL([245, 245, 245]) + 0.02, 'a white card stays raised above a light-gray page');
+  // The scene itself is the page: no raise on background colors.
+  assert.ok(L(parseHexRgb(flipColorHex('#ffffff', 'dark', 20))) <= L(parseHexRgb(flipColorHex('#f5f5f5', 'dark', 20))) + 1e-6, 'a white scene background goes to the surface, not above it');
   const lut = buildLut3d('dark', 20, 60);
   const px = (rgb, l = lut, protect = 60) => [...applyFlip(flat(1, 1, rgb), l, null, protect).slice(0, 3)];
   const white = px([255, 255, 255]);
@@ -491,6 +503,27 @@ function testModeFlipCore() {
   // Normalize repairs junk.
   assert.deepEqual(normalizeModeFlip({ enabled: 'yes', target: 'sideways', surface: 99, protect: -5 }),
     { enabled: false, target: 'auto', surface: 36, protect: 0 });
+}
+
+function parseHexRgb(hex) { return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)); }
+
+function testSceneRecordIsShared() {
+  const design = { bgMode: 'solid', bgColor: '#ffffff', textOverlay: { color: '#111111' }, deviceFrame: { color: 'light' } };
+  matchScene(design, 'dark', 20);
+  assert.notEqual(design.bgColor, '#ffffff', 'match flips the background');
+  assert.equal(design.deviceFrame.color, 'dark');
+  assert.ok(restoreScene(design), 'an untouched scene is put back');
+  assert.equal(design.bgColor, '#ffffff');
+  assert.equal(design.deviceFrame.color, 'light');
+  assert.ok(!restoreScene(design), 'the record is used once');
+  matchScene(design, 'dark', 20);
+  design.bgColor = '#123456';   // edited since
+  assert.ok(!restoreScene(design), 'an edited scene stays as it is');
+  assert.equal(design.bgColor, '#123456');
+  matchScene(design, 'dark', 20);
+  forgetScene();
+  assert.ok(!restoreScene(design));
+  assert.ok(SCENE_KEYS.includes('bgColor') && SCENE_KEYS.includes('textOverlay'));
 }
 
 function testModeFlipMigratesAndPersists() {
@@ -945,6 +978,7 @@ const tests = [
   testColorToolsLuts,
   testLooksAndColorToolsPersist,
   testModeFlipCore,
+  testSceneRecordIsShared,
   testModeFlipMigratesAndPersists,
   testHistoryStepsStayPaired,
   testHistoryPeekPutsLiveStateBack,

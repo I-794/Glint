@@ -12,24 +12,17 @@ import { showNotification } from '../ui/notification.js';
 import { revealSection } from './studio-nav.js';
 import { adoptCurrentAsBefore, refreshCompareUI } from './compare-ui.js';
 import { detectImageMode, modeFlipActive } from '../render/mode-flip.js';
-import { normalizeModeFlip, sceneFlip } from '../render/mode-flip-core.js';
+import { normalizeModeFlip, matchScene, restoreScene } from '../render/mode-flip-core.js';
 import { compareDefaults } from '../render/compare-core.js';
 import { canvasToBlob, loadImage, nearestGptImageSize } from './ai-shared.js';
 
 const PREFS_KEY = 'glint_light_dark_prefs';
 const NAMES = { light: 'Light', dark: 'Dark' };
-const SCENE_KEYS = ['bgColor', 'gradient', 'meshGradient', 'pattern', 'deviceFrame', 'textOverlay'];
 let busy = false;
-// Runtime only: the scene before and after the last Match the scene, so turning
-// the flip off restores it exactly (a flip back would only be close).
-let lastScene = null;
-
-const sceneOf = () => JSON.stringify(SCENE_KEYS.map((k) => state[k]));
-function flipScene(target, surface) {
-  const before = JSON.parse(JSON.stringify(SCENE_KEYS.map((k) => state[k])));
-  sceneFlip(state, target, surface);
-  lastScene = { before, after: sceneOf() };
-}
+// The scene before and after the last Match the scene lives in mode-flip-core
+// (matchScene / restoreScene), shared with the Design Agent, so turning the
+// flip off restores it exactly (a flip back would only be close).
+const flipScene = (target, surface) => matchScene(state, target, surface);
 
 // ---- per-viewer choices (engine, Match the scene, Keep the original) -------------
 
@@ -110,8 +103,7 @@ export function turnOffLightDark() {
   if (!mf.enabled) return;
   saveStateToHistory('Light / Dark off');
   state.modeFlip = { ...mf, enabled: false };
-  if (lastScene && lastScene.after === sceneOf()) SCENE_KEYS.forEach((k, i) => { state[k] = lastScene.before[i]; });
-  lastScene = null;
+  restoreScene(state);
   if (isOwnPair()) state.compare = { ...state.compare, beforeSrc: null, enabled: false, wipe: false, labels: compareDefaults().labels };
   syncSidebar();
   refreshModeFlipUI();

@@ -26,7 +26,7 @@ import { imageToDataUrl } from '../state/serialize.js';
 import { ensureCompareImage } from '../render/compare.js';
 import { syncCroppedImage } from '../render/crop-image.js';
 import { cropSource } from '../render/crop-core.js';
-import { normalizeModeFlip, sceneFlip } from '../render/mode-flip-core.js';
+import { normalizeModeFlip, sceneFlip, SCENE_KEYS } from '../render/mode-flip-core.js';
 import {
   rollSources, rollRuntime, captureOverrideFields, diffOverrides, applyOverrides,
   smartFrameFor, classifyAspect, fileName, parseSizes, sizeLabel,
@@ -189,7 +189,6 @@ async function withShot(shot, fn) {
 // null leaves the design as set). A shot already in that mode comes out as it
 // is (the pass skips a matching target). With matchScene the scene follows the
 // mode. Everything touched is put back afterwards.
-const SCENE_KEYS = ['bgColor', 'gradient', 'meshGradient', 'pattern', 'deviceFrame', 'textOverlay'];
 function withMode(mode, matchScene, fn) {
   if (!mode) return fn();
   const savedFlip = state.modeFlip;

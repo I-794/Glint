@@ -8,6 +8,9 @@
 
 export const TARGETS = ['auto', 'dark', 'light'];
 const INK = 0.93;            // OKLab L that black text becomes in dark mode
+const RAISE_FROM = 0.93;     // OKLab L where the dark flip starts to fold (#e5e5e5 is just below)
+const RAISE_PAGE = 0.97;     // OKLab L of a light-gray page (#f5f5f5): lands on the surface
+const RAISE = 0.05;          // how far above the surface a white card sits
 const LUT_N = 33;            // table points per axis
 const TILE = 16;             // photo-detection tile size in pixels
 
@@ -100,10 +103,17 @@ export function oklabToSrgb(L, a, b) {
 
 // Dark: white becomes the surface level and black becomes soft ink, like a real
 // dark theme. Light is the exact inverse, so flipping twice comes back close.
-export function flipLightness(L, target, surface = 20) {
+export function flipLightness(L, target, surface = 20, raise = true) {
   const s = clamp(surface, 12, 36) / 100;
-  if (target === 'dark') return INK - (INK - s) * clamp(L, 0, 1);
-  return clamp((INK - L) / (INK - s), 0, 1);
+  L = clamp(L, 0, 1);
+  if (target !== 'dark') return clamp((INK - L) / (INK - s), 0, 1);
+  // v41.0.1 — raised cards: a straight flip made a white card darker than the
+  // light-gray page around it, the opposite of a dark interface. The top of
+  // the range folds: light grays (a page) still reach the surface, and the
+  // last stretch up to white climbs RAISE above it, so cards sit on the page.
+  if (!raise || L <= RAISE_FROM) return INK - (INK - s) * L;
+  if (L <= RAISE_PAGE) return INK - (INK - s) * RAISE_FROM + (s - (INK - (INK - s) * RAISE_FROM)) * (L - RAISE_FROM) / (RAISE_PAGE - RAISE_FROM);
+  return s + RAISE * (L - RAISE_PAGE) / (1 - RAISE_PAGE);
 }
 
 // ---- detection --------------------------------------------------------------
@@ -453,8 +463,37 @@ export function flipColorHex(hex, target, surface = 20) {
   if (target === 'dark' ? L < 0.5 : L >= 0.5) return hex;
   // Mid tones sit near the flip's fixed point; never lighten on the way to
   // dark (or darken on the way to light).
-  const f = flipLightness(L, target, surface);
+  // The scene around the screenshot is the page, not a card: no raise.
+  const f = flipLightness(L, target, surface, false);
   return toHex(oklabToSrgb(target === 'dark' ? Math.min(L, f) : Math.max(L, f), a, b));
+}
+
+// ---- scene record ---------------------------------------------------------------
+// v41.0.1 — one runtime record of the last Match the scene, shared by the
+// Light / Dark panel and the Design Agent (they used to keep one each, so the
+// panel's Turn off could not put back a scene the agent had matched). Turning
+// the flip off restores the scene exactly, unless it was edited since.
+export const SCENE_KEYS = ['bgColor', 'gradient', 'meshGradient', 'pattern', 'deviceFrame', 'textOverlay'];
+let sceneRecord = null;
+const sceneOf = (design) => JSON.stringify(SCENE_KEYS.map((k) => design[k]));
+
+// sceneFlip + remember the scene before and after.
+export function matchScene(design, target, surface = 20) {
+  const before = JSON.parse(JSON.stringify(SCENE_KEYS.map((k) => design[k] === undefined ? null : design[k])));
+  sceneFlip(design, target, surface);
+  sceneRecord = { before, after: sceneOf(design) };
+  return design;
+}
+
+export function forgetScene() { sceneRecord = null; }
+
+// Put the matched scene back if it is still as the match left it. Returns
+// whether it was restored; the record is dropped either way.
+export function restoreScene(design) {
+  const ok = !!(sceneRecord && sceneRecord.after === sceneOf(design));
+  if (ok) SCENE_KEYS.forEach((k, i) => { design[k] = sceneRecord.before[i]; });
+  sceneRecord = null;
+  return ok;
 }
 
 const FRAME_TO_DARK = { light: 'dark', silver: 'dark', gold: 'dark', titanium: 'dark' };

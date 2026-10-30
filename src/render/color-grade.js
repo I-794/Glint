@@ -71,6 +71,19 @@ function applyTempTint(rgb, tempK, tintK) {
   rgb[1] -= tintK;       // green (magenta when reduced)
 }
 
+// The same temperature / tint over a whole RGBA buffer, clamped (Look chips).
+export function tempTintData(data, temperature = 0, tint = 0) {
+  const tempK = (temperature || 0) / 100 * 50;
+  const tintK = (tint || 0) / 100 * 50;
+  if (!tempK && !tintK) return data;
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = Math.max(0, Math.min(255, data[i] + tempK));
+    data[i + 1] = Math.max(0, Math.min(255, data[i + 1] - tintK));
+    data[i + 2] = Math.max(0, Math.min(255, data[i + 2] - tempK));
+  }
+  return data;
+}
+
 function gradeImage(srcImage) {
   if (!srcImage || !srcImage.width || !srcImage.height) return srcImage;
   if (!gradeActive()) return srcImage;
@@ -213,6 +226,11 @@ function imageId(img) {
 // device paths. Returns 'none' when nothing is set.
 export function cssFilterFor(f = state.imageFilters || {}) {
   if (showingOriginal()) return 'none';   // v39: holding backslash
+  return filterCss(f);
+}
+
+// The filter string alone (no hold-to-compare gate): Look chips use it.
+export function filterCss(f = {}) {
   const out = [];
   if (f.brightness != null && f.brightness !== 100) out.push(`brightness(${f.brightness}%)`);
   if (f.contrast != null && f.contrast !== 100) out.push(`contrast(${f.contrast}%)`);

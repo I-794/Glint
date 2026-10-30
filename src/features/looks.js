@@ -10,7 +10,7 @@ import { showNotification } from '../ui/notification.js';
 import { escapeHTML } from '../utils/dom.js';
 import { download } from './motion-export.js';
 import { STARTER_LOOKS, normalizeLook, normalizeFilters, normalizeColorTools, encodeLook, decodeLook, lookToJson, channelLuts, applyLuts } from '../render/curves-core.js';
-import { cssFilterFor } from '../render/color-grade.js';
+import { filterCss, tempTintData } from '../render/color-grade.js';
 import { openCurves } from './curves-ui.js';
 
 const KEY = 'glint_looks';
@@ -55,12 +55,12 @@ export function applyLook(look) {
   showNotification(`Applied "${n.name}". Undo if needed.`, 'success');
 }
 
-// v40 — each chip shows the current screenshot with that look: the curves and
-// levels tables on a small center crop, then the filter sliders as a canvas
-// filter, the order the editor grades in. Temperature and tint are left out
-// (no starter look uses them), so it is a preview, not the export.
+// v40 — each chip shows the current screenshot with that look: temperature and
+// tint, then the curves and levels tables, on a small center crop, then the
+// other filter sliders as a canvas filter, the order the editor grades in.
+// Since v41.0.1 blur is scaled to the crop, so the chip blurs like the canvas.
 const THUMB = { w: 88, h: 56 };   // drawn at 2x a 44x28 chip
-let thumbSource = null;           // { image, canvas }
+let thumbSource = null;           // { image, canvas, scale }
 
 function smallSource() {
   const img = state.image;
@@ -71,7 +71,7 @@ function smallSource() {
   const s = Math.max(THUMB.w / img.width, THUMB.h / img.height);
   const sw = THUMB.w / s, sh = THUMB.h / s;
   c.getContext('2d').drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, THUMB.w, THUMB.h);
-  thumbSource = { image: img, canvas: c };
+  thumbSource = { image: img, canvas: c, scale: s };
   return c;
 }
 
@@ -81,12 +81,16 @@ function paintThumb(canvas, look, src) {
   const t = tmp.getContext('2d');
   t.drawImage(src, 0, 0);
   const data = t.getImageData(0, 0, tmp.width, tmp.height);   // throws on a cross-origin screenshot
+  const f = look.imageFilters;
+  tempTintData(data.data, f.temperature, f.tint);
   const [lr, lg, lb] = channelLuts(look.colorTools);
   applyLuts(data.data, lr, lg, lb);
   t.putImageData(data, 0, 0);
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.filter = cssFilterFor(look.imageFilters);
+  // Blur is in source pixels; the crop is `scale` times smaller than the screenshot.
+  const scale = thumbSource ? thumbSource.scale : 1;
+  ctx.filter = filterCss({ ...f, blur: (f.blur || 0) * scale });
   ctx.drawImage(tmp, 0, 0, canvas.width, canvas.height);
   ctx.filter = 'none';
 }

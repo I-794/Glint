@@ -22,17 +22,13 @@ function genSize() {
   return '1024x1024';
 }
 
-// v40 — mirrors the Light / Dark panel's lastScene: the scene before and after
-// the agent's last Match the scene, so turning the flip off puts it back exactly.
-const SCENE_KEYS = ['bgColor', 'gradient', 'meshGradient', 'pattern', 'deviceFrame', 'textOverlay'];
-let agentScene = null;
-const sceneOf = () => JSON.stringify(SCENE_KEYS.map((k) => state[k]));
-// Restores the matched scene unless it was edited since; returns ' and put the scene back' or ''.
-function restoreAgentScene() {
-  const restored = !!(agentScene && agentScene.after === sceneOf());
-  if (restored) SCENE_KEYS.forEach((k, i) => { state[k] = agentScene.before[i]; });
-  agentScene = null;
-  return restored ? ' and put the scene back' : '';
+// v40 — the scene before and after the last Match the scene (the panel's or
+// the agent's; one record in mode-flip-core since v41.0.1), so turning the
+// flip off puts it back exactly unless it was edited since.
+// Returns ' and put the scene back' or ''.
+async function restoreAgentScene() {
+  const { restoreScene } = await import('../render/mode-flip-core.js');
+  return restoreScene(state) ? ' and put the scene back' : '';
 }
 
 function clampNum(v, lo, hi) { const n = Number(v); return isFinite(n) ? Math.max(lo, Math.min(hi, n)) : null; }
@@ -173,13 +169,13 @@ export const TOOLS = [
       required: ['mode']
     },
     async run(args) {
-      const { normalizeModeFlip, sceneFlip } = await import('../render/mode-flip-core.js');
+      const { normalizeModeFlip, matchScene, forgetScene } = await import('../render/mode-flip-core.js');
       const { detectImageMode } = await import('../render/mode-flip.js');
       const mf = normalizeModeFlip(state.modeFlip);
       if (args.mode === 'off') {
         if (!mf.enabled) return 'Light / Dark is already off.';
         state.modeFlip = { ...mf, enabled: false };
-        return `Turned Light / Dark off${restoreAgentScene()}.`;
+        return `Turned Light / Dark off${await restoreAgentScene()}.`;
       }
       if (args.mode !== 'dark' && args.mode !== 'light') return 'mode must be dark, light or off.';
       if (mf.enabled && mf.target === args.mode) return `The screenshot is already flipped to ${args.mode}.`;
@@ -192,17 +188,12 @@ export const TOOLS = [
       if (from === args.mode) {
         if (!mf.enabled) return `The screenshot is already ${args.mode}.`;
         state.modeFlip = { ...mf, enabled: false };
-        return `Turned the flip off, so the screenshot is back to its original ${args.mode}${restoreAgentScene()}.`;
+        return `Turned the flip off, so the screenshot is back to its original ${args.mode}${await restoreAgentScene()}.`;
       }
       state.modeFlip = { ...mf, enabled: true, target: args.mode };
       const scene = args.match_scene !== false;
-      if (scene) {
-        const before = JSON.parse(JSON.stringify(SCENE_KEYS.map((k) => state[k])));
-        sceneFlip(state, args.mode, state.modeFlip.surface);
-        agentScene = { before, after: sceneOf() };
-      } else {
-        agentScene = null;
-      }
+      if (scene) matchScene(state, args.mode, state.modeFlip.surface);
+      else forgetScene();
       return `Flipped the screenshot to ${args.mode}${scene ? ' and matched the scene' : ''}.`;
     }
   },
