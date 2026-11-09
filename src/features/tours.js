@@ -12,10 +12,10 @@
 
 import { state } from '../state/state.js';
 import { saveStateToHistory, onHistoryChange } from '../state/history.js';
-import { addPage } from './pages.js';
+import { addPage, getPageMeta, activePageId, onDocumentChange } from './pages.js';
 import {
   showTourOverlay, hideTourOverlay, refreshTourOverlay, onTourOverlayChange,
-  getSelectedHotspot, selectHotspot, deleteHotspot, addDefaultHotspot
+  getSelectedHotspot, selectHotspot, deleteHotspot, addDefaultHotspot, setTourBadge
 } from '../render/tour-overlay.js';
 import { previewTour, exportTour, tourEmbedCode } from './tour-export.js';
 import { showNotification } from '../ui/notification.js';
@@ -41,6 +41,39 @@ export function exitTourMode() {
 
 export function toggleTourMode() { inTourMode() ? exitTourMode() : enterTourMode(); }
 
+// ── v42 — where a hotspot goes ───────────────────────────────────────────────
+// A target is a page id. Returns the 1-based page number it points at, or 0
+// when the hotspot goes to the next step (no target, its own page, or a page
+// that was deleted).
+function targetPageNumber(h) {
+  if (!h || !h.target || h.target === activePageId()) return 0;
+  return getPageMeta().findIndex(p => p.id === h.target) + 1;
+}
+
+function renderTargetSelect(h) {
+  const sel = $('tour-hotspot-target'), note = $('tour-target-note');
+  if (!sel) return;
+  const here = activePageId();
+  const pages = getPageMeta();
+  sel.textContent = '';
+  const next = document.createElement('option');
+  next.value = ''; next.textContent = 'Next step';
+  sel.appendChild(next);
+  pages.forEach((p, i) => {
+    if (p.id === here) return;
+    const o = document.createElement('option');
+    o.value = p.id; o.textContent = `Page ${i + 1}`;
+    sel.appendChild(o);
+  });
+  const n = targetPageNumber(h);
+  sel.value = n ? h.target : '';
+  if (note) {
+    const lost = !!h.target && !n && h.target !== here;
+    note.hidden = !lost;
+    note.textContent = lost ? 'The page this hotspot pointed at was removed, so it goes to the next step.' : '';
+  }
+}
+
 // ── Sidebar sync ──────────────────────────────────────────────────────────────
 function renderHotspotList() {
   const list = $('tour-hotspot-list');
@@ -54,10 +87,12 @@ function renderHotspotList() {
   list.innerHTML = hs.map((h, i) => {
     const title = (h.callout && h.callout.title) || h.label || `Hotspot ${i + 1}`;
     const on = sel && sel.id === h.id;
-    return `<div class="tour-hs-row${on ? ' active' : ''}" data-id="${h.id}">
+    const to = targetPageNumber(h);
+    return `<div class="tour-hs-row${on ? ' active' : ''}" data-id="${escapeHtml(h.id)}">
       <span class="tour-hs-row-num">${i + 1}</span>
       <span class="tour-hs-row-label">${escapeHtml(title)}</span>
-      <button class="tour-hs-row-del" data-del="${h.id}" title="Delete">✕</button>
+      ${to ? `<span class="tour-hs-row-to" title="Jumps to page ${to}">to Page ${to}</span>` : ''}
+      <button class="tour-hs-row-del" data-del="${escapeHtml(h.id)}" title="Delete">✕</button>
     </div>`;
   }).join('');
   list.querySelectorAll('.tour-hs-row').forEach(row => {
@@ -80,6 +115,7 @@ function renderCalloutEditor() {
   if ($('tour-callout-title')) $('tour-callout-title').value = c.title || '';
   if ($('tour-callout-body')) $('tour-callout-body').value = c.body || '';
   if ($('tour-callout-side')) $('tour-callout-side').value = c.side || 'bottom';
+  renderTargetSelect(h);
 }
 
 function renderAutoAdvance() {
@@ -136,9 +172,27 @@ export function bindTours() {
   if (side) side.addEventListener('change', () => {
     const h = getSelectedHotspot();
     if (!h) return;
+    // Read the choice first: saving a step refreshes this panel from state,
+    // which put the old side back before it was stored.
+    const to = side.value;
     saveStateToHistory();
-    (h.callout || (h.callout = {})).side = side.value;
+    (h.callout || (h.callout = {})).side = to;
   });
+
+  // v42 — "Goes to": the next step, or any other page.
+  const target = $('tour-hotspot-target');
+  if (target) target.addEventListener('change', () => {
+    const h = getSelectedHotspot();
+    if (!h) return;
+    // Read the choice first: saving a step refreshes this panel from state.
+    const to = target.value || null;
+    saveStateToHistory('Tour hotspot target');
+    h.target = to;
+    refreshTourOverlay();
+  });
+  setTourBadge((h) => { const n = targetPageNumber(h); return n ? `→ ${n}` : ''; });
+  // Pages added, removed or reordered change what the picker and badges show.
+  onDocumentChange(() => { if (inTourMode()) { refreshTourOverlay(); renderHotspotList(); renderCalloutEditor(); } });
 
   const auto = $('tour-auto');
   if (auto) {

@@ -15,6 +15,7 @@ import { cropSource, ensureCropDefaults } from '../render/crop-core.js';
 import { ensureColorToolsDefaults } from '../render/curves-core.js';
 import { ensureModeFlipDefaults } from '../render/mode-flip-core.js';
 import { ensureVersionsDefaults } from './versions-core.js';
+import { normalizeTour } from './tour-core.js';
 
 export const SERIALIZED_FIELDS = [
   'imageTransform', 'imageCrop', 'imageFilters', 'imageLayer', 'textOverlay', 'watermark', 'gradient',
@@ -88,7 +89,7 @@ export function snapshotProject() {
 // restores the artwork — unlike snapshotProject(), which stays deliberately
 // lean for realtime collab/gallery payloads. Bump SCHEMA_VERSION whenever the
 // field set changes so normalizeProject() can migrate older saves.
-export const SCHEMA_VERSION = 25;
+export const SCHEMA_VERSION = 26;
 
 // SERIALIZED_FIELDS + the rest of the design-defining state. Kept separate from
 // SERIALIZED_FIELDS so collab/gallery stay small; projects want full fidelity.
@@ -123,10 +124,10 @@ export const PROJECT_FIELDS = [
 // applyDesignToState() does Object.assign(state, design), a page payload that
 // predates Tours (or simply has none) must explicitly reset state.tour, or the
 // previous step's hotspots would bleed onto it. Mutates + returns the design.
+// v42 — schema 26: the block is also repaired (normalizeTour), and a hotspot's
+// unused `action` gives way to `target` (a page id, or null for the next step).
 export function ensureTourDefaults(design) {
-  if (design && !design.tour) {
-    design.tour = { hotspots: [], autoAdvanceMs: 0 };
-  }
+  if (design) design.tour = normalizeTour(design.tour);
   return design;
 }
 

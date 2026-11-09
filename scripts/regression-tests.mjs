@@ -14,6 +14,7 @@ import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightne
 import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, peekSnapshot, withSnapshot, clearHistory, commitStep, onHistoryChange } from '../src/state/history.js';
 import { describeChange } from '../src/state/history-labels.js';
 import { makeVersion, normalizeVersions, MAX_VERSIONS, isSafeThumb } from '../src/state/versions-core.js';
+import { normalizeTour, resolveTourTargets, tourLinks } from '../src/state/tour-core.js';
 import { createHmac, randomBytes } from 'node:crypto';
 import { store as shareStore, memoryStoreEntries } from '../api/_share.js';
 import shareStatusRoute from '../api/_share-status.js';
@@ -742,6 +743,47 @@ function testVersionsNormalizeAndPersist() {
   }
 }
 
+// v42 — branching tours: targets are page ids, the player wants step indexes.
+function testTourCoreTargets() {
+  const old = normalizeTour({ hotspots: [{ id: 'a', x: 0.1, y: 0.2, w: 0.3, h: 0.1, label: '', callout: { title: 'Hi', body: '', side: 'left' }, action: 'next' }], autoAdvanceMs: 2000 });
+  assert.equal(old.hotspots[0].action, undefined);
+  assert.equal(old.hotspots[0].target, null);
+  assert.equal(old.hotspots[0].callout.side, 'left');
+  assert.equal(old.autoAdvanceMs, 2000);
+
+  const bad = normalizeTour({ hotspots: [{ x: 4, y: -1, w: 2, h: 'x', callout: { side: 'up' }, target: 7 }, null], autoAdvanceMs: 'soon' });
+  assert.equal(bad.hotspots.length, 2);
+  assert.deepEqual([bad.hotspots[0].x, bad.hotspots[0].y, bad.hotspots[0].w, bad.hotspots[0].h], [1, 0, 0, 0]);
+  assert.equal(bad.hotspots[0].callout.side, 'bottom');
+  assert.equal(bad.hotspots[0].target, null);
+  assert.ok(bad.hotspots[0].id && bad.hotspots[1].id);
+  assert.equal(bad.autoAdvanceMs, 0);
+  assert.deepEqual(normalizeTour(undefined), { hotspots: [], autoAdvanceMs: 0 });
+
+  // Page p2 is blank, so it is not a step: p3 is step 1 and p4 is step 2.
+  const hs = (target) => ({ id: 'h', x: 0, y: 0, w: 0.5, h: 0.5, label: '', callout: null, target });
+  const steps = resolveTourTargets([
+    { pageId: 'p1', img: 'a', w: 10, h: 10, autoAdvanceMs: 0, hotspots: [hs('p4'), hs(null), hs('p2'), hs('gone'), hs('p1')] },
+    { pageId: 'p3', img: 'b', w: 10, h: 10, autoAdvanceMs: 0, hotspots: [hs('p1')] },
+    { pageId: 'p4', img: 'c', w: 10, h: 10, autoAdvanceMs: 0, hotspots: [] }
+  ]);
+  assert.equal(steps[0].pageId, undefined);
+  assert.deepEqual(steps[0].hotspots.map((h) => h.goto), [2, undefined, undefined, undefined, undefined]);
+  assert.equal(steps[1].hotspots[0].goto, 0);
+  assert.equal(steps[0].hotspots[0].target, undefined);
+  assert.equal(steps[0].hotspots[0].id, undefined);
+
+  const page = (id, targets) => ({ id, payload: { design: { tour: { hotspots: targets.map((t) => ({ target: t })) } } } });
+  assert.deepEqual(tourLinks([page('p1', ['p2', 'p2', 'p1', 'gone', null]), page('p2', ['p1']), { id: 'p3', payload: null }]),
+    [{ from: 'p1', to: 'p2' }, { from: 'p2', to: 'p1' }]);
+
+  // A design saved before v42 comes back with targets and without `action`.
+  const migrated = normalizeProject({ schemaVersion: 25, design: { tour: { hotspots: [{ id: 'a', x: 0.1, y: 0.1, w: 0.2, h: 0.2, action: 'next' }] } } });
+  assert.equal(migrated.design.tour.hotspots[0].target, null);
+  assert.equal(migrated.design.tour.hotspots[0].action, undefined);
+  assert.equal(SCHEMA_VERSION, 26);
+}
+
 function shareHmac(secret, msg) {
   return createHmac('sha256', secret).update(msg).digest();
 }
@@ -796,6 +838,13 @@ function testShareCoreManifest() {
   assert.equal(tour.tour.steps[1].autoAdvanceMs, 0);
   assert.equal(tour.tour.steps[0].hotspots[0].callout.side, 'left');
   assert.equal(describeShare(tour), 'An interactive tour in 2 steps. Made with Glint.');
+  assert.equal(tour.tour.steps[0].hotspots[0].goto, undefined);
+
+  // v42 — a hotspot's goto is kept only when it is a step inside the tour.
+  const jump = shareFixture('tour');
+  const spot = (goto) => ({ x: 0, y: 0, w: 0.2, h: 0.2, goto });
+  jump.tour.steps[0].hotspots = [spot(1), spot(2), spot(-1), spot(0.5), spot('1'), spot(0)];
+  assert.deepEqual(normalizeManifest(jump).tour.steps[0].hotspots.map((h) => h.goto), [1, undefined, undefined, undefined, undefined, 0]);
 
   const long = shareFixture('tour');
   long.tour.steps = Array.from({ length: 31 }, (_, i) => ({ src: `${i}.webp`, w: 10, h: 10 }));
@@ -985,6 +1034,7 @@ const tests = [
   testCommitStepEmitsAfterApply,
   testHistoryLabels,
   testVersionsNormalizeAndPersist,
+  testTourCoreTargets,
   testShareCoreIdsAndKeys,
   testShareCoreManifest,
   testSharePlayersInlineCleanly,

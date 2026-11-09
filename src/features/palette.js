@@ -129,6 +129,10 @@ export function registerCommands() {
     { id: 'exportBoard', label: 'Board: export PNG', icon: 'download', group: 'File',
       run: () => import('./board.js').then(m => m.exportBoard()),
       when: () => state.mode === 'board' },
+    // v42 — the tour map on the board.
+    { id: 'board-tour-links', label: 'Board: show or hide tour links', icon: '⇢', group: 'View',
+      run: () => import('./board.js').then(m => m.toggleTourLinks()),
+      when: () => state.mode === 'board' },
     // v32.1 — board layout commands (previously reachable only via the agent).
     { id: 'boardFit', label: 'Board: fit to screen', icon: '⌧', group: 'View', keys: '0',
       run: () => import('./board.js').then(m => m.fitBoard()),

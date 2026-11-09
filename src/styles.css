@@ -1003,6 +1003,12 @@ kbd {
     background: var(--accent-primary); color: var(--on-accent); font-size: 11px; font-weight: 700;
     border-radius: 10px; border: 2px solid #fff; pointer-events: none;
 }
+.tour-hotspot-to {
+    position: absolute; bottom: -10px; left: -10px; height: 20px; padding: 0 7px;
+    display: flex; align-items: center; white-space: nowrap;
+    background: #141416; color: #f2a93b; font-size: 11px; font-weight: 700;
+    border-radius: 10px; border: 2px solid #f2a93b; pointer-events: none;
+}
 .tour-hotspot-del {
     position: absolute; top: -10px; right: -10px; width: 20px; height: 20px; padding: 0;
     display: none; align-items: center; justify-content: center; cursor: pointer;
@@ -1032,6 +1038,7 @@ kbd {
     background: var(--accent-primary); color: var(--on-accent); font-size: 11px; font-weight: 700; border-radius: 50%;
 }
 .tour-hs-row-label { flex: 1; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tour-hs-row-to { flex-shrink: 0; font-size: 11px; color: var(--accent-text); border: 1px solid var(--accent-line); border-radius: 999px; padding: 1px 7px; }
 .tour-hs-row-del { flex-shrink: 0; border: 0; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 12px; padding: 2px 4px; border-radius: 4px; }
 .tour-hs-row-del:hover { background: rgba(229,72,77,0.15); color: #e5484d; }
 
@@ -1883,6 +1890,10 @@ kbd {
 .board-text.selected { outline: 1px dashed var(--accent-line, #f2a93b); outline-offset: 2px; }
 .board-connectors { position: absolute; inset: 0; width: 100%; height: 100%;
   overflow: visible; pointer-events: none; }
+/* v42 — the tour map: jumps between cards, drawn above them */
+.board-tour-map { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+  pointer-events: none; z-index: 2147483000; }
+.board-tour-link { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7)); }
 
 /* v32 — Seed: the board toolbar's Add-from-URL input bar. */
 .board-seed { display: flex; gap: 6px; align-items: center; }

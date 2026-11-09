@@ -3,7 +3,9 @@
 // raw text (minus the `export` keyword) into a self-contained page.
 //
 // steps: [{ img | src (URL), w, h, autoAdvanceMs, hotspots: [{ x, y, w, h, label,
-//          callout: { title, body, side } }] }]  (geometry in fractions)
+//          callout: { title, body, side }, goto }] }]  (geometry in fractions)
+// v42: `goto` (optional) is the index of the step a hotspot jumps to; without
+// it the hotspot goes to the next step. Back retraces the steps you visited.
 export function mountTour(root, steps, opts) {
   opts = opts || {};
   var doc = root.ownerDocument;
@@ -32,7 +34,7 @@ export function mountTour(root, steps, opts) {
   var prev = root.querySelector('.gt-prev');
   var next = root.querySelector('.gt-next');
   var auto = root.querySelector('.gt-auto');
-  var i = 0, timer = null, rafId = 0, placed = [];
+  var i = 0, timer = null, rafId = 0, placed = [], trail = [];
 
   function srcOf(s) { return s.img || s.src; }
 
@@ -42,7 +44,7 @@ export function mountTour(root, steps, opts) {
     d.className = 'gt-dot';
     d.title = 'Step ' + (n + 1);
     d.setAttribute('aria-label', 'Go to step ' + (n + 1));
-    d.onclick = function () { go(n); };
+    d.onclick = function () { visit(n); };
     dots.appendChild(d);
   });
 
@@ -98,9 +100,10 @@ export function mountTour(root, steps, opts) {
       b.className = 'gt-hs';
       b.style.left = (hs.x * 100) + '%'; b.style.top = (hs.y * 100) + '%';
       b.style.width = (hs.w * 100) + '%'; b.style.height = (hs.h * 100) + '%';
-      b.setAttribute('aria-label', hs.label || 'Next step');
+      var to = targetOf(hs);
+      b.setAttribute('aria-label', hs.label || (to < 0 ? 'Next step' : 'Go to step ' + (to + 1)));
       if (hs.label) b.title = hs.label;
-      b.onclick = function () { advance(); };
+      b.onclick = function () { if (to < 0) advance(); else visit(to); };
       stage.appendChild(b);
       if (hs.callout && (hs.callout.title || hs.callout.body)) {
         var c = doc.createElement('div');
@@ -116,10 +119,13 @@ export function mountTour(root, steps, opts) {
       if (n2 === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
     });
     count.textContent = (i + 1) + ' / ' + list.length;
-    prev.disabled = i === 0;
+    prev.disabled = i === 0 && !trail.length;
     next.textContent = i === list.length - 1 ? '↺ Replay' : 'Next ›';
     // Warm the next frame so stepping forward never waits on the network.
-    if (i + 1 < list.length) { var pre = new Image(); pre.src = srcOf(list[i + 1]); }
+    // v42: the steps this one's hotspots jump to are warmed too.
+    var warm = i + 1 < list.length ? [i + 1] : [];
+    (s.hotspots || []).forEach(function (hs) { var t = targetOf(hs); if (t >= 0 && warm.indexOf(t) < 0) warm.push(t); });
+    warm.forEach(function (n2) { var pre = new Image(); pre.src = srcOf(list[n2]); });
     if (s.autoAdvanceMs > 0 && i < list.length - 1) startAuto(s.autoAdvanceMs);
   }
 
@@ -135,17 +141,38 @@ export function mountTour(root, steps, opts) {
     timer = setTimeout(advance, ms);
   }
 
-  function advance() { if (i >= list.length - 1) go(0); else go(i + 1); }
+  // The step a hotspot jumps to, or -1 for "the next step".
+  function targetOf(hs) {
+    var t = hs.goto;
+    return typeof t === 'number' && t % 1 === 0 && t >= 0 && t < list.length && t !== i ? t : -1;
+  }
+
+  // Moving forward (Next, a hotspot, a dot) remembers where you came from, so
+  // Back retraces a branch instead of stepping to the step before in the list.
+  function visit(n) {
+    if (n === i) return;
+    trail.push(i);
+    if (trail.length > 200) trail.shift();
+    go(n);
+  }
+
+  function back() {
+    if (trail.length) go(trail.pop());
+    else go(i - 1);
+  }
+
+  // Replay starts the tour over, with nothing to go back to.
+  function advance() { if (i >= list.length - 1) { trail = []; go(0); } else visit(i + 1); }
 
   function onKey(e) {
     if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
     var tag = e.target && e.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
     if (e.key === 'ArrowRight' || (e.key === ' ' && tag !== 'BUTTON')) { e.preventDefault(); advance(); }
-    else if (e.key === 'ArrowLeft') { e.preventDefault(); go(i - 1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); back(); }
   }
 
-  prev.onclick = function () { go(i - 1); };
+  prev.onclick = function () { back(); };
   next.onclick = function () { advance(); };
   frame.addEventListener('load', placeAll);
   var win = doc.defaultView;

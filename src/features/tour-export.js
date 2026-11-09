@@ -12,6 +12,7 @@ import { renderInto } from '../render/render.js';
 import { applyDesignToState, applyPayload } from './document.js';
 import { serializeDocument } from './pages.js';
 import { normalizeProject } from '../state/serialize.js';
+import { resolveTourTargets } from '../state/tour-core.js';
 import { showNotification } from '../ui/notification.js';
 import tourPlayerSrc from '../share/tour-player.js?raw';
 import tourCss from '../share/tour-player.css?raw';
@@ -31,6 +32,7 @@ export async function collectTourSteps(onProgress, encode = (c) => c.toDataURL('
     renderInto(off, true);
     const tour = norm.design.tour || { hotspots: [], autoAdvanceMs: 0 };
     steps.push({
+      pageId: doc.pages[i].id,
       img: await encode(off, steps.length),
       w: off.width, h: off.height,
       hotspots: Array.isArray(tour.hotspots) ? tour.hotspots : [],
@@ -41,7 +43,8 @@ export async function collectTourSteps(onProgress, encode = (c) => c.toDataURL('
   }
   // Restore the live editor to the step the user was on (mirrors renderAllPages).
   applyPayload(doc.pages[doc.active].payload);
-  return steps;
+  // v42 — hotspot targets are page ids; the player wants step indexes.
+  return resolveTourTargets(steps);
 }
 
 // ── Self-contained player document ────────────────────────────────────────────

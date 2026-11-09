@@ -152,7 +152,10 @@ function asset(v, field) {
   return v;
 }
 
-function normalizeHotspot(h) {
+// v42 — `goto` is the index of the step a hotspot jumps to. It is kept only
+// when it is a whole number inside the tour; otherwise the hotspot goes to the
+// next step.
+function normalizeHotspot(h, stepCount) {
   if (!h || typeof h !== 'object') fail('hotspot');
   const x = frac(h.x), y = frac(h.y);
   const out = {
@@ -168,10 +171,11 @@ function normalizeHotspot(h) {
     const body = text(c.body, LIMITS.body);
     if (title || body) out.callout = { title, body, side: SIDES.includes(c.side) ? c.side : 'bottom' };
   }
+  if (Number.isInteger(h.goto) && h.goto >= 0 && h.goto < stepCount) out.goto = h.goto;
   return out;
 }
 
-function normalizeStep(s) {
+function normalizeStep(s, stepCount) {
   if (!s || typeof s !== 'object') fail('step');
   const hotspots = s.hotspots == null ? [] : s.hotspots;
   if (!Array.isArray(hotspots) || hotspots.length > LIMITS.hotspots) fail('hotspots');
@@ -181,7 +185,7 @@ function normalizeStep(s) {
     w: dim(s.w, 'step.w'),
     h: dim(s.h, 'step.h'),
     autoAdvanceMs: Number.isFinite(ms) ? Math.max(0, Math.min(LIMITS.autoAdvanceMs, ms)) : 0,
-    hotspots: hotspots.map(normalizeHotspot),
+    hotspots: hotspots.map((h) => normalizeHotspot(h, stepCount)),
   };
 }
 
@@ -242,7 +246,7 @@ export function normalizeManifest(raw, { id, now } = {}) {
   } else if (raw.kind === 'tour') {
     const steps = raw.tour && raw.tour.steps;
     if (!Array.isArray(steps) || steps.length < 1 || steps.length > LIMITS.steps) fail('tour.steps');
-    out.tour = { steps: steps.map(normalizeStep) };
+    out.tour = { steps: steps.map((s) => normalizeStep(s, steps.length)) };
   } else {
     out.compare = normalizeCompareBlock(raw.compare);
   }

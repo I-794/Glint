@@ -1253,7 +1253,7 @@
 
         <div class="sidebar-section" data-group="export" id="tour-section">
             <h3 class="section-title">🎬 Interactive Tour</h3>
-            <p class="info-text" style="margin-bottom:8px;">Turn your pages into a clickable, embeddable product demo. Each page is a step — drop hotspots on the canvas, add callouts, and export a self-contained HTML file that works offline.</p>
+            <p class="info-text" style="margin-bottom:8px;">Turn your pages into a clickable, embeddable product demo. Each page is a step. Drop hotspots on the canvas, add callouts, and send each hotspot to the next step or to any page you pick. Export a self-contained HTML file that works offline.</p>
             <button class="btn btn-primary" style="width:100%;" id="tour-toggle-btn">▶ Enter Tour mode</button>
             <div id="tour-editor" style="display:none;">
                 <div class="divider"></div>
@@ -1278,6 +1278,9 @@
                         <option value="left">Left of the hotspot</option>
                         <option value="right">Right of the hotspot</option>
                     </select>
+                    <label class="control-label" style="margin-top:8px;">Goes to</label>
+                    <select class="control-input" id="tour-hotspot-target"></select>
+                    <p class="info-text" id="tour-target-note" style="margin-top:4px;" hidden></p>
                 </div>
                 <div class="divider"></div>
                 <label class="control-label">Auto-advance this step</label>

@@ -39,6 +39,8 @@ function freshHistoryIf(prevRec) {
 }
 
 export function pageCount() { return pages.length; }
+// v42 — the id of the page being edited (a tour hotspot cannot target its own page).
+export function activePageId() { return pages[active] ? pages[active].id : null; }
 
 // v32 — board accessors. The board enumerates pages as cards and resolves a
 // card's pageId back to an index for switchTo().
@@ -242,9 +244,13 @@ function deleteWithUndo(index) {
 
 export function movePage(from, to) {
   if (from === to || from < 0 || to < 0 || from >= pages.length || to >= pages.length) return;
+  // v42 — the page being edited stays the active one. This used to make the
+  // dragged page active without loading it, so dragging any other tile left the
+  // editor's design filed under the dragged page and the next save overwrote it.
+  const live = pages[active];
   const [rec] = pages.splice(from, 1);
   pages.splice(to, 0, rec);
-  active = pages.indexOf(rec);
+  active = pages.indexOf(live);
   renderFilmstrip();
   emitChange();
 }

@@ -141,6 +141,7 @@ async function collect(kind, onStage) {
             hotspots: (s.hotspots || []).slice(0, LIMITS.hotspots).map((h) => ({
               x: h.x, y: h.y, w: h.w, h: h.h, label: h.label || '',
               callout: h.callout ? { title: h.callout.title || '', body: h.callout.body || '', side: h.callout.side || 'bottom' } : null,
+              ...(Number.isInteger(h.goto) ? { goto: h.goto } : {}),
             })),
           })),
         },

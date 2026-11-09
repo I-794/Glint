@@ -18,6 +18,7 @@ import { pageCount, getPageMeta, indexOfPage, onDocumentChange, notifyDocumentCh
 import { syncCanvasUI } from './document.js';
 import { isTypingTarget } from '../utils/dom.js';
 import { showNotification } from '../ui/notification.js';
+import { tourLinks } from '../state/tour-core.js';
 
 let surface = null;     // .board-surface (camera-transformed)
 let viewport = null;    // #canvas-viewport
@@ -216,6 +217,7 @@ function ensureSurface() {
     </select>
     <button class="board-fit" title="Fit board to screen (0)">Fit</button>
     <button class="board-reset" title="Reset zoom to 100% (1)">100%</button>
+    <button class="board-tour-links" title="Show which page each tour hotspot jumps to" aria-pressed="true">Tour links</button>
     <button class="board-export" title="Export the board as a PNG">Export</button>
     <span class="board-zoom-label" aria-label="Zoom level">100%</span>
     <span class="board-hint" aria-live="polite"></span>`;
@@ -227,6 +229,8 @@ function ensureSurface() {
   toolbar.querySelector('.board-group').addEventListener('click', groupSelected);
   toolbar.querySelector('.board-ungroup').addEventListener('click', ungroupSelected);
   toolbar.querySelector('.board-export').addEventListener('click', () => exportBoard());
+  toolbar.querySelector('.board-tour-links').addEventListener('click', toggleTourLinks);
+  syncTourLinksButton();
   const arrange = toolbar.querySelector('.board-arrange');
   arrange.addEventListener('change', () => {
     const v = arrange.value;
@@ -565,6 +569,78 @@ function dragSelection(e) {
   });
 }
 
+// v42 — the tour map: a dashed arrow from a card to each card its tour
+// hotspots jump to. Derived from the pages on every render and never stored
+// in state.board.objects, so it is not part of the board's undo or its file.
+const TOUR_LINKS_KEY = 'glint_board_tour_links';
+function tourLinksOn() {
+  try { return localStorage.getItem(TOUR_LINKS_KEY) !== '0'; } catch (e) { return true; }
+}
+function syncTourLinksButton() {
+  const b = toolbar && toolbar.querySelector('.board-tour-links');
+  if (!b) return;
+  const on = tourLinksOn();
+  b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  b.classList.toggle('active', on);
+}
+export function toggleTourLinks() {
+  try { localStorage.setItem(TOUR_LINKS_KEY, tourLinksOn() ? '0' : '1'); } catch (e) {}
+  syncTourLinksButton();
+  renderBoard();
+}
+
+// Where the line from a card's centre toward (tx, ty) leaves the card.
+function edgePoint(r, tx, ty) {
+  const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+  const dx = tx - cx, dy = ty - cy;
+  if (!dx && !dy) return { x: cx, y: cy };
+  const s = Math.min(dx ? (r.w / 2) / Math.abs(dx) : Infinity, dy ? (r.h / 2) / Math.abs(dy) : Infinity);
+  return { x: cx + dx * s, y: cy + dy * s };
+}
+
+// The map has its own <svg> above the cards: a jump often passes over the
+// cards between its two ends, and the connector layer sits under them.
+function drawTourLinks(cards, allMeta) {
+  if (!surface) return;
+  const NS = 'http://www.w3.org/2000/svg';
+  let svg = surface.querySelector('.board-tour-map');
+  const links = tourLinksOn() ? tourLinks(allMeta) : [];
+  if (!links.length) { if (svg) svg.remove(); return; }
+  if (!svg) {
+    svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'board-tour-map');
+    svg.setAttribute('aria-hidden', 'true');
+    surface.appendChild(svg);
+  }
+  svg.innerHTML = '';
+  const cardOf = new Map(cards.map(c => [c.pageId, c]));
+  for (const l of links) {
+    const f = cardOf.get(l.from), t = cardOf.get(l.to);
+    if (!f || !t) continue;
+    const a = edgePoint(f, t.x + t.w / 2, t.y + t.h / 2);
+    const b = edgePoint(t, f.x + f.w / 2, f.y + f.h / 2);
+    // Bow the line to one side, so a jump there and a jump back do not overlap.
+    const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+    const bow = Math.min(90, len * 0.22);
+    const mx = (a.x + b.x) / 2 - (dy / len) * bow, my = (a.y + b.y) / 2 + (dx / len) * bow;
+    const path = document.createElementNS(NS, 'path');
+    path.setAttribute('class', 'board-tour-link');
+    path.setAttribute('d', `M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#f2a93b');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('stroke-dasharray', '7 5');
+    path.setAttribute('marker-end', 'url(#board-tour-arrowhead)');
+    svg.appendChild(path);
+  }
+  const m = document.createElementNS(NS, 'marker');
+  m.id = 'board-tour-arrowhead'; m.setAttribute('markerWidth', '9'); m.setAttribute('markerHeight', '9');
+  m.setAttribute('refX', '8'); m.setAttribute('refY', '4.5'); m.setAttribute('orient', 'auto');
+  const p = document.createElementNS(NS, 'path');
+  p.setAttribute('d', 'M0,0 L9,4.5 L0,9 z'); p.setAttribute('fill', '#f2a93b');
+  m.appendChild(p); svg.appendChild(m);
+}
+
 // v32 Task 7 — the SVG connector overlay (one <svg> over the surface; arrows
 // are redrawn from state.board.objects on every renderBoard).
 function ensureOverlay() {
@@ -693,6 +769,7 @@ export function renderBoard() {
     }
   }
 
+  drawTourLinks(cards, allMeta);
   renderEmptyState(allMeta);
   updateSelectionChrome();
 }
