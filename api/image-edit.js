@@ -9,6 +9,8 @@
 //
 // Returns 501 when no server key is set so the client falls back to BYOK.
 
+import { metered } from './_account.js';
+
 export const config = { api: { bodyParser: { sizeLimit: '12mb' } } };
 
 function b64ToBlob(b64, type = 'image/png') {
@@ -16,7 +18,9 @@ function b64ToBlob(b64, type = 'image/png') {
   return new Blob([buf], { type });
 }
 
-export default async function handler(req, res) {
+export default metered('image', handler);
+
+async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
   const key = process.env.OPENAI_API_KEY;
   if (!key) { res.status(501).json({ error: 'No server key configured' }); return; }

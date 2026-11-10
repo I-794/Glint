@@ -10,6 +10,7 @@ import { TOOLS, runTool, consumeChips } from './agent-tools.js';
 import { loadChat, saveChat, loadMemory } from './agent-memory.js';
 import { getPageMeta } from './pages.js';
 import { revealSection } from './studio-nav.js';
+import { recentMeterBlock } from './account.js';
 
 const MAX_ITERS = 8;
 let messages = [];          // neutral history
@@ -113,7 +114,7 @@ async function send() {
     }
   } catch (e) {
     if (e && e.code === 'NO_KEY') {
-      addLine('assistant', 'Add an OpenAI or Claude key in AI settings to use the Design Agent.');
+      addLine('assistant', recentMeterBlock() || 'Add an OpenAI or Claude key in AI settings to use the Design Agent.');
       const d = el('api-keys-details'); if (d) { revealSection(d); d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     } else {
       console.error(e);

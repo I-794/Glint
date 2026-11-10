@@ -7,7 +7,11 @@
 // Request  (POST JSON): { prompt: string, size?: '1024x1024'|'1536x1024'|'1024x1536' }
 // Response (200 JSON):  { b64: string }   // base64 PNG, no data: prefix
 
-export default async function handler(req, res) {
+import { metered } from './_account.js';
+
+export default metered('image', handler);
+
+async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;

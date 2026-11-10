@@ -60,6 +60,7 @@ import { bindAiArtDirector } from './features/ai-art-director.js';
 import { bindAiImageEdit } from './features/ai-image-edit.js';
 import { bindScreenshotEditor } from './features/ai-screenshot-editor.js';
 import { bindAuth } from './features/auth.js';
+import { bindAccount } from './features/account.js';
 import { bindCloudSync } from './features/cloud-sync.js';
 import { bindProjects } from './features/projects.js';
 import { bindCampaigns } from './features/campaigns.js';
@@ -177,6 +178,7 @@ function init() {
   bindAiArtDirector();
   bindAiImageEdit();
   bindScreenshotEditor();   // v30 — Magic Edit panel
+  bindAccount();   // before bindAuth, so it hears the first sign-in state
   bindAuth();
   bindCloudSync();
   bindPages();

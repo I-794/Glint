@@ -38,8 +38,16 @@ export function isConfigured() {
 
 export function getUser() { return currentUser; }
 
-export async function getClient() {
-  if (supabaseClient) return supabaseClient;
+// Callers can ask at the same moment (startup, a hosted AI call); they share
+// one client instead of each creating their own.
+let clientPromise = null;
+export function getClient() {
+  if (supabaseClient) return Promise.resolve(supabaseClient);
+  if (!clientPromise) clientPromise = createClientOnce().finally(() => { clientPromise = null; });
+  return clientPromise;
+}
+
+async function createClientOnce() {
   const cfg = getConfig();
   if (!cfg) return null;
   const { createClient } = await import('@supabase/supabase-js');
@@ -57,6 +65,8 @@ export async function getClient() {
   });
   return supabaseClient;
 }
+
+export function openSignIn() { openModal(); }
 
 function openModal() {
   const m = document.getElementById('auth-modal');

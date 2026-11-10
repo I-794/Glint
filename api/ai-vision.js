@@ -7,10 +7,13 @@ import {
   requirePost,
   textFromChat
 } from './_shared.js';
+import { metered } from './_account.js';
 
 export const config = { api: { bodyParser: { sizeLimit: '8mb' } } };
 
-export default async function handler(req, res) {
+export default metered('vision', handler);
+
+async function handler(req, res) {
   if (!requirePost(req, res)) return;
 
   try {
