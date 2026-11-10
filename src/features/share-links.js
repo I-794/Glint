@@ -21,6 +21,7 @@ import { renderRollShots } from './roll.js';
 import { renderSnapshotFull } from '../render/history-thumbs.js';
 import { ensureCompareImage } from '../render/compare.js';
 import { escapeHTML } from '../utils/dom.js';
+import { track } from './analytics.js';
 
 const STORE_KEY = 'glint_shares';
 const MAX_RECORDS = 50;
@@ -343,6 +344,7 @@ export async function createShareLink(kind, { title = '', expiresIn = 'never', o
     thumb: thumbOf(job.poster),
   };
   writeShares([rec, ...readShares().filter((r) => r.id !== rec.id)]);
+  track('share_link', { kind });
   return rec;
 }
 

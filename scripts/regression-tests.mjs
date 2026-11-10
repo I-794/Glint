@@ -29,6 +29,7 @@ import shareSweepRoute from '../api/_share-sweep.js';
 import { shareMeta, fillTemplate } from '../api/_share-page.js';
 import shareRouter from '../api/share.js';
 import shareUploadRoute from '../api/_share-upload.js';
+import { join as waitlistJoin, exportList as waitlistExport, cleanEmail, WAITLIST_PREFIX } from '../api/_waitlist.js';
 import { LIMITS, newShareId, isShareId, isAssetName, shareKey, verifyKey, base64url, normalizeManifest, manifestAssets, describeShare, planUploads, isExpired, EXPIRY } from '../src/share/share-core.js';
 
 function mockRes() {
@@ -1232,6 +1233,69 @@ async function testShareRoutesRoundTrip() {
   }
 }
 
+// Glint Pro waitlist: emails are stored once, encrypted, under an unguessable name.
+async function testWaitlistRoutes() {
+  const saved = { ...process.env };
+  process.env.SHARE_STORE = 'memory';
+  process.env.SHARE_SIGNING_SECRET = 'test-secret';
+  process.env.CRON_SECRET = 'cron';
+  const from = (ip) => ({ headers: { 'x-forwarded-for': ip } });
+  const listed = () => [...memoryStoreEntries().keys()].filter((k) => k.startsWith(WAITLIST_PREFIX));
+  try {
+    assert.equal(cleanEmail('  Ada@Example.COM '), 'ada@example.com');
+    assert.equal(cleanEmail('nope'), '');
+    assert.equal(cleanEmail('a@b'), '');
+    assert.equal(cleanEmail('a b@c.io'), '');
+    assert.equal(cleanEmail('x'.repeat(250) + '@c.io'), '');
+
+    assert.equal((await callRoute(waitlistJoin, shareReq('GET'))).statusCode, 405);
+    assert.equal((await callRoute(waitlistJoin, shareReq('POST', { email: 'not-an-email' }, from('1.1.1.1')))).statusCode, 400);
+    // The honeypot answers OK and stores nothing.
+    const bot = await callRoute(waitlistJoin, shareReq('POST', { email: 'bot@example.com', website: 'http://spam' }, from('1.1.1.2')));
+    assert.equal(bot.statusCode, 200);
+    assert.equal(listed().length, 0);
+
+    // Reached through the one deployed function, as vercel.json rewrites it.
+    const first = await callRoute(shareRouter, shareReq('POST', { email: 'Ada@Example.com', source: 'pricing' }, { query: { op: 'waitlist' }, ...from('1.1.1.3') }));
+    assert.equal(first.statusCode, 200);
+    assert.deepEqual(first.body, { ok: true });
+    const again = await callRoute(waitlistJoin, shareReq('POST', { email: ' ada@example.com ', source: 'pricing' }, from('1.1.1.4')));
+    assert.deepEqual(again.body, { ok: true });
+    await callRoute(waitlistJoin, shareReq('POST', { email: 'grace@example.org', source: 'made-up' }, from('1.1.1.5')));
+    assert.equal(listed().length, 2);
+    // Nothing readable in the (public) store: not in the name, not in the body.
+    // Names and bodies are random-looking base64, which now and then spells a
+    // short word like "ada" by chance (about 1 run in 100), so look for the
+    // addresses themselves: base64 has no "@" or ".".
+    const readable = /ada@|grace@|@example|example\.(com|org)/i;
+    for (const k of listed()) {
+      assert.ok(!readable.test(k));
+      assert.ok(!readable.test(memoryStoreEntries().get(k).body.toString('utf8')));
+    }
+
+    assert.equal((await callRoute(waitlistExport, shareReq('GET'))).statusCode, 401);
+    assert.equal((await callRoute(waitlistExport, shareReq('GET', null, { headers: { authorization: 'Bearer nope' } }))).statusCode, 401);
+    const out = await callRoute(shareRouter, shareReq('GET', null, { query: { op: 'waitlist-export' }, headers: { authorization: 'Bearer cron' } }));
+    assert.equal(out.body.count, 2);
+    assert.deepEqual(out.body.entries.map((e) => [e.email, e.source]), [['ada@example.com', 'pricing'], ['grace@example.org', 'other']]);
+    const csv = await callRoute(waitlistExport, shareReq('GET', null, { query: { format: 'csv' }, headers: { authorization: 'Bearer cron' } }));
+    assert.match(csv.body, /^email,joined,source\n"ada@example\.com","[^"]+","pricing"\n/);
+
+    // One address cannot flood the list.
+    let last;
+    for (let i = 0; i < 9; i++) last = await callRoute(waitlistJoin, shareReq('POST', { email: `flood${i}@example.com` }, from('9.9.9.9')));
+    assert.equal(last.statusCode, 429);
+
+    delete process.env.SHARE_SIGNING_SECRET;
+    assert.equal((await callRoute(waitlistJoin, shareReq('POST', { email: 'late@example.com' }, from('1.1.1.6')))).statusCode, 501);
+  } finally {
+    for (const k of [...memoryStoreEntries().keys()]) if (k.startsWith(WAITLIST_PREFIX)) memoryStoreEntries().delete(k);
+    for (const k of ['SHARE_STORE', 'SHARE_SIGNING_SECRET', 'CRON_SECRET']) {
+      if (k in saved) process.env[k] = saved[k]; else delete process.env[k];
+    }
+  }
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -1265,7 +1329,8 @@ const tests = [
   testShareCoreIdsAndKeys,
   testShareCoreManifest,
   testSharePlayersInlineCleanly,
-  testShareRoutesRoundTrip
+  testShareRoutesRoundTrip,
+  testWaitlistRoutes
 ];
 
 for (const test of tests) {

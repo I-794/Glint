@@ -2,7 +2,7 @@
 // Initialize DOM refs, bind every module, then render.
 
 import './state/brand-migrate.js';   // v36: must run before any module reads localStorage
-import { inject } from '@vercel/analytics';
+import { bindAnalytics } from './features/analytics.js';
 import { state } from './state/state.js';
 import { onHistoryChange, undo, redo } from './state/history.js';
 import { initElements, el } from './ui/elements.js';
@@ -119,7 +119,7 @@ function setInitialActivePresets() {
 }
 
 function init() {
-  inject();
+  bindAnalytics();
   initElements();
   loadSavedTheme();
 
