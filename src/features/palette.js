@@ -249,6 +249,9 @@ export function registerCommands() {
     { id: 'share-link-design',  label: 'Share: Create a link to this design', icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('image')), when: () => !!state.image },
     { id: 'share-link-tour',    label: 'Share: Create a link to the tour',    icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('tour')), when: () => pageCount() >= 2 },
     { id: 'share-link-compare', label: 'Share: Create a link to the before / after', icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('compare')), when: () => !!(state.compare?.beforeSrc && state.image) },
+    // v42 — the Roll and Pins as gallery links
+    { id: 'share-link-roll',    label: 'Share: Create a link to the Roll', icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('roll')), when: () => state.mode === 'single' && !!window.__rollCommands?.hasShots() },
+    { id: 'share-link-pins',    label: "Share: Create a link to this page's pins", icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('pins')), when: () => state.mode === 'single' && !!state.image && Array.isArray(state.versions) && state.versions.length > 0 },
     { id: 'share-links-open',   label: 'Share: Your links',  icon: '🔗', run: () => { const s = document.getElementById('share-section'); if (s) { revealSection(s); s.scrollIntoView({ block: 'start', behavior: 'smooth' }); } } },
     { id: 'generate-qr',      label: 'Generate QR Code for the last link', icon: '📱', run: () => document.getElementById('qr-btn')?.click(), when: () => !document.getElementById('share-result')?.hidden },
     { id: 'export-gif',       label: 'Export as GIF',         icon: '🎬', run: () => document.getElementById('gif-export-btn')?.click() },

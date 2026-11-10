@@ -28,7 +28,7 @@ import shareSweepRoute from '../api/_share-sweep.js';
 import { shareMeta, fillTemplate } from '../api/_share-page.js';
 import shareRouter from '../api/share.js';
 import shareUploadRoute from '../api/_share-upload.js';
-import { LIMITS, newShareId, isShareId, isAssetName, shareKey, verifyKey, base64url, normalizeManifest, manifestAssets, describeShare, planUploads } from '../src/share/share-core.js';
+import { LIMITS, newShareId, isShareId, isAssetName, shareKey, verifyKey, base64url, normalizeManifest, manifestAssets, describeShare, planUploads, isExpired, EXPIRY } from '../src/share/share-core.js';
 
 function mockRes() {
   return {
@@ -866,6 +866,12 @@ function shareFixture(kind) {
       { src: '1.webp', w: 1200, h: 800 }
     ] } };
   }
+  if (kind === 'gallery') {
+    return { ...base, gallery: { source: 'roll', items: [
+      { src: '0.webp', w: 1200, h: 800, label: 'Home' },
+      { src: '1.webp', w: 800, h: 1600, label: 'Settings' }
+    ] } };
+  }
   return { ...base, compare: { before: '0.webp', after: '1.webp', w: 1600, h: 1000, rect: { x: 0.1, y: 0.1, w: 0.8, h: 0.8 }, split: 0.4, labels: { enabled: true, before: 'Before', after: 'After' }, divider: { color: '#ff00aa', width: 4, handle: true } } };
 }
 
@@ -928,6 +934,42 @@ function testShareCoreManifest() {
   const c = normalizeManifest(cmp);
   assert.equal(c.compare.divider.color, '#ffffff');
   assert.equal(c.compare.labels.position, 'top');
+
+  // v42 — galleries (the Roll's shots, a page's Pins).
+  const g = shareFixture('gallery');
+  g.gallery.items[0].label = 'x'.repeat(200);
+  g.gallery.items[1].evil = '<script>';
+  const gal = normalizeManifest(g);
+  assert.equal(gal.gallery.source, 'roll');
+  assert.equal(gal.gallery.items[0].label.length, 80);
+  assert.equal(gal.gallery.items[1].evil, undefined);
+  assert.equal(gal.compare, undefined);
+  assert.deepEqual(manifestAssets(gal), ['poster.webp', '0.webp', '1.webp']);
+  assert.equal(describeShare(gal), '2 screenshots. Made with Glint.');
+  assert.equal(normalizeManifest({ ...g, gallery: { ...g.gallery, source: 'elsewhere' } }).gallery.source, 'roll');
+  assert.equal(describeShare(normalizeManifest({ ...g, gallery: { source: 'pins', items: [g.gallery.items[0]] } })), '1 version of one design. Made with Glint.');
+  assert.throws(() => normalizeManifest({ ...g, gallery: { source: 'roll', items: [] } }), /gallery\.items/);
+  assert.throws(() => normalizeManifest({ ...g, gallery: { source: 'roll', items: Array.from({ length: 31 }, (_, i) => ({ src: `${i}.webp`, w: 10, h: 10 })) } }), /gallery\.items/);
+  assert.throws(() => normalizeManifest({ ...g, gallery: { source: 'roll', items: [{ src: 'https://evil.test/a.webp', w: 10, h: 10 }] } }), /gallery\.src/);
+  assert.equal(planUploads({ kind: 'gallery', files: Array.from({ length: 30 }, () => ({ type: 'image/webp', size: 10 })) }).length, 30);
+  assert.throws(() => planUploads({ kind: 'gallery', files: Array.from({ length: 31 }, () => ({ type: 'image/webp', size: 10 })) }), /files/);
+  assert.throws(() => planUploads({ kind: 'gallery', files: [] }), /files/);
+
+  // v42 — expiry is stamped by the server (with `now`), never taken from the client.
+  const forged = { ...shareFixture('image'), expiresAt: '2999-01-01T00:00:00.000Z' };
+  assert.equal(normalizeManifest(forged, { now: 0 }).expiresAt, undefined);
+  assert.equal(normalizeManifest(forged, { now: 0, expiresIn: 'never' }).expiresAt, undefined);
+  assert.equal(normalizeManifest(forged, { now: 0, expiresIn: '7d' }).expiresAt, new Date(EXPIRY['7d']).toISOString());
+  assert.throws(() => normalizeManifest(forged, { now: 0, expiresIn: 'forever' }), /expiresIn/);
+  assert.throws(() => normalizeManifest(forged, { now: 0, expiresIn: 'toString' }), /expiresIn/);
+  // A stored manifest keeps its expiry when it is read back.
+  assert.equal(normalizeManifest(forged).expiresAt, '2999-01-01T00:00:00.000Z');
+  assert.equal(normalizeManifest({ ...forged, expiresAt: 'soon' }).expiresAt, undefined);
+  assert.ok(!isExpired(normalizeManifest(forged)));
+  assert.ok(isExpired({ expiresAt: '2020-01-01T00:00:00.000Z' }));
+  assert.ok(isExpired({ expiresAt: new Date(1000).toISOString() }, 1000));
+  assert.ok(!isExpired({ expiresAt: new Date(1001).toISOString() }, 1000));
+  assert.ok(!isExpired({}));
 
   assert.throws(() => normalizeManifest({ ...shareFixture('image'), kind: 'html' }), /kind/);
   assert.throws(() => normalizeManifest(shareFixture('image'), { id: '../../etc' }), /id/);
@@ -1060,6 +1102,65 @@ async function testShareRoutesRoundTrip() {
     assert.ok(![...memoryStoreEntries().keys()].some((k) => k.includes(a.id)));
     assert.ok(memoryStoreEntries().has(`shares/${b.id}/manifest.json`));
     assert.ok(!memoryStoreEntries().has(`shares-pending/${b.id}.json`));
+
+    // v42 — a gallery link with an expiry: stamped by the server, gone once
+    // it runs out, and cleaned up by the sweep through its marker.
+    const makeGallery = async (extra) => {
+      const c = (await callRoute(shareCreateRoute, shareReq('POST', { kind: 'gallery', files: [{ type: 'image/png', size: 9 }, { type: 'image/png', size: 9 }] }))).body;
+      await uploadPlanned(c.uploads);
+      const res = await callRoute(shareCommitRoute, shareReq('POST', {
+        id: c.id, key: c.key, ...extra,
+        manifest: { kind: 'gallery', expiresAt: '2999-01-01T00:00:00.000Z', gallery: { source: 'pins', items: [{ src: '0.png', w: 10, h: 10, label: 'First' }, { src: '1.png', w: 10, h: 10 }] } },
+      }));
+      return { id: c.id, key: c.key, res };
+    };
+    const markerOf = (id) => [...memoryStoreEntries().keys()].find((k) => k.startsWith('shares-expiry/') && k.includes(id));
+
+    assert.equal((await makeGallery({ expiresIn: 'forever' })).res.statusCode, 400);
+    const forever = await makeGallery({});
+    assert.equal(forever.res.statusCode, 201);
+    assert.equal(forever.res.body.expiresAt, null);
+    assert.equal(markerOf(forever.id), undefined);
+
+    const week = await makeGallery({ expiresIn: '7d' });
+    assert.equal(week.res.statusCode, 201);
+    const left = Date.parse(week.res.body.expiresAt) - Date.now();
+    assert.ok(left > EXPIRY['7d'] - 60000 && left <= EXPIRY['7d'], 'expiry is seven days from the commit, not the client value');
+    assert.equal(markerOf(week.id), `shares-expiry/${Date.parse(week.res.body.expiresAt)}-${week.id}.json`);
+    const live = await callRoute(shareManifestRoute, shareReq('GET', null, { query: { id: week.id } }));
+    assert.equal(live.statusCode, 200);
+    assert.equal(live.body.manifest.kind, 'gallery');
+    assert.equal(live.body.manifest.gallery.items[0].label, 'First');
+    assert.equal(live.body.manifest.expiresAt, week.res.body.expiresAt);
+
+    // Deleting a link takes its expiry marker with it.
+    const gone = await makeGallery({ expiresIn: '1d' });
+    assert.ok(markerOf(gone.id));
+    assert.equal((await callRoute(shareDeleteRoute, shareReq('POST', { id: gone.id, key: gone.key }))).statusCode, 204);
+    assert.equal(markerOf(gone.id), undefined);
+
+    // Move the week-long link's expiry into the past.
+    const entries = memoryStoreEntries();
+    const past = Date.now() - 1000;
+    const mPath = `shares/${week.id}/manifest.json`;
+    const stored = JSON.parse(entries.get(mPath).body.toString('utf8'));
+    entries.delete(mPath);
+    await shareStore().put(mPath, JSON.stringify({ ...stored, expiresAt: new Date(past).toISOString() }), { contentType: 'application/json' });
+    entries.delete(markerOf(week.id));
+    await shareStore().put(`shares-expiry/${past}-${week.id}.json`, '{}', { contentType: 'application/json' });
+    await shareStore().put('shares-expiry/not-a-marker.json', '{}', { contentType: 'application/json' });
+
+    const lapsed = await callRoute(shareManifestRoute, shareReq('GET', null, { query: { id: week.id } }));
+    assert.equal(lapsed.statusCode, 404);
+    assert.match(lapsed.body.error, /expired/);
+    assert.ok(entries.has(`shares/${week.id}/0.png`), 'files wait for the sweep');
+
+    const swept2 = await callRoute(shareSweepRoute, shareReq('GET', null, { headers: { authorization: 'Bearer cron' } }));
+    assert.equal(swept2.body.expired, 1);
+    assert.ok(![...entries.keys()].some((k) => k.includes(week.id)), 'the expired share and its marker are gone');
+    assert.ok(!entries.has('shares-expiry/not-a-marker.json'));
+    assert.ok(entries.has(`shares/${forever.id}/manifest.json`), 'a link with no expiry stays');
+    assert.ok(entries.has(`shares/${b.id}/manifest.json`));
 
     // A store connected the newer way (OIDC + BLOB_STORE_ID, no read-write token) counts as set up.
     delete process.env.SHARE_STORE;

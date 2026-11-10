@@ -23,3 +23,14 @@ export function renderStepThumb(snap, width = 72) {
     return out;
   });
 }
+
+// v42 — the same render at full size, on a canvas of its own (share links use
+// it to share a page's Pins). Null when there is no screenshot.
+export function renderSnapshotFull(snap) {
+  if (!state.image || !snap) return null;
+  return withSnapshot(snap, () => {
+    const out = document.createElement('canvas');
+    renderInto(out, true);
+    return out.width && out.height ? out : null;
+  });
+}

@@ -463,6 +463,25 @@ function cancelDevelop() {
   if (developing) developing.abort();
 }
 
+// v42 — render every shot once, with the design as set, and hand each canvas
+// to `each(canvas, shot, index, count)`. The canvas is reused for the next
+// shot, so `each` must copy or encode it before it returns. Used by share
+// links (the Roll as a gallery). `limit` caps how many shots are rendered.
+export async function renderRollShots(each, { signal, limit = Infinity } = {}) {
+  if (developing) throw new Error('The roll is being developed. Try again when it is done.');
+  if (state.mode !== 'single') throw new Error('The Roll works in Single mode.');
+  const all = shots().filter((s) => imageRegistry[s.id]);
+  const list = all.slice(0, limit);
+  const off = document.createElement('canvas');
+  for (let i = 0; i < list.length; i++) {
+    if (signal && signal.aborted) throw new DOMException('Cancelled', 'AbortError');
+    await withShot(list[i], () => renderInto(off, true));
+    await each(off, list[i], i, list.length);
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  return { rendered: list.length, total: all.length };
+}
+
 export async function developRoll() {
   if (developing) return;
   revealSection(el.rollSection);

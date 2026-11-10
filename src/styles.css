@@ -2061,7 +2061,10 @@ kbd {
 .compare-thumb-row .btn { padding: 6px 10px; font-size: 12px; }
 
 /* v41 — Share links panel */
-.share-kind { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 2px; padding: 2px; margin: 4px 0 12px; border-radius: var(--radius-sm); background: var(--bg-tertiary); border: 1px solid var(--border-color); }
+.share-kind { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; padding: 2px; margin: 4px 0 12px; border-radius: var(--radius-sm); background: var(--bg-tertiary); border: 1px solid var(--border-color); }
+.share-kind-btn { grid-column: span 2; }
+.share-kind-btn[data-kind="roll"], .share-kind-btn[data-kind="pins"] { grid-column: span 3; }   /* v42 — second row */
+.share-row.expired { opacity: 0.55; }
 .share-kind-btn { height: 30px; border: 0; border-radius: 4px; background: transparent; color: var(--text-secondary); font: 500 12px var(--font-sans); cursor: pointer; transition: background var(--transition-fast), color var(--transition-fast); }
 .share-kind-btn:hover:not(:disabled) { color: var(--text-primary); }
 .share-kind-btn.active { background: var(--accent-primary); color: var(--on-accent); font-weight: 600; }

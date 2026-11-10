@@ -16,14 +16,20 @@ import { activeProjectName } from './projects.js';
 import { pageCount } from './pages.js';
 import { generateEmbedCode, generateQR } from './share.js';
 import { makePoster } from '../share/share-poster.js';
-import { LIMITS } from '../share/share-core.js';
+import { LIMITS, EXPIRY } from '../share/share-core.js';
+import { renderRollShots } from './roll.js';
+import { renderSnapshotFull } from '../render/history-thumbs.js';
+import { ensureCompareImage } from '../render/compare.js';
 import { escapeHTML } from '../utils/dom.js';
 
 const STORE_KEY = 'glint_shares';
 const MAX_RECORDS = 50;
 const MAX_EDGE = 4096;
 const STALL_MS = 20000;
-const KIND_NAME = { image: 'Design', tour: 'Tour', compare: 'Before / after' };
+// v42 — `roll` and `pins` are what the panel offers; both publish a `gallery`.
+const KIND_NAME = { image: 'Design', tour: 'Tour', compare: 'Before / after', roll: 'Roll', pins: 'Pins' };
+const KIND_ORDER = ['image', 'tour', 'compare', 'roll', 'pins'];
+const EXPIRY_KEY = 'glint_share_expiry';
 
 // ── status ───────────────────────────────────────────────────────────────────
 
@@ -103,8 +109,67 @@ function thumbOf(canvas) {
   try { return c.toDataURL('image/jpeg', 0.7); } catch (_) { return null; }
 }
 
+// A small copy of a frame, for the gallery poster.
+function tileOf(canvas) {
+  const s = Math.min(1, 640 / Math.max(canvas.width, canvas.height));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(canvas.width * s));
+  c.height = Math.max(1, Math.round(canvas.height * s));
+  c.getContext('2d').drawImage(canvas, 0, 0, c.width, c.height);
+  return c;
+}
+
+const baseName = (name) => String(name || '').replace(/\.[a-z0-9]{2,5}$/i, '').slice(0, LIMITS.label);
+
+// v42 — the Roll's shots or this page's Pins, as a gallery.
+async function collectGallery(source, onStage, signal) {
+  if (state.mode !== 'single') throw new Error(source === 'roll' ? 'The Roll works in Single mode.' : 'Pins work in Single mode.');
+  const items = [];
+  const tiles = [];
+  const add = async (canvas, label) => {
+    const frame = capped(canvas);
+    if (tiles.length < 4) tiles.push(tileOf(frame));
+    items.push({ blob: await encodeBlob(frame), w: frame.width, h: frame.height, label });
+  };
+  let note = '';
+  if (source === 'roll') {
+    const { rendered, total } = await renderRollShots(async (canvas, shot, i, n) => {
+      onStage && onStage(`Rendering shot ${i + 1} of ${n}…`);
+      await add(canvas, baseName(shot.name));
+    }, { signal, limit: LIMITS.items });
+    if (!rendered) throw new Error('Add screenshots to the roll first.');
+    if (total > rendered) note = `A link holds up to ${LIMITS.items} images, so it has the first ${rendered} of ${total} shots.`;
+  } else {
+    if (!state.image) throw new Error('Load a screenshot first.');
+    const pins = (Array.isArray(state.versions) ? state.versions : []).slice(0, LIMITS.items);
+    if (!pins.length) throw new Error('Pin a step in History first.');
+    for (let i = 0; i < pins.length; i++) {
+      if (signal && signal.aborted) throw new DOMException('Cancelled', 'AbortError');
+      onStage && onStage(`Rendering pin ${i + 1} of ${pins.length}…`);
+      const snap = pins[i].snap;
+      await ensureCompareImage(snap && snap.compare && snap.compare.beforeSrc);
+      const canvas = renderSnapshotFull(snap);
+      if (canvas) await add(canvas, String(pins[i].name || '').slice(0, LIMITS.label));
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    // A pin's own Before image was loaded for its render; put the design's back.
+    await ensureCompareImage(state.compare && state.compare.beforeSrc);
+    if (!items.length) throw new Error('The pins could not be rendered.');
+  }
+  return {
+    kind: 'gallery',
+    note,
+    files: items.map((it) => it.blob),
+    poster: makePoster('gallery', tiles, { count: items.length }),
+    build: (names) => ({ gallery: { source, items: items.map((it, i) => ({ src: names[i], w: it.w, h: it.h, label: it.label })) } }),
+  };
+}
+
 // Renders what `kind` shares. Returns { files: [Blob], poster: canvas, build(names) -> manifest body }.
-async function collect(kind, onStage) {
+// v42 — a job may name the manifest `kind` it publishes (roll and pins both
+// publish a gallery) and carry a `note` for the person.
+async function collect(kind, onStage, signal) {
+  if (kind === 'roll' || kind === 'pins') return collectGallery(kind, onStage, signal);
   if (kind === 'image') {
     if (!state.image) throw new Error('Load a screenshot first.');
     const off = document.createElement('canvas');
@@ -184,10 +249,11 @@ async function postJson(path, body, signal) {
 
 // ── create / delete ──────────────────────────────────────────────────────────
 
-export async function createShareLink(kind, { title = '', onProgress, onStage, signal } = {}) {
+export async function createShareLink(kind, { title = '', expiresIn = 'never', onProgress, onStage, signal } = {}) {
   if (!(await shareStatus())) throw new Error('Links are not set up on this site.');
   onStage && onStage('Rendering…');
-  const job = await collect(kind, onStage);
+  const job = await collect(kind, onStage, signal);
+  const manifestKind = job.kind || kind;
   const posterBlob = await encodeBlob(job.poster, 0.86);
   const all = [...job.files, posterBlob];
   for (const f of all) {
@@ -199,7 +265,7 @@ export async function createShareLink(kind, { title = '', onProgress, onStage, s
 
   onStage && onStage('Uploading…');
   const created = await postJson('/api/share-create', {
-    kind,
+    kind: manifestKind,
     files: job.files.map((f) => ({ type: f.type, size: f.size })),
     poster: { type: posterBlob.type, size: posterBlob.size },
   }, signal);
@@ -255,8 +321,11 @@ export async function createShareLink(kind, { title = '', onProgress, onStage, s
   onStage && onStage('Publishing…');
   const names = created.uploads.map((u) => u.name);
   const fileNames = names.slice(0, job.files.length);
-  const manifest = { kind, title, poster: names[names.length - 1], ...job.build(fileNames) };
-  const committed = await postJson('/api/share-commit', { id: created.id, key: created.key, manifest }, signal);
+  const manifest = { kind: manifestKind, title, poster: names[names.length - 1], ...job.build(fileNames) };
+  const committed = await postJson('/api/share-commit', {
+    id: created.id, key: created.key, manifest,
+    expiresIn: Object.prototype.hasOwnProperty.call(EXPIRY, expiresIn) ? expiresIn : 'never',
+  }, signal);
 
   const rec = {
     id: created.id,
@@ -265,6 +334,8 @@ export async function createShareLink(kind, { title = '', onProgress, onStage, s
     url: committed.url,
     key: created.key,
     createdAt: new Date().toISOString(),
+    expiresAt: committed.expiresAt || null,   // v42
+    note: job.note || '',
     imageUrl: kind === 'image' ? urls[0] : null,
     posterUrl: urls[urls.length - 1],
     w: job.poster.width,
@@ -312,23 +383,28 @@ function refreshKinds(force) {
     image: !!state.image,
     tour: pageCount() >= 2,
     compare: !!(state.image && state.compare && state.compare.beforeSrc && !(state.video && state.video.loaded)),
+    roll: state.mode === 'single' && !!(window.__rollCommands && window.__rollCommands.hasShots()),
+    pins: state.mode === 'single' && !!state.image && Array.isArray(state.versions) && state.versions.length > 0,
   };
   // Called from render(), so only touch the DOM when something changed.
-  const key = `${can.image}${can.tour}${can.compare}${!!running}`;
+  const key = `${can.image}${can.tour}${can.compare}${can.roll}${can.pins}${!!running}`;
   if (key === lastKindsKey && force !== true) return;
   lastKindsKey = key;
   const why = {
     image: 'Load a screenshot first',
     tour: 'Add a second page to make a tour',
     compare: 'Set a Before image in Before / After first',
+    roll: 'Add screenshots to the Roll first',
+    pins: 'Pin a step in History first',
   };
+  const what = { image: 'Share this design', tour: 'Share the tour', compare: 'Share the before / after', roll: 'Share every shot in the Roll', pins: "Share this page's pins" };
   document.querySelectorAll('.share-kind-btn').forEach((btn) => {
     const k = btn.dataset.kind;
     btn.disabled = !can[k];
-    btn.title = can[k] ? `Share the ${KIND_NAME[k].toLowerCase()}` : why[k];
+    btn.title = can[k] ? what[k] : why[k];
   });
   if (!can[currentKind]) {
-    const first = ['image', 'tour', 'compare'].find((k) => can[k]);
+    const first = KIND_ORDER.find((k) => can[k]);
     if (first) setKind(first);
   }
   const btn = $('share-create-btn');
@@ -382,6 +458,17 @@ function showResult(rec) {
   if (qr) { qr.hidden = true; qr.innerHTML = ''; }
 }
 
+// v42 — "Expires in 6 days", "Expires today", "Expired", or '' for no expiry.
+function expiryText(rec) {
+  const t = rec && rec.expiresAt ? Date.parse(rec.expiresAt) : NaN;
+  if (!Number.isFinite(t)) return '';
+  const left = t - Date.now();
+  if (left <= 0) return 'Expired';
+  const days = Math.round(left / (24 * 60 * 60 * 1000));
+  if (days < 1) return 'Expires today';
+  return `Expires in ${days} day${days === 1 ? '' : 's'}`;
+}
+
 function relTime(iso) {
   const t = Date.parse(iso);
   if (!t) return '';
@@ -410,7 +497,9 @@ function renderList() {
     t.textContent = rec.title || KIND_NAME[rec.kind] || 'Link';
     const meta = document.createElement('div');
     meta.className = 'share-row-meta';
-    meta.textContent = `${KIND_NAME[rec.kind] || ''}, ${relTime(rec.createdAt)}`;
+    const exp = expiryText(rec);
+    meta.textContent = `${KIND_NAME[rec.kind] || ''}, ${relTime(rec.createdAt)}${exp ? `. ${exp}` : ''}`;
+    if (exp === 'Expired') row.classList.add('expired');
     text.append(t, meta);
     const actions = document.createElement('div');
     actions.className = 'share-row-actions';
@@ -472,17 +561,20 @@ export async function startShare(kind = currentKind) {
   setKind(kind);
   const titleInput = $('share-title');
   const title = (titleInput && titleInput.value.trim()) || '';
+  const expiryInput = $('share-expiry');
+  const expiresIn = (expiryInput && expiryInput.value) || 'never';
   const controller = new AbortController();
   running = controller;
   setBusy(true, 'Rendering…');
   try {
     const rec = await createShareLink(kind, {
       title,
+      expiresIn,
       signal: controller.signal,
       onStage: setStatus,
       onProgress: setProgress,
     });
-    setBusy(false, '');
+    setBusy(false, rec.note || '');
     showResult(rec);
     renderList();
     // Storage full or blocked: the link works, but this browser cannot keep
@@ -558,6 +650,13 @@ export function bindShareLinks() {
     btn.addEventListener('click', () => current && copyText(generateEmbedCode(current, btn.dataset.copyEmbed), 'Embed code copied.'));
   });
   $('share-url')?.addEventListener('focus', (e) => e.target.select());
+
+  // v42 — the expiry choice is remembered for the next link.
+  const expiry = $('share-expiry');
+  if (expiry) {
+    try { const saved = localStorage.getItem(EXPIRY_KEY); if (saved && Object.prototype.hasOwnProperty.call(EXPIRY, saved)) expiry.value = saved; } catch (_) { /* private mode */ }
+    expiry.addEventListener('change', () => { try { localStorage.setItem(EXPIRY_KEY, expiry.value); } catch (_) { /* private mode */ } });
+  }
 
   const titleInput = $('share-title');
   if (titleInput) {
