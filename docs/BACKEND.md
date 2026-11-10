@@ -33,6 +33,8 @@ the Vite frontend.
 | `POST /api/share-delete` | Deletes a share. Needs the owner key. |
 | `GET /s/<id>` | Serves the share viewer with link-preview tags (rewritten to `/api/share?op=page`). |
 | `GET /api/share-sweep` | Daily cron. Removes uploads that were never published. |
+| `POST /api/waitlist` | Glint Pro waitlist. Stores `{ email, at, source }` encrypted under `waitlist/` in the share Blob store. Always answers `{ ok: true }` for a valid email. |
+| `GET /api/waitlist-export` | The waitlist for the site owner, as JSON or `?format=csv`. Needs `Authorization: Bearer <CRON_SECRET>`. |
 
 All share routes run in one function, `api/share.js`: `vercel.json` rewrites
 `/api/share-<op>` to `/api/share?op=<op>`, and the route code lives in

@@ -5,6 +5,58 @@
 (function () {
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // 0) Analytics: Vercel Web Analytics, which sets no cookies. The script only
+  // exists on the deployed site, so local runs just queue and drop the calls.
+  // Events carry a name and a page or a choice, never anything a person typed.
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  if (!/^(localhost$|127\.|192\.168\.|10\.|\[)/.test(location.hostname)) {
+    const s = document.createElement('script');
+    s.defer = true;
+    s.src = '/_vercel/insights/script.js';
+    document.head.appendChild(s);
+  }
+  const track = (name, data) => { try { window.va('event', { name, data }); } catch (e) { /* never break the page */ } };
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href^="/editor/"]');
+    if (a) track('open_studio', { from: location.pathname });
+  });
+
+  // 0a) Glint Pro waitlist form (pricing page). Posts the email to /api/waitlist.
+  document.querySelectorAll('form[data-waitlist]').forEach((form) => {
+    const input = form.querySelector('input[type="email"]');
+    const button = form.querySelector('button[type="submit"]');
+    const note = form.querySelector('.wl-note');
+    const say = (text, state) => { if (note) { note.textContent = text; note.dataset.state = state || ''; } };
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (form.dataset.busy) return;
+      const email = input.value.trim();
+      if (!email || !input.checkValidity()) { say('Enter an email address like you@example.com.', 'error'); input.focus(); return; }
+      form.dataset.busy = '1';
+      button.disabled = true;
+      say('Adding you…');
+      try {
+        const r = await fetch('/api/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, source: form.dataset.waitlist || 'other', website: form.elements.website ? form.elements.website.value : '' })
+        });
+        const type = r.headers.get('content-type') || '';
+        const data = type.includes('json') ? await r.json().catch(() => ({})) : {};
+        if (!r.ok || !data.ok) throw new Error(data.error || 'The waitlist is not reachable right now. Try again in a bit.');
+        form.classList.add('done');
+        say('You are on the list. We will email you once, when Glint Pro opens.', 'ok');
+        track('waitlist_join', { source: form.dataset.waitlist || 'other' });
+      } catch (err) {
+        say(err.message || 'Something went wrong. Try again.', 'error');
+        button.disabled = false;
+        input.focus();   // the disabled button dropped focus
+      } finally {
+        delete form.dataset.busy;
+      }
+    });
+  });
+
   // 1) Nav border once the page scrolls past a 1px sentinel.
   const nav = document.getElementById('nav');
   if (nav) {

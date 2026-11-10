@@ -4,9 +4,11 @@ import { showNotification } from '../ui/notification.js';
 import { render } from '../render/render.js';
 import { exportGif } from './gif-export.js';
 import { escapeHTML } from '../utils/dom.js';
+import { track } from './analytics.js';
 
 export function exportImage() {
   if (!state.image) { showNotification('Please load an image first!', 'error'); return; }
+  track('export', { format: state.exportSettings.format, mode: state.mode });
   if (state.exportSettings.format === 'gif') { exportGif(); return; }
   let mimeType, extension;
   const quality = state.exportSettings.quality / 100;
@@ -35,6 +37,7 @@ export function exportImage() {
 
 export function copyToClipboard() {
   if (!state.image) { showNotification('Please load an image first!', 'error'); return; }
+  track('export', { format: 'clipboard', mode: state.mode });
   const bracket = state.mode !== 'set';   // see exportImage
   if (bracket) render(true);
   el.previewCanvas.toBlob((blob) => {
@@ -48,6 +51,7 @@ export function copyToClipboard() {
 
 export function exportAsHTML() {
   if (!state.image) { showNotification('Please load an image first!', 'error'); return; }
+  track('export', { format: 'html', mode: state.mode });
   const bracket = state.mode !== 'set';   // see exportImage
   if (bracket) render(true);
   const dataURL = el.previewCanvas.toDataURL('image/png');

@@ -18,6 +18,7 @@ import { generateEmbedCode, generateQR } from './share.js';
 import { makePoster } from '../share/share-poster.js';
 import { LIMITS } from '../share/share-core.js';
 import { escapeHTML } from '../utils/dom.js';
+import { track } from './analytics.js';
 
 const STORE_KEY = 'glint_shares';
 const MAX_RECORDS = 50;
@@ -271,6 +272,7 @@ export async function createShareLink(kind, { title = '', onProgress, onStage, s
     thumb: thumbOf(job.poster),
   };
   writeShares([rec, ...readShares().filter((r) => r.id !== rec.id)]);
+  track('share_link', { kind });
   return rec;
 }
 

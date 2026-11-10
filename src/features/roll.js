@@ -36,6 +36,7 @@ import { listExportPresets, encodeCanvas, upscaleCanvas } from './export-presets
 import { loadImageFile } from './set-ui.js';
 import { revealSection } from './studio-nav.js';
 import { escapeHTML } from '../utils/dom.js';
+import { track } from './analytics.js';
 
 const MAX_SHOTS_HINT = 30;
 const THUMB_W = 180;
@@ -511,6 +512,7 @@ export async function developRoll() {
       files['contact-sheet.pdf'] = await contactSheetPdf(sheet);
     }
     await downloadZip(files, `roll-${Date.now()}.zip`);
+    track('roll_develop', { files: files.length });
     setProgress(`Developed ${done} image${done === 1 ? '' : 's'}.`);
     showNotification(`Roll developed: ${done} image${done === 1 ? '' : 's'} in one ZIP.`, 'success');
   } catch (e) {
