@@ -12,6 +12,7 @@ import { el } from '../ui/elements.js';
 import { render } from '../render/render.js';
 import { showNotification } from '../ui/notification.js';
 import { askText } from '../ui/dialog.js';
+import { track } from './analytics.js';
 
 const LS_KEY = 'glint_export_presets';
 const LAST_KEY = 'glint_last_export_preset';   // v33 — quick export
@@ -94,6 +95,7 @@ export function applyExportPreset(id) {
   state.exportSettings.format = p.format;
   if (p.quality != null) state.exportSettings.quality = p.quality;
   if (el.exportFormat) el.exportFormat.value = p.format;
+  track('export', { format: p.format, mode: state.mode, scale: p.scale || 1 });
   exportScaled(p.scale || 1, p.format, p.quality);
 }
 
