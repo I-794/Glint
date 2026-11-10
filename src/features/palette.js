@@ -90,6 +90,8 @@ export function registerCommands() {
     { id: 'export-jpeg',      label: 'Export as JPEG',        icon: '📥', run: () => { state.exportSettings.format = 'jpeg'; exportImage(); } },
     { id: 'export-webp',      label: 'Export as WebP',        icon: '📥', run: () => { state.exportSettings.format = 'webp'; exportImage(); } },
     { id: 'export-html',      label: 'Export as HTML Card',   icon: '🌐', run: exportAsHTML },
+    // v42 — print-ready PDF (paper size, bleed, crop marks)
+    { id: 'export-print-pdf', label: 'Export print PDF',      icon: '🖨', run: () => import('./print-pdf.js').then((m) => m.exportPrintPdf()), when: () => !!state.image },
     { id: 'copy-clipboard',   label: 'Copy to Clipboard',     icon: '📋', run: copyToClipboard },
     { id: 'load-url',         label: 'Load from URL',         icon: '🔗', run: focusUrlLoad },
     { id: 'code-studio',      label: 'Open Code Snippet Studio', icon: '</>', run: openCodeStudio },

@@ -275,6 +275,31 @@ async function renderAllPages(onProgress) {
   return out.filter(Boolean);
 }
 
+// v42 — render every page with a screenshot and hand each canvas to
+// `each(canvas, index, count)` (the print PDF uses it). The canvas is reused
+// for the next page, so `each` must use it before it returns.
+export async function eachPageCanvas(each) {
+  syncActive();
+  const savedActive = active;
+  const off = document.createElement('canvas');
+  const list = pages.slice();
+  try {
+    let n = 0;
+    for (let i = 0; i < list.length; i++) {
+      await applyDesignToState(list[i].payload);
+      if (!state.image) continue;   // skip blank pages
+      renderInto(off, true);
+      await each(off, n++, list.length);
+      await new Promise(r => setTimeout(r, 0));
+    }
+    return n;
+  } finally {
+    // Restore the live editor to the page the user was on.
+    active = savedActive;
+    applyPayload(pages[active].payload);
+  }
+}
+
 export async function exportDeckPDF() {
   if (!hasContent()) { showNotification('Add a screenshot to a page first.', 'error'); return; }
   setDeckStatus('Rendering deck…');

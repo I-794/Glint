@@ -2100,3 +2100,8 @@ kbd {
 .share-row-btn:last-child:hover { color: var(--error); }
 .share-row-btn:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 2px; border-radius: 2px; }
 .share-row-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* v42 — Print PDF: the resolution readout */
+.print-dpi { margin: 4px 0 10px; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-tertiary); }
+.print-dpi[data-verdict="sharp"] { border-color: color-mix(in srgb, #30a46c 55%, var(--border-color)); }
+.print-dpi[data-verdict="soft"] { border-color: color-mix(in srgb, #e5484d 60%, var(--border-color)); }

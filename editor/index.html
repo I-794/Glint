@@ -1335,6 +1335,32 @@
             <button class="btn btn-secondary" style="width:100%;margin-top:8px;" id="export-html-btn">🌐 Export as HTML Card</button>
         </div>
 
+        <!-- v42 — Junction: print-ready PDF (features/print-pdf.js). Pro only. -->
+        <div class="sidebar-section" data-group="export" id="print-section">
+            <h3 class="section-title">Print PDF</h3>
+            <p class="info-text" style="margin-bottom:10px;">Put the design on a real paper size, with bleed and crop marks for a print shop. The PDF is RGB.</p>
+            <div class="control-group"><label class="control-label">Paper</label><select class="control-input" id="print-paper"></select></div>
+            <div id="print-custom" hidden>
+                <div style="display:flex;gap:8px;margin-bottom:12px;">
+                    <div style="flex:1;"><label class="control-label" for="print-custom-w">Width (mm)</label><input type="number" class="control-input" id="print-custom-w" min="20" max="2000" step="1"></div>
+                    <div style="flex:1;"><label class="control-label" for="print-custom-h">Height (mm)</label><input type="number" class="control-input" id="print-custom-h" min="20" max="2000" step="1"></div>
+                </div>
+            </div>
+            <div class="control-group"><label class="control-label">Orientation</label><select class="control-input" id="print-orientation"><option value="auto">Match the design</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></div>
+            <div class="control-group"><label class="control-label">Placement</label><select class="control-input" id="print-fit"><option value="fit">Fit inside the page</option><option value="fill">Fill the page, edge to edge</option></select></div>
+            <div class="control-group" id="print-margin-group"><label class="control-label">Margin</label><div class="range-group"><input type="range" class="range-input" id="print-margin" min="0" max="50" step="1" value="10"><span class="range-value" id="print-margin-value">10 mm</span></div></div>
+            <div class="control-group"><label class="control-label">Bleed</label><div class="range-group"><input type="range" class="range-input" id="print-bleed" min="0" max="10" step="0.5" value="3"><span class="range-value" id="print-bleed-value">3 mm</span></div></div>
+            <div class="toggle-switch"><span class="toggle-label">Crop marks</span><label class="switch"><input type="checkbox" id="print-marks" checked><span class="slider"></span></label></div>
+            <div class="control-group"><label class="control-label">Pages</label><select class="control-input" id="print-scope"><option value="page">This page</option><option value="all">All pages</option></select></div>
+            <div style="display:flex;gap:8px;">
+                <div class="control-group" style="flex:1;"><label class="control-label">Image</label><select class="control-input" id="print-quality"><option value="jpeg">JPEG, high quality</option><option value="png">PNG, lossless</option></select></div>
+                <div class="control-group" style="width:96px;"><label class="control-label">Upscale</label><select class="control-input" id="print-upscale"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option></select></div>
+            </div>
+            <p class="info-text print-dpi" id="print-dpi" aria-live="polite"></p>
+            <button type="button" class="btn btn-primary" style="width:100%;" id="print-export-btn">Export print PDF</button>
+            <p class="info-text" id="print-status" aria-live="polite" style="min-height:14px;margin-top:6px;"></p>
+        </div>
+
         <div class="sidebar-section" data-group="export" data-simple id="share-section">
             <h3 class="section-title">Share</h3>
             <p class="info-text" id="share-links-off" hidden>Links are not set up on this site. Downloads still work.</p>

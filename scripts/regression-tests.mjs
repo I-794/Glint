@@ -17,6 +17,7 @@ import { makeVersion, normalizeVersions, MAX_VERSIONS, isSafeThumb } from '../sr
 import { normalizeTour, resolveTourTargets, tourLinks } from '../src/state/tour-core.js';
 import { bokehDefaults, normalizeBokeh, tiltBand, pullEase, lensBlur } from '../src/render/bokeh-core.js';
 import { localProgress } from '../src/state/motion-clock.js';
+import { PAPERS, normalizePrint, trimSize, layoutPrint, effectiveDpi, dpiVerdict } from '../src/render/print-core.js';
 import { createHmac, randomBytes } from 'node:crypto';
 import { store as shareStore, memoryStoreEntries } from '../api/_share.js';
 import shareStatusRoute from '../api/_share-status.js';
@@ -853,6 +854,60 @@ function testBokehTiltAndPull() {
   }
 }
 
+// v42 — print PDF geometry (millimetres).
+function testPrintCoreLayout() {
+  const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-6, `${msg || ''} ${a} vs ${b}`);
+  const bad = normalizePrint({ paper: 'napkin', orientation: 'diagonal', fit: 'stretch', margin: 999, bleed: -4, marks: 'no', scope: 'some', quality: 'gif', upscale: 9, customW: 'x' });
+  assert.deepEqual(bad, { paper: 'a4', customW: 210, customH: 297, orientation: 'auto', fit: 'fit', margin: 50, bleed: 0, marks: true, scope: 'page', quality: 'jpeg', upscale: 1 });
+  assert.equal(normalizePrint({ marks: false }).marks, false);
+
+  // 'auto' turns the paper to match the picture.
+  assert.deepEqual(trimSize({ paper: 'a4' }, 1600, 1000), { w: 297, h: 210 });
+  assert.deepEqual(trimSize({ paper: 'a4' }, 1000, 1600), { w: 210, h: 297 });
+  assert.deepEqual(trimSize({ paper: 'a4', orientation: 'portrait' }, 1600, 1000), { w: 210, h: 297 });
+  assert.deepEqual(trimSize({ paper: 'custom', customW: 300, customH: 100, orientation: 'portrait' }, 10, 10), { w: 100, h: 300 });
+  assert.equal(PAPERS.letter.w, 215.9);
+
+  // Fill: A4 landscape, 3mm bleed, marks. Slug = 3 + 1 + 5 + 1 = 10mm a side.
+  const fill = layoutPrint({ paper: 'a4', fit: 'fill', bleed: 3, marks: true }, 1600, 1000);
+  assert.deepEqual(fill.page, { w: 317, h: 230 });
+  assert.deepEqual(fill.trim, { x: 10, y: 10, w: 297, h: 210 });
+  assert.deepEqual(fill.bleed, { x: 7, y: 7, w: 303, h: 216 });
+  assert.deepEqual(fill.image, fill.bleed);
+  // The picture is cropped to the bleed box's shape, centred, never stretched.
+  near(fill.source.sw / fill.source.sh, 303 / 216, 'crop ratio');
+  near(fill.source.sx * 2 + fill.source.sw, 1600);
+  near(fill.source.sy * 2 + fill.source.sh, 1000);
+  assert.ok(fill.source.sw <= 1600 && fill.source.sh <= 1000);
+  near(fill.dpi, effectiveDpi(fill.source.sw, 303), 'dpi');
+  // Eight marks, each 5mm, all outside the bleed and inside the page.
+  assert.equal(fill.marks.length, 8);
+  for (const m of fill.marks) {
+    near(Math.abs(m.x2 - m.x1) + Math.abs(m.y2 - m.y1), 5, 'mark length');
+    const outside = (x, y) => x <= fill.bleed.x || x >= fill.bleed.x + fill.bleed.w || y <= fill.bleed.y || y >= fill.bleed.y + fill.bleed.h;
+    assert.ok(outside(m.x1, m.y1) && outside(m.x2, m.y2), 'marks stay out of the bleed');
+    for (const v of [m.x1, m.x2]) assert.ok(v >= 0 && v <= fill.page.w);
+    for (const v of [m.y1, m.y2]) assert.ok(v >= 0 && v <= fill.page.h);
+  }
+  // Marks line up with the trim edges.
+  assert.ok(fill.marks.some((m) => m.y1 === 10 && m.y2 === 10 && m.x2 === 6));
+  assert.ok(fill.marks.some((m) => m.x1 === 307 && m.x2 === 307 && m.y1 === 224));
+
+  // Fit: whole picture, inside the trim minus the margin, centred.
+  const fit = layoutPrint({ paper: 'a4', fit: 'fit', margin: 10, bleed: 3, marks: false }, 1000, 1000);
+  assert.deepEqual(fit.page, { w: 216, h: 303 });           // no marks: page = trim + bleed
+  assert.deepEqual(fit.source, { sx: 0, sy: 0, sw: 1000, sh: 1000 });
+  near(fit.image.w, 190); near(fit.image.h, 190);
+  near(fit.image.x, 3 + 10); near(fit.image.y, 3 + (297 - 190) / 2);
+  assert.equal(fit.marks.length, 0);
+  // No bleed and no marks: the page is exactly the paper.
+  assert.deepEqual(layoutPrint({ paper: 'a5', bleed: 0, marks: false, orientation: 'portrait' }, 10, 10).page, { w: 148, h: 210 });
+
+  near(effectiveDpi(3000, 254), 300);
+  assert.equal(effectiveDpi(0, 10), 0);
+  assert.deepEqual([dpiVerdict(300), dpiVerdict(299), dpiVerdict(150), dpiVerdict(149)], ['sharp', 'ok', 'ok', 'soft']);
+}
+
 function shareHmac(secret, msg) {
   return createHmac('sha256', secret).update(msg).digest();
 }
@@ -1206,6 +1261,7 @@ const tests = [
   testVersionsNormalizeAndPersist,
   testTourCoreTargets,
   testBokehTiltAndPull,
+  testPrintCoreLayout,
   testShareCoreIdsAndKeys,
   testShareCoreManifest,
   testSharePlayersInlineCleanly,
