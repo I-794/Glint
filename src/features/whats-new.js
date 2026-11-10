@@ -10,20 +10,20 @@
 // release's highlights — same checklist step as the editor version badge and
 // the changelog page.
 
-const CURRENT_VERSION = '41.0';
+const CURRENT_VERSION = '42.0';
 const LASTSEEN_KEY = 'glint_lastseen_version';
 const WELCOME_KEY  = 'glint_welcome_v1';   // set by welcome.js on dismissal
 
 // Latest release only — the newest version’s highlights, not an accumulation.
 const WHATS_NEW = {
-  heading: "v41 · Iris",
+  heading: "v42 · Junction",
   items: [
-    { title: 'Send a link',
-      desc: 'Open Share in the Export tab and press Create link. Anyone can open it, no account needed.' },
-    { title: 'Tours and sliders, live',
-      desc: 'Interactive Tours and Before / After pages open in the browser and show a preview card when you paste them in a chat.' },
-    { title: 'Yours to take back',
-      desc: 'Your links lists everything you shared. Delete one and it is gone for everyone.' }
+    { title: 'Tours that branch',
+      desc: 'In Tour mode, pick where each hotspot goes: the next step or any page. Back retraces the path, and the board shows the jumps as arrows.' },
+    { title: 'Share a Roll or your Pins',
+      desc: 'Both open as a gallery anyone can browse. Links can now last a day, a week or a month.' },
+    { title: 'Print PDF and tilt-shift',
+      desc: 'Export on real paper sizes with bleed and crop marks. Bokeh can keep one band sharp, and Motion Studio can pull the focus.' }
   ]
 };
 
