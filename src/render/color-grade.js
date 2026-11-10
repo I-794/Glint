@@ -16,7 +16,7 @@ import { showNotification } from '../ui/notification.js';
 import {
   luminance, rgbToLab, labToRgb, buildGradientRamp, nearestSwatch, paletteLabStats
 } from '../utils/color.js';
-import { applyBokeh, bokehActive, maskFits } from './bokeh.js';
+import { applyBokeh, applyTiltShift, bokehActive, tiltActive, maskFits } from './bokeh.js';
 import { applyColorTools } from './curves.js';
 import { applyCompare } from './compare.js';
 import { applyModeFlip } from './mode-flip.js';
@@ -265,6 +265,9 @@ function gradeAndBlur(srcImage) {
   const { image: toned, key: baseKey } = applyColorTools(graded, gradeKey);
   // maskFits first (even with Bokeh off) so the one-shot claim after a page
   // load goes to that page's own image, not one rendered later.
-  if (!maskFits(srcImage) || !bokehActive()) return toned;   // mask belongs to another image
+  const fits = maskFits(srcImage);
+  // v42 — tilt-shift blurs by position, so it needs no mask and fits any image.
+  if (tiltActive()) return applyTiltShift(toned, baseKey);
+  if (!fits || !bokehActive()) return toned;   // mask belongs to another image
   return applyBokeh(toned, baseKey);
 }

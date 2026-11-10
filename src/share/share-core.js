@@ -10,6 +10,7 @@ export const LIMITS = {
   fileBytes: 8 * 1024 * 1024,
   shareBytes: 40 * 1024 * 1024,
   steps: 30,
+  items: 30,          // v42 — images in a gallery (the Roll's sheet, Pins)
   hotspots: 12,
   title: 120,
   label: 80,
@@ -19,7 +20,22 @@ export const LIMITS = {
   types: ['image/webp', 'image/jpeg', 'image/png'],
 };
 
-export const KINDS = ['image', 'tour', 'compare'];
+// v42 — `gallery` is a set of images with captions: the Roll's shots or a
+// page's Pins (its `source` says which, for the wording around it).
+export const KINDS = ['image', 'tour', 'compare', 'gallery'];
+const GALLERY_SOURCES = ['roll', 'pins'];
+
+// v42 — how long a link lives. The client sends one of these names at commit;
+// the server turns it into the manifest's `expiresAt`. 0 = no expiry.
+const DAY_MS = 24 * 60 * 60 * 1000;
+export const EXPIRY = { never: 0, '1d': DAY_MS, '7d': 7 * DAY_MS, '30d': 30 * DAY_MS };
+export const isExpiryChoice = (v) => typeof v === 'string' && Object.prototype.hasOwnProperty.call(EXPIRY, v);
+
+// Has this manifest's link run out? A manifest without expiresAt never does.
+export function isExpired(manifest, now = Date.now()) {
+  const t = manifest && typeof manifest.expiresAt === 'string' ? Date.parse(manifest.expiresAt) : NaN;
+  return Number.isFinite(t) && t <= now;
+}
 export const MANIFEST_NAME = 'manifest.json';
 
 const ID_RE = /^[A-Za-z0-9]{12}$/;
@@ -106,7 +122,7 @@ export async function verifyKey(hmac, secret, id, key) {
 export function planUploads({ kind, files, poster } = {}) {
   if (!KINDS.includes(kind)) fail('kind');
   if (!Array.isArray(files)) fail('files');
-  const want = kind === 'image' ? [1, 1] : kind === 'compare' ? [2, 2] : [1, LIMITS.steps];
+  const want = kind === 'image' ? [1, 1] : kind === 'compare' ? [2, 2] : kind === 'gallery' ? [1, LIMITS.items] : [1, LIMITS.steps];
   if (files.length < want[0] || files.length > want[1]) fail('files');
   const plan = [];
   const check = (f, name) => {
@@ -152,7 +168,10 @@ function asset(v, field) {
   return v;
 }
 
-function normalizeHotspot(h) {
+// v42 — `goto` is the index of the step a hotspot jumps to. It is kept only
+// when it is a whole number inside the tour; otherwise the hotspot goes to the
+// next step.
+function normalizeHotspot(h, stepCount) {
   if (!h || typeof h !== 'object') fail('hotspot');
   const x = frac(h.x), y = frac(h.y);
   const out = {
@@ -168,10 +187,11 @@ function normalizeHotspot(h) {
     const body = text(c.body, LIMITS.body);
     if (title || body) out.callout = { title, body, side: SIDES.includes(c.side) ? c.side : 'bottom' };
   }
+  if (Number.isInteger(h.goto) && h.goto >= 0 && h.goto < stepCount) out.goto = h.goto;
   return out;
 }
 
-function normalizeStep(s) {
+function normalizeStep(s, stepCount) {
   if (!s || typeof s !== 'object') fail('step');
   const hotspots = s.hotspots == null ? [] : s.hotspots;
   if (!Array.isArray(hotspots) || hotspots.length > LIMITS.hotspots) fail('hotspots');
@@ -181,7 +201,7 @@ function normalizeStep(s) {
     w: dim(s.w, 'step.w'),
     h: dim(s.h, 'step.h'),
     autoAdvanceMs: Number.isFinite(ms) ? Math.max(0, Math.min(LIMITS.autoAdvanceMs, ms)) : 0,
-    hotspots: hotspots.map(normalizeHotspot),
+    hotspots: hotspots.map((h) => normalizeHotspot(h, stepCount)),
   };
 }
 
@@ -214,10 +234,26 @@ function normalizeCompareBlock(c) {
   };
 }
 
+function normalizeGallery(g) {
+  if (!g || typeof g !== 'object') fail('gallery');
+  const items = g.items;
+  if (!Array.isArray(items) || items.length < 1 || items.length > LIMITS.items) fail('gallery.items');
+  return {
+    source: GALLERY_SOURCES.includes(g.source) ? g.source : 'roll',
+    items: items.map((it) => {
+      if (!it || typeof it !== 'object') fail('gallery.item');
+      return { src: asset(it.src, 'gallery.src'), w: dim(it.w, 'gallery.w'), h: dim(it.h, 'gallery.h'), label: text(it.label, LIMITS.label) };
+    }),
+  };
+}
+
 // Returns a clean manifest or throws Error('bad manifest: <field>'). Unknown
 // keys and the blocks for other kinds are dropped. `id` (when given) wins over
 // the manifest's own; `now` (server side) stamps createdAt.
-export function normalizeManifest(raw, { id, now } = {}) {
+// v42 — with `now`, `expiresIn` (a name from EXPIRY) stamps expiresAt and any
+// expiresAt in the raw manifest is ignored, so only the server sets it.
+// Without `now` (reading a stored manifest) a valid expiresAt is kept.
+export function normalizeManifest(raw, { id, now, expiresIn } = {}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) fail('root');
   if (!KINDS.includes(raw.kind)) fail('kind');
   const shareId = id != null ? id : raw.id;
@@ -225,6 +261,13 @@ export function normalizeManifest(raw, { id, now } = {}) {
   let createdAt = null;
   if (now != null) createdAt = new Date(now).toISOString();
   else if (typeof raw.createdAt === 'string' && !Number.isNaN(Date.parse(raw.createdAt))) createdAt = new Date(raw.createdAt).toISOString();
+  let expiresAt = null;
+  if (now != null) {
+    if (expiresIn != null && !isExpiryChoice(expiresIn)) fail('expiresIn');
+    if (expiresIn != null && EXPIRY[expiresIn] > 0) expiresAt = new Date(Number(new Date(now)) + EXPIRY[expiresIn]).toISOString();
+  } else if (typeof raw.expiresAt === 'string' && !Number.isNaN(Date.parse(raw.expiresAt))) {
+    expiresAt = new Date(raw.expiresAt).toISOString();
+  }
 
   const out = {
     v: 1,
@@ -234,6 +277,7 @@ export function normalizeManifest(raw, { id, now } = {}) {
     createdAt,
     poster: raw.poster == null ? null : asset(raw.poster, 'poster'),
   };
+  if (expiresAt) out.expiresAt = expiresAt;
 
   if (raw.kind === 'image') {
     const im = raw.image;
@@ -242,7 +286,9 @@ export function normalizeManifest(raw, { id, now } = {}) {
   } else if (raw.kind === 'tour') {
     const steps = raw.tour && raw.tour.steps;
     if (!Array.isArray(steps) || steps.length < 1 || steps.length > LIMITS.steps) fail('tour.steps');
-    out.tour = { steps: steps.map(normalizeStep) };
+    out.tour = { steps: steps.map((s) => normalizeStep(s, steps.length)) };
+  } else if (raw.kind === 'gallery') {
+    out.gallery = normalizeGallery(raw.gallery);
   } else {
     out.compare = normalizeCompareBlock(raw.compare);
   }
@@ -255,6 +301,7 @@ export function manifestAssets(m) {
   if (m.poster) names.push(m.poster);
   if (m.kind === 'image') names.push(m.image.src);
   else if (m.kind === 'tour') m.tour.steps.forEach((s) => names.push(s.src));
+  else if (m.kind === 'gallery') m.gallery.items.forEach((it) => names.push(it.src));
   else names.push(m.compare.before, m.compare.after);
   return [...new Set(names)];
 }
@@ -266,5 +313,11 @@ export function describeShare(m) {
     return `An interactive tour in ${n} step${n === 1 ? '' : 's'}. Made with Glint.`;
   }
   if (m.kind === 'compare') return 'A before and after you can drag. Made with Glint.';
+  if (m.kind === 'gallery') {
+    const n = m.gallery.items.length;
+    return m.gallery.source === 'pins'
+      ? `${n} version${n === 1 ? '' : 's'} of one design. Made with Glint.`
+      : `${n} screenshot${n === 1 ? '' : 's'}. Made with Glint.`;
+  }
   return 'Made with Glint.';
 }

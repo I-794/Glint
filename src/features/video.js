@@ -95,7 +95,8 @@ export function loadVideoFile(file) {
     ensureFrameCanvas(w, h);
     state.video.loaded = true;
     // v34 — Bokeh is still-image only; drop any mask from the previous image.
-    if (state.bokeh) state.bokeh = { ...state.bokeh, enabled: false, maskDataUrl: null, maskSig: null };
+    // v42 — tilt-shift needs no mask, so it stays on for the new image.
+    if (state.bokeh) state.bokeh = { ...state.bokeh, enabled: state.bokeh.mode === 'tilt' ? state.bokeh.enabled : false, maskDataUrl: null, maskSig: null };
     refreshBokehUI();
     state.video.duration = videoEl.duration || 0;
     state.video.in = 0;

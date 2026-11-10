@@ -6,7 +6,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { shareConfig, store, readManifest, siteOrigin } from './_share.js';
-import { normalizeManifest, describeShare, isShareId } from '../src/share/share-core.js';
+import { normalizeManifest, describeShare, isShareId, isExpired } from '../src/share/share-core.js';
 
 export const SHARE_CSP = "default-src 'self'; img-src 'self' data: https://*.public.blob.vercel-storage.com; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-ancestors *; base-uri 'none'; form-action 'none'";
 
@@ -70,10 +70,13 @@ export default async function handler(req, res) {
   const cfg = shareConfig();
 
   let found = null;
+  let expired = false;
   if (cfg.enabled && isShareId(id)) {
     try {
       const got = await readManifest(store(cfg), id);
       if (got) found = { manifest: normalizeManifest(got.manifest, { id }), base: got.base };
+      // v42 — an expired link is served as a missing one.
+      if (found && isExpired(found.manifest)) { found = null; expired = true; }
     } catch (e) {
       console.error('[share-page]', e);
     }
@@ -87,7 +90,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const data = found ? { manifest: found.manifest, base: found.base, report: cfg.reportEmail || null } : { missing: true };
+  const data = found ? { manifest: found.manifest, base: found.base, report: cfg.reportEmail || null } : { missing: true, ...(expired ? { expired: true } : {}) };
   const html = fillTemplate(template, shareMeta({ ...(found || {}), origin, id: isShareId(id) ? id : null }), data);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Content-Security-Policy', SHARE_CSP);

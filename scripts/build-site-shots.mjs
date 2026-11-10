@@ -719,7 +719,15 @@ const IRIS = {
       before: '0.webp', after: '1.webp', w: 1600, h: 1000, rect: { x: 0, y: 0, w: 1, h: 1 }, orientation: 'vertical', split: 0.42,
       labels: { enabled: true, before: 'Raw', after: 'Glint', position: 'top' }, divider: { color: '#ffffff', width: 3, handle: true } } }
   };
-  for (const shot of [IRIS.tour, IRIS.compare]) {
+  // v42 — Junction: the same three steps as a branching tour. The first step
+  // has two hotspots that jump to two different pages.
+  const JUNCTION = { file: 'junction-tour', id: 'JunctionDemo', title: 'Lumen product tour', viewport: { width: 1440, height: 900 } };
+  for (let i = 0; i < steps.length; i++) files[`${JUNCTION.id}/${i}.webp`] = files[`${IRIS.tour.id}/${i}.webp`];
+  manifests[JUNCTION.id] = { v: 1, id: JUNCTION.id, kind: 'tour', title: JUNCTION.title, poster: null, tour: { steps: steps.map((st, i) => (i ? { ...st, hotspots: [] } : { ...st, hotspots: [
+    { x: 0.33, y: 0.354, w: 0.108, h: 0.114, label: 'Open the team board', goto: 1, callout: { title: 'Open the team board', body: 'This hotspot jumps to the board.', side: 'bottom' } },
+    { x: 0.664, y: 0.354, w: 0.101, h: 0.114, label: 'Skip to pricing', goto: 2, callout: { title: 'Skip to pricing', body: 'This one goes straight to the last page.', side: 'bottom' } }
+  ] })) } };
+  for (const shot of [IRIS.tour, IRIS.compare, JUNCTION]) {
     const vctx = await browser.newContext({ viewport: shot.viewport, deviceScaleFactor: 2 });
     await vctx.route('**/api/share-manifest*', (r) => {
       const id = new URL(r.request().url()).searchParams.get('id');

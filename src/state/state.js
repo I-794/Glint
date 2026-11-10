@@ -287,10 +287,10 @@ export const state = {
   // (each page carries its own `tour`; this mirrors the active page, same as how
   // the rest of `state` mirrors the active page's design). Authored as overlay
   // chrome (NOT baked into renderInto) and exported into a self-contained player.
-  //   hotspots: [{ id, x, y, w, h, label, callout: { title, body, side }, action }]
+  //   hotspots: [{ id, x, y, w, h, label, callout: { title, body, side }, target }]
   //   x/y/w/h are normalized 0..1 over the rendered frame (survive any export size).
   //   side: 'top'|'bottom'|'left'|'right' — which edge the callout pins to.
-  //   action: 'next' (MVP) — schema reserves room for { goto: stepIndex } branching.
+  //   target: v42 — the id of the page this hotspot jumps to, or null for the next step.
   //   autoAdvanceMs: 0 = manual advance; > 0 = auto-advance after that many ms.
   tour: { hotspots: [], autoAdvanceMs: 0 },
 

@@ -14,6 +14,11 @@ import { shareKey, verifyKey, isShareId, MANIFEST_NAME, base64url } from '../src
 
 export const PENDING_PREFIX = 'shares-pending/';
 export const pendingPath = (id) => `${PENDING_PREFIX}${id}.json`;
+// v42 — a link that expires leaves a marker whose NAME carries the time
+// (`shares-expiry/<ms>-<id>.json`), so the daily sweep finds expired shares
+// by listing one folder, without reading any manifest.
+export const EXPIRY_PREFIX = 'shares-expiry/';
+export const expiryPath = (id, ms) => `${EXPIRY_PREFIX}${Math.round(ms)}-${id}.json`;
 
 // A Blob store connects in one of two ways: newer stores add BLOB_STORE_ID and
 // the SDK signs in with the deployment's OIDC token; older ones add

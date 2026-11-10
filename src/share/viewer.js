@@ -8,7 +8,7 @@ import './tour-player.css';
 import './compare-player.css';
 import { mountTour } from './tour-player.js';
 import { mountCompare } from './compare-player.js';
-import { normalizeManifest, isShareId } from './share-core.js';
+import { normalizeManifest, isShareId, isExpired } from './share-core.js';
 
 const $ = (id) => document.getElementById(id);
 const app = $('share-app');
@@ -57,12 +57,84 @@ function stateBlock({ heading, body, action }) {
   app.append(box);
 }
 
-function showGone(heading = 'This link is gone.') {
+function showGone(heading = 'This link is gone.', body = 'It was removed, or it never existed. You can still make your own in the editor.') {
   setTitle('');
   document.title = 'Link not found · Glint';
   $('sv-owner').hidden = true;
   document.body.classList.remove('has-owner');
-  stateBlock({ heading, body: 'It was removed, or it never existed. You can still make your own in the editor.' });
+  stateBlock({ heading, body });
+}
+
+// v42 — a link can be made to last a day, a week or a month.
+function showExpired() {
+  showGone('This link has expired.', 'The person who made it set it to stop working after a while. You can still make your own in the editor.');
+}
+
+// v42 — a gallery (the Roll's shots, or a page's Pins): a grid of images that
+// open in a lightbox. Captions reach the page through textContent only.
+function renderGallery(stage, items, url, fallbackAlt) {
+  const grid = document.createElement('div');
+  grid.className = 'sv-gallery';
+  if (items.length === 1) grid.classList.add('is-single');
+  const dlg = $('sv-lightbox');
+  const canOpen = dlg && typeof dlg.showModal === 'function';
+  let at = 0;
+  const show = (n) => {
+    at = (n + items.length) % items.length;
+    const it = items[at];
+    const img = $('sv-lb-img');
+    img.src = url(it.src);
+    img.width = it.w;
+    img.height = it.h;
+    img.alt = it.label || `${fallbackAlt} ${at + 1}`;
+    $('sv-lb-label').textContent = it.label || '';
+    $('sv-lb-count').textContent = `${at + 1} / ${items.length}`;
+    $('sv-lb-open').href = img.src;
+    const many = items.length > 1;
+    $('sv-lb-prev').hidden = !many;
+    $('sv-lb-next').hidden = !many;
+  };
+  if (canOpen) {
+    $('sv-lb-close').onclick = () => dlg.close();
+    $('sv-lb-prev').onclick = () => show(at - 1);
+    $('sv-lb-next').onclick = () => show(at + 1);
+    dlg.onclick = (e) => { if (e.target === dlg) dlg.close(); };
+    dlg.onkeydown = (e) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); show(at - 1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); show(at + 1); }
+    };
+  }
+  items.forEach((it, i) => {
+    const fig = document.createElement('figure');
+    fig.className = 'sv-tile';
+    const btn = document.createElement(canOpen ? 'button' : 'a');
+    btn.className = 'sv-tile-btn';
+    if (canOpen) {
+      btn.type = 'button';
+      btn.onclick = () => { show(i); dlg.showModal(); };
+    } else {
+      btn.href = url(it.src);
+      btn.target = '_blank';
+      btn.rel = 'noopener';
+    }
+    btn.setAttribute('aria-label', `Open ${it.label || `${fallbackAlt} ${i + 1}`}`);
+    const img = document.createElement('img');
+    img.src = url(it.src);
+    img.width = it.w;
+    img.height = it.h;
+    img.alt = it.label || `${fallbackAlt} ${i + 1}`;
+    img.loading = i < 6 ? 'eager' : 'lazy';
+    img.decoding = 'async';
+    btn.append(img);
+    fig.append(btn);
+    if (it.label) {
+      const cap = document.createElement('figcaption');
+      cap.textContent = it.label;
+      fig.append(cap);
+    }
+    grid.append(fig);
+  });
+  stage.append(grid);
 }
 
 function showError(retry) {
@@ -99,7 +171,13 @@ function render(manifest, base, report) {
   setTitle(manifest.title);
   $('sv-kind').textContent = manifest.kind === 'tour'
     ? `Interactive tour, ${manifest.tour.steps.length} step${manifest.tour.steps.length === 1 ? '' : 's'}`
-    : manifest.kind === 'compare' ? 'Before and after. Drag the divider.' : KIND_LABEL.image;
+    : manifest.kind === 'compare' ? 'Before and after. Drag the divider.'
+      : manifest.kind === 'gallery'
+        ? (manifest.gallery.source === 'pins'
+          ? `${manifest.gallery.items.length} version${manifest.gallery.items.length === 1 ? '' : 's'} of one design`
+          : `${manifest.gallery.items.length} screenshot${manifest.gallery.items.length === 1 ? '' : 's'}`)
+        : KIND_LABEL.image;
+  document.documentElement.classList.toggle('is-gallery', manifest.kind === 'gallery');
 
   const stage = document.createElement('div');
   stage.className = 'sv-enter';
@@ -120,6 +198,8 @@ function render(manifest, base, report) {
     fig.append(img);
     stage.append(fig);
     $('sv-links').append(link('Open full size', img.src, { target: '_blank', rel: 'noopener' }));
+  } else if (manifest.kind === 'gallery') {
+    renderGallery(stage, manifest.gallery.items, url, manifest.gallery.source === 'pins' ? 'Version' : 'Screenshot');
   } else if (manifest.kind === 'tour') {
     const root = document.createElement('div');
     stage.append(root);
@@ -189,6 +269,7 @@ function inlineData() {
 function accept(data, id) {
   try {
     const manifest = normalizeManifest(data.manifest, { id });
+    if (isExpired(manifest)) { showExpired(); return; }   // v42 — a cached page may outlive its link
     const base = checkedBase(data.base, id);
     if (!base) throw new Error('bad base');
     render(manifest, base, typeof data.report === 'string' && data.report.includes('@') ? data.report : null);
@@ -204,12 +285,16 @@ async function load() {
   if (!id) { showGone(); return; }
   const inline = inlineData();
   if (inline) {
-    if (inline.missing) showGone(); else accept(inline, id);
+    if (inline.missing) { if (inline.expired) showExpired(); else showGone(); } else accept(inline, id);
     return;
   }
   try {
     const r = await fetch(`/api/share-manifest?id=${encodeURIComponent(id)}`);
-    if (r.status === 404 || r.status === 400) { showGone(); return; }
+    if (r.status === 404 || r.status === 400) {
+      const why = await r.json().catch(() => null);
+      if (why && /expired/i.test(String(why.error))) showExpired(); else showGone();
+      return;
+    }
     if (r.status === 501) {
       stateBlock({ heading: 'Links are not set up here.', body: 'This copy of Glint is not connected to link storage.' });
       return;

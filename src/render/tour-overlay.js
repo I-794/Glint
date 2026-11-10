@@ -18,6 +18,12 @@ let selectedId = null;
 let changeCb = null;  // fired after structural changes / selection so the UI refreshes
 
 export function onTourOverlayChange(fn) { changeCb = fn; }
+
+// v42 — tours.js supplies the text for a hotspot's destination badge ("→ 3"),
+// since it knows the pages. Returns '' for a hotspot that goes to the next step.
+let badgeCb = null;
+export function setTourBadge(fn) { badgeCb = fn; }
+function badgeFor(h) { try { return badgeCb ? String(badgeCb(h) || '') : ''; } catch (e) { return ''; } }
 function emit() { if (changeCb) { try { changeCb(); } catch (e) {} } }
 
 export function isTourOverlayActive() { return active; }
@@ -55,6 +61,7 @@ function buildBoxes() {
     box.dataset.id = h.id;
     box.innerHTML =
       `<span class="tour-hotspot-num">${i + 1}</span>` +
+      (badgeFor(h) ? `<span class="tour-hotspot-to">${badgeFor(h)}</span>` : '') +
       `<button class="tour-hotspot-del" data-del="${h.id}" title="Delete hotspot">✕</button>` +
       ['nw', 'ne', 'sw', 'se'].map(c => `<div class="tour-handle ${c}" data-corner="${c}"></div>`).join('');
     overlay.appendChild(box);
@@ -99,7 +106,7 @@ function onPointerDown(e) {
   } else {
     // Draw a new hotspot on the empty backdrop (or click-to-drop a default box).
     saveStateToHistory();
-    const h = { id: uid(), x: norm.x, y: norm.y, w: 0, h: 0, label: '', callout: { title: '', body: '', side: 'bottom' }, action: 'next' };
+    const h = { id: uid(), x: norm.x, y: norm.y, w: 0, h: 0, label: '', callout: { title: '', body: '', side: 'bottom' }, target: null };
     hotspots().push(h);
     selectedId = h.id;
     drag = { type: 'create', id: h.id, start: norm, init: { x: norm.x, y: norm.y } };
@@ -162,7 +169,7 @@ export function selectHotspot(id) {
 export function addDefaultHotspot() {
   saveStateToHistory();
   const dw = 0.24, dh = 0.14;
-  const h = { id: uid(), x: (1 - dw) / 2, y: (1 - dh) / 2, w: dw, h: dh, label: '', callout: { title: '', body: '', side: 'bottom' }, action: 'next' };
+  const h = { id: uid(), x: (1 - dw) / 2, y: (1 - dh) / 2, w: dw, h: dh, label: '', callout: { title: '', body: '', side: 'bottom' }, target: null };
   hotspots().push(h);
   selectedId = h.id;
   buildBoxes();

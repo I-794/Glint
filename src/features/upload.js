@@ -16,7 +16,8 @@ export function loadImageFromSrc(src) {
     state.image = img;
     state.svgCode = null;
     // v34 — a new image needs its own subject mask.
-    if (state.bokeh) state.bokeh = { ...state.bokeh, enabled: false, maskDataUrl: null, maskSig: null };
+    // v42 — tilt-shift needs no mask, so it stays on for the new image.
+    if (state.bokeh) state.bokeh = { ...state.bokeh, enabled: state.bokeh.mode === 'tilt' ? state.bokeh.enabled : false, maskDataUrl: null, maskSig: null };
     refreshBokehUI();
     el.uploadZone.style.display = 'none';
     el.canvasWrapper.style.display = 'block';

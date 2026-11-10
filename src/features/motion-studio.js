@@ -43,7 +43,8 @@ const KIND_META = {
   kenburns:  { icon: '🎥', accent: '#10b981' },
   video:     { icon: '🎬', accent: '#f59e0b' },
   turntable: { icon: '↻', accent: '#8b5cf6' },
-  compare:   { icon: '◧', accent: '#ec4899' }   // v35
+  compare:   { icon: '◧', accent: '#ec4899' },  // v35
+  focus:     { icon: '◎', accent: '#38bdf8' }   // v42
 };
 
 // ── lane reconciliation ────────────────────────────────────────────────────
@@ -101,6 +102,14 @@ export function syncLanesFromState() {
   if (cmp && cmp.enabled && cmp.wipe && cmp.beforeSrc && !state.video.loaded) {
     const old = keep('compare', 0);
     lanes.push({ id: 'compare', kind: 'compare', target: null, label: 'Before / After wipe',
+      clips: [{ start: old.start, duration: old.duration || baseDur, ref: {} }] });
+  }
+
+  // v42 — focus pull: the tilt-shift band travels, or the subject blur fades.
+  const bk = state.bokeh;
+  if (bk && bk.enabled && bk.pull && bk.pull.enabled && !state.video.loaded && (bk.mode === 'tilt' || bk.maskDataUrl)) {
+    const old = keep('focus', 0);
+    lanes.push({ id: 'focus', kind: 'focus', target: null, label: 'Focus pull',
       clips: [{ start: old.start, duration: old.duration || baseDur, ref: {} }] });
   }
 

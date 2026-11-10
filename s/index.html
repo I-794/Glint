@@ -35,6 +35,15 @@
         </div>
     </form>
 </dialog>
+<dialog class="sv-lightbox" id="sv-lightbox" aria-label="Image viewer">
+    <button type="button" class="sv-lb-btn sv-lb-close" id="sv-lb-close" aria-label="Close">Close</button>
+    <button type="button" class="sv-lb-btn sv-lb-prev" id="sv-lb-prev" aria-label="Previous image">&#8249;</button>
+    <figure class="sv-lb-figure">
+        <img class="sv-lb-img" id="sv-lb-img" alt="">
+        <figcaption class="sv-lb-cap"><span id="sv-lb-label"></span><span class="sv-lb-count" id="sv-lb-count"></span><a id="sv-lb-open" target="_blank" rel="noopener">Open full size</a></figcaption>
+    </figure>
+    <button type="button" class="sv-lb-btn sv-lb-next" id="sv-lb-next" aria-label="Next image">&#8250;</button>
+</dialog>
 <main class="sv-main" id="share-app" aria-live="polite">
     <div class="sv-skeleton" aria-hidden="true"></div>
 </main>

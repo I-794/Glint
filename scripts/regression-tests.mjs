@@ -14,6 +14,10 @@ import { normalizeModeFlip, resolveTarget, srgbToOklab, oklabToSrgb, flipLightne
 import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, peekStep, endPeek, isPeeking, peekSnapshot, withSnapshot, clearHistory, commitStep, onHistoryChange } from '../src/state/history.js';
 import { describeChange } from '../src/state/history-labels.js';
 import { makeVersion, normalizeVersions, MAX_VERSIONS, isSafeThumb } from '../src/state/versions-core.js';
+import { normalizeTour, resolveTourTargets, tourLinks } from '../src/state/tour-core.js';
+import { bokehDefaults, normalizeBokeh, tiltBand, pullEase, lensBlur } from '../src/render/bokeh-core.js';
+import { localProgress } from '../src/state/motion-clock.js';
+import { PAPERS, normalizePrint, trimSize, layoutPrint, effectiveDpi, dpiVerdict } from '../src/render/print-core.js';
 import { createHmac, randomBytes } from 'node:crypto';
 import { store as shareStore, memoryStoreEntries } from '../api/_share.js';
 import shareStatusRoute from '../api/_share-status.js';
@@ -26,7 +30,7 @@ import { shareMeta, fillTemplate } from '../api/_share-page.js';
 import shareRouter from '../api/share.js';
 import shareUploadRoute from '../api/_share-upload.js';
 import { join as waitlistJoin, exportList as waitlistExport, cleanEmail, WAITLIST_PREFIX } from '../api/_waitlist.js';
-import { LIMITS, newShareId, isShareId, isAssetName, shareKey, verifyKey, base64url, normalizeManifest, manifestAssets, describeShare, planUploads } from '../src/share/share-core.js';
+import { LIMITS, newShareId, isShareId, isAssetName, shareKey, verifyKey, base64url, normalizeManifest, manifestAssets, describeShare, planUploads, isExpired, EXPIRY } from '../src/share/share-core.js';
 
 function mockRes() {
   return {
@@ -743,6 +747,168 @@ function testVersionsNormalizeAndPersist() {
   }
 }
 
+// v42 — branching tours: targets are page ids, the player wants step indexes.
+function testTourCoreTargets() {
+  const old = normalizeTour({ hotspots: [{ id: 'a', x: 0.1, y: 0.2, w: 0.3, h: 0.1, label: '', callout: { title: 'Hi', body: '', side: 'left' }, action: 'next' }], autoAdvanceMs: 2000 });
+  assert.equal(old.hotspots[0].action, undefined);
+  assert.equal(old.hotspots[0].target, null);
+  assert.equal(old.hotspots[0].callout.side, 'left');
+  assert.equal(old.autoAdvanceMs, 2000);
+
+  const bad = normalizeTour({ hotspots: [{ x: 4, y: -1, w: 2, h: 'x', callout: { side: 'up' }, target: 7 }, null], autoAdvanceMs: 'soon' });
+  assert.equal(bad.hotspots.length, 2);
+  assert.deepEqual([bad.hotspots[0].x, bad.hotspots[0].y, bad.hotspots[0].w, bad.hotspots[0].h], [1, 0, 0, 0]);
+  assert.equal(bad.hotspots[0].callout.side, 'bottom');
+  assert.equal(bad.hotspots[0].target, null);
+  assert.ok(bad.hotspots[0].id && bad.hotspots[1].id);
+  assert.equal(bad.autoAdvanceMs, 0);
+  assert.deepEqual(normalizeTour(undefined), { hotspots: [], autoAdvanceMs: 0 });
+
+  // Page p2 is blank, so it is not a step: p3 is step 1 and p4 is step 2.
+  const hs = (target) => ({ id: 'h', x: 0, y: 0, w: 0.5, h: 0.5, label: '', callout: null, target });
+  const steps = resolveTourTargets([
+    { pageId: 'p1', img: 'a', w: 10, h: 10, autoAdvanceMs: 0, hotspots: [hs('p4'), hs(null), hs('p2'), hs('gone'), hs('p1')] },
+    { pageId: 'p3', img: 'b', w: 10, h: 10, autoAdvanceMs: 0, hotspots: [hs('p1')] },
+    { pageId: 'p4', img: 'c', w: 10, h: 10, autoAdvanceMs: 0, hotspots: [] }
+  ]);
+  assert.equal(steps[0].pageId, undefined);
+  assert.deepEqual(steps[0].hotspots.map((h) => h.goto), [2, undefined, undefined, undefined, undefined]);
+  assert.equal(steps[1].hotspots[0].goto, 0);
+  assert.equal(steps[0].hotspots[0].target, undefined);
+  assert.equal(steps[0].hotspots[0].id, undefined);
+
+  const page = (id, targets) => ({ id, payload: { design: { tour: { hotspots: targets.map((t) => ({ target: t })) } } } });
+  assert.deepEqual(tourLinks([page('p1', ['p2', 'p2', 'p1', 'gone', null]), page('p2', ['p1']), { id: 'p3', payload: null }]),
+    [{ from: 'p1', to: 'p2' }, { from: 'p2', to: 'p1' }]);
+
+  // A design saved before v42 comes back with targets and without `action`.
+  const migrated = normalizeProject({ schemaVersion: 25, design: { tour: { hotspots: [{ id: 'a', x: 0.1, y: 0.1, w: 0.2, h: 0.2, action: 'next' }] } } });
+  assert.equal(migrated.design.tour.hotspots[0].target, null);
+  assert.equal(migrated.design.tour.hotspots[0].action, undefined);
+  assert.equal(SCHEMA_VERSION, 26);
+}
+
+// v42 — tilt-shift and the focus pull.
+function testBokehTiltAndPull() {
+  // A v34 block gains the new fields and keeps its mask.
+  const old = normalizeBokeh({ enabled: true, amount: 20, highlights: 0.2, shape: 'hexagon', maskDataUrl: 'data:image/png;base64,AA', maskSig: '1.600' });
+  assert.equal(old.mode, 'subject');
+  assert.equal(old.maskDataUrl, 'data:image/png;base64,AA');
+  assert.deepEqual(old.tilt, bokehDefaults().tilt);
+  assert.deepEqual(old.pull, bokehDefaults().pull);
+  assert.equal(old.shape, 'hexagon');
+
+  const bad = normalizeBokeh({ enabled: 'yes', amount: 'lots', mode: 'sideways', shape: 'star', tilt: { pos: 7, width: -1, feather: 0, angle: 400 }, pull: { enabled: 1, from: null, to: 2 } });
+  assert.equal(bad.enabled, false);
+  assert.equal(bad.amount, 12);
+  assert.equal(bad.mode, 'subject');
+  assert.equal(bad.shape, 'circle');
+  assert.deepEqual(bad.tilt, { pos: 1, width: 0, feather: 0.02, angle: 90 });
+  assert.deepEqual(bad.pull, { enabled: false, from: 0.15, to: 1 });
+  assert.deepEqual(normalizeBokeh(null), bokehDefaults());
+
+  const migrated = normalizeProject({ schemaVersion: 25, design: { bokeh: { enabled: true, amount: 8, mode: 'tilt' } } });
+  assert.equal(migrated.design.bokeh.mode, 'tilt');
+  assert.equal(migrated.design.bokeh.tilt.width, 0.2);
+
+  // A horizontal band: the line runs straight down through the centre.
+  const band = tiltBand({ pos: 0.5, width: 0.2, feather: 0.4, angle: 0 }, 400, 200);
+  assert.equal(band.span, 200);
+  assert.ok(Math.abs(band.line.x0 - 200) < 1e-9 && Math.abs(band.line.x1 - 200) < 1e-9);
+  assert.equal(band.line.y0, -100);
+  assert.equal(band.line.y1, 300);
+  assert.equal(band.half, 20);
+  // Half blur fades in from the band edge (20px) to 60px, full blur from 60 to 100.
+  const at = (px) => 0.5 + px / 400;
+  assert.deepEqual(band.mid.map((s) => s[1]), [1, 1, 0, 0, 1, 1]);
+  assert.ok(Math.abs(band.mid[3][0] - at(20)) < 1e-9 && Math.abs(band.mid[4][0] - at(60)) < 1e-9);
+  assert.ok(Math.abs(band.full[3][0] - at(60)) < 1e-9 && Math.abs(band.full[4][0] - at(100)) < 1e-9);
+  for (const stops of [band.mid, band.full]) {
+    for (let i = 1; i < stops.length; i++) assert.ok(stops[i][0] >= stops[i - 1][0], 'stops must not go backwards');
+  }
+  // Position moves the centre along the line; 90 degrees makes the band vertical.
+  assert.equal(tiltBand({ pos: 0.25, width: 0.2, feather: 0.4, angle: 0 }, 400, 200).centre.y, 50);
+  const upright = tiltBand({ pos: 1, width: 0.1, feather: 0.2, angle: 90 }, 400, 200);
+  assert.equal(upright.span, 400);
+  assert.ok(Math.abs(upright.centre.x - 0) < 1e-9 && Math.abs(upright.centre.y - 100) < 1e-9);
+  assert.equal(tiltBand({ pos: 0.5, width: 0.2, feather: 0.4, angle: 0 }, 400, 200, 1).centre.y, 200);
+
+  assert.equal(pullEase(0), 0);
+  assert.equal(pullEase(1), 1);
+  assert.equal(pullEase(0.5), 0.5);
+  assert.equal(pullEase(5), 1);
+
+  // A flat image stays flat under the lens blur; a radius under 0.5 copies.
+  const flat = new Uint8ClampedArray(4 * 16).fill(120);
+  assert.deepEqual(Array.from(lensBlur(flat, 4, 4, 2, 'circle', 0.4)), Array.from(flat));
+  assert.deepEqual(Array.from(lensBlur(flat, 4, 4, 0.2)), Array.from(flat));
+
+  // The focus lane is read through the shared clock, and only while it drives.
+  const saved = state.timeline;
+  try {
+    state.timeline = { ...saved, _driving: true, currentTime: 500, lanes: [{ id: 'focus', kind: 'focus', target: null, clips: [{ start: 0, duration: 2000 }] }] };
+    assert.equal(localProgress('focus', null, null), 0.25);
+    state.timeline._driving = false;
+    assert.equal(localProgress('focus', null, null), null);
+  } finally {
+    state.timeline = saved;
+  }
+}
+
+// v42 — print PDF geometry (millimetres).
+function testPrintCoreLayout() {
+  const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-6, `${msg || ''} ${a} vs ${b}`);
+  const bad = normalizePrint({ paper: 'napkin', orientation: 'diagonal', fit: 'stretch', margin: 999, bleed: -4, marks: 'no', scope: 'some', quality: 'gif', upscale: 9, customW: 'x' });
+  assert.deepEqual(bad, { paper: 'a4', customW: 210, customH: 297, orientation: 'auto', fit: 'fit', margin: 50, bleed: 0, marks: true, scope: 'page', quality: 'jpeg', upscale: 1 });
+  assert.equal(normalizePrint({ marks: false }).marks, false);
+
+  // 'auto' turns the paper to match the picture.
+  assert.deepEqual(trimSize({ paper: 'a4' }, 1600, 1000), { w: 297, h: 210 });
+  assert.deepEqual(trimSize({ paper: 'a4' }, 1000, 1600), { w: 210, h: 297 });
+  assert.deepEqual(trimSize({ paper: 'a4', orientation: 'portrait' }, 1600, 1000), { w: 210, h: 297 });
+  assert.deepEqual(trimSize({ paper: 'custom', customW: 300, customH: 100, orientation: 'portrait' }, 10, 10), { w: 100, h: 300 });
+  assert.equal(PAPERS.letter.w, 215.9);
+
+  // Fill: A4 landscape, 3mm bleed, marks. Slug = 3 + 1 + 5 + 1 = 10mm a side.
+  const fill = layoutPrint({ paper: 'a4', fit: 'fill', bleed: 3, marks: true }, 1600, 1000);
+  assert.deepEqual(fill.page, { w: 317, h: 230 });
+  assert.deepEqual(fill.trim, { x: 10, y: 10, w: 297, h: 210 });
+  assert.deepEqual(fill.bleed, { x: 7, y: 7, w: 303, h: 216 });
+  assert.deepEqual(fill.image, fill.bleed);
+  // The picture is cropped to the bleed box's shape, centred, never stretched.
+  near(fill.source.sw / fill.source.sh, 303 / 216, 'crop ratio');
+  near(fill.source.sx * 2 + fill.source.sw, 1600);
+  near(fill.source.sy * 2 + fill.source.sh, 1000);
+  assert.ok(fill.source.sw <= 1600 && fill.source.sh <= 1000);
+  near(fill.dpi, effectiveDpi(fill.source.sw, 303), 'dpi');
+  // Eight marks, each 5mm, all outside the bleed and inside the page.
+  assert.equal(fill.marks.length, 8);
+  for (const m of fill.marks) {
+    near(Math.abs(m.x2 - m.x1) + Math.abs(m.y2 - m.y1), 5, 'mark length');
+    const outside = (x, y) => x <= fill.bleed.x || x >= fill.bleed.x + fill.bleed.w || y <= fill.bleed.y || y >= fill.bleed.y + fill.bleed.h;
+    assert.ok(outside(m.x1, m.y1) && outside(m.x2, m.y2), 'marks stay out of the bleed');
+    for (const v of [m.x1, m.x2]) assert.ok(v >= 0 && v <= fill.page.w);
+    for (const v of [m.y1, m.y2]) assert.ok(v >= 0 && v <= fill.page.h);
+  }
+  // Marks line up with the trim edges.
+  assert.ok(fill.marks.some((m) => m.y1 === 10 && m.y2 === 10 && m.x2 === 6));
+  assert.ok(fill.marks.some((m) => m.x1 === 307 && m.x2 === 307 && m.y1 === 224));
+
+  // Fit: whole picture, inside the trim minus the margin, centred.
+  const fit = layoutPrint({ paper: 'a4', fit: 'fit', margin: 10, bleed: 3, marks: false }, 1000, 1000);
+  assert.deepEqual(fit.page, { w: 216, h: 303 });           // no marks: page = trim + bleed
+  assert.deepEqual(fit.source, { sx: 0, sy: 0, sw: 1000, sh: 1000 });
+  near(fit.image.w, 190); near(fit.image.h, 190);
+  near(fit.image.x, 3 + 10); near(fit.image.y, 3 + (297 - 190) / 2);
+  assert.equal(fit.marks.length, 0);
+  // No bleed and no marks: the page is exactly the paper.
+  assert.deepEqual(layoutPrint({ paper: 'a5', bleed: 0, marks: false, orientation: 'portrait' }, 10, 10).page, { w: 148, h: 210 });
+
+  near(effectiveDpi(3000, 254), 300);
+  assert.equal(effectiveDpi(0, 10), 0);
+  assert.deepEqual([dpiVerdict(300), dpiVerdict(299), dpiVerdict(150), dpiVerdict(149)], ['sharp', 'ok', 'ok', 'soft']);
+}
+
 function shareHmac(secret, msg) {
   return createHmac('sha256', secret).update(msg).digest();
 }
@@ -754,6 +920,12 @@ function shareFixture(kind) {
     return { ...base, tour: { steps: [
       { src: '0.webp', w: 1200, h: 800, autoAdvanceMs: 0, hotspots: [{ x: 0.1, y: 0.2, w: 0.3, h: 0.1, label: 'Go', callout: { title: 'Start', body: 'Here', side: 'left' } }] },
       { src: '1.webp', w: 1200, h: 800 }
+    ] } };
+  }
+  if (kind === 'gallery') {
+    return { ...base, gallery: { source: 'roll', items: [
+      { src: '0.webp', w: 1200, h: 800, label: 'Home' },
+      { src: '1.webp', w: 800, h: 1600, label: 'Settings' }
     ] } };
   }
   return { ...base, compare: { before: '0.webp', after: '1.webp', w: 1600, h: 1000, rect: { x: 0.1, y: 0.1, w: 0.8, h: 0.8 }, split: 0.4, labels: { enabled: true, before: 'Before', after: 'After' }, divider: { color: '#ff00aa', width: 4, handle: true } } };
@@ -797,6 +969,13 @@ function testShareCoreManifest() {
   assert.equal(tour.tour.steps[1].autoAdvanceMs, 0);
   assert.equal(tour.tour.steps[0].hotspots[0].callout.side, 'left');
   assert.equal(describeShare(tour), 'An interactive tour in 2 steps. Made with Glint.');
+  assert.equal(tour.tour.steps[0].hotspots[0].goto, undefined);
+
+  // v42 — a hotspot's goto is kept only when it is a step inside the tour.
+  const jump = shareFixture('tour');
+  const spot = (goto) => ({ x: 0, y: 0, w: 0.2, h: 0.2, goto });
+  jump.tour.steps[0].hotspots = [spot(1), spot(2), spot(-1), spot(0.5), spot('1'), spot(0)];
+  assert.deepEqual(normalizeManifest(jump).tour.steps[0].hotspots.map((h) => h.goto), [1, undefined, undefined, undefined, undefined, 0]);
 
   const long = shareFixture('tour');
   long.tour.steps = Array.from({ length: 31 }, (_, i) => ({ src: `${i}.webp`, w: 10, h: 10 }));
@@ -811,6 +990,42 @@ function testShareCoreManifest() {
   const c = normalizeManifest(cmp);
   assert.equal(c.compare.divider.color, '#ffffff');
   assert.equal(c.compare.labels.position, 'top');
+
+  // v42 — galleries (the Roll's shots, a page's Pins).
+  const g = shareFixture('gallery');
+  g.gallery.items[0].label = 'x'.repeat(200);
+  g.gallery.items[1].evil = '<script>';
+  const gal = normalizeManifest(g);
+  assert.equal(gal.gallery.source, 'roll');
+  assert.equal(gal.gallery.items[0].label.length, 80);
+  assert.equal(gal.gallery.items[1].evil, undefined);
+  assert.equal(gal.compare, undefined);
+  assert.deepEqual(manifestAssets(gal), ['poster.webp', '0.webp', '1.webp']);
+  assert.equal(describeShare(gal), '2 screenshots. Made with Glint.');
+  assert.equal(normalizeManifest({ ...g, gallery: { ...g.gallery, source: 'elsewhere' } }).gallery.source, 'roll');
+  assert.equal(describeShare(normalizeManifest({ ...g, gallery: { source: 'pins', items: [g.gallery.items[0]] } })), '1 version of one design. Made with Glint.');
+  assert.throws(() => normalizeManifest({ ...g, gallery: { source: 'roll', items: [] } }), /gallery\.items/);
+  assert.throws(() => normalizeManifest({ ...g, gallery: { source: 'roll', items: Array.from({ length: 31 }, (_, i) => ({ src: `${i}.webp`, w: 10, h: 10 })) } }), /gallery\.items/);
+  assert.throws(() => normalizeManifest({ ...g, gallery: { source: 'roll', items: [{ src: 'https://evil.test/a.webp', w: 10, h: 10 }] } }), /gallery\.src/);
+  assert.equal(planUploads({ kind: 'gallery', files: Array.from({ length: 30 }, () => ({ type: 'image/webp', size: 10 })) }).length, 30);
+  assert.throws(() => planUploads({ kind: 'gallery', files: Array.from({ length: 31 }, () => ({ type: 'image/webp', size: 10 })) }), /files/);
+  assert.throws(() => planUploads({ kind: 'gallery', files: [] }), /files/);
+
+  // v42 — expiry is stamped by the server (with `now`), never taken from the client.
+  const forged = { ...shareFixture('image'), expiresAt: '2999-01-01T00:00:00.000Z' };
+  assert.equal(normalizeManifest(forged, { now: 0 }).expiresAt, undefined);
+  assert.equal(normalizeManifest(forged, { now: 0, expiresIn: 'never' }).expiresAt, undefined);
+  assert.equal(normalizeManifest(forged, { now: 0, expiresIn: '7d' }).expiresAt, new Date(EXPIRY['7d']).toISOString());
+  assert.throws(() => normalizeManifest(forged, { now: 0, expiresIn: 'forever' }), /expiresIn/);
+  assert.throws(() => normalizeManifest(forged, { now: 0, expiresIn: 'toString' }), /expiresIn/);
+  // A stored manifest keeps its expiry when it is read back.
+  assert.equal(normalizeManifest(forged).expiresAt, '2999-01-01T00:00:00.000Z');
+  assert.equal(normalizeManifest({ ...forged, expiresAt: 'soon' }).expiresAt, undefined);
+  assert.ok(!isExpired(normalizeManifest(forged)));
+  assert.ok(isExpired({ expiresAt: '2020-01-01T00:00:00.000Z' }));
+  assert.ok(isExpired({ expiresAt: new Date(1000).toISOString() }, 1000));
+  assert.ok(!isExpired({ expiresAt: new Date(1001).toISOString() }, 1000));
+  assert.ok(!isExpired({}));
 
   assert.throws(() => normalizeManifest({ ...shareFixture('image'), kind: 'html' }), /kind/);
   assert.throws(() => normalizeManifest(shareFixture('image'), { id: '../../etc' }), /id/);
@@ -944,6 +1159,65 @@ async function testShareRoutesRoundTrip() {
     assert.ok(memoryStoreEntries().has(`shares/${b.id}/manifest.json`));
     assert.ok(!memoryStoreEntries().has(`shares-pending/${b.id}.json`));
 
+    // v42 — a gallery link with an expiry: stamped by the server, gone once
+    // it runs out, and cleaned up by the sweep through its marker.
+    const makeGallery = async (extra) => {
+      const c = (await callRoute(shareCreateRoute, shareReq('POST', { kind: 'gallery', files: [{ type: 'image/png', size: 9 }, { type: 'image/png', size: 9 }] }))).body;
+      await uploadPlanned(c.uploads);
+      const res = await callRoute(shareCommitRoute, shareReq('POST', {
+        id: c.id, key: c.key, ...extra,
+        manifest: { kind: 'gallery', expiresAt: '2999-01-01T00:00:00.000Z', gallery: { source: 'pins', items: [{ src: '0.png', w: 10, h: 10, label: 'First' }, { src: '1.png', w: 10, h: 10 }] } },
+      }));
+      return { id: c.id, key: c.key, res };
+    };
+    const markerOf = (id) => [...memoryStoreEntries().keys()].find((k) => k.startsWith('shares-expiry/') && k.includes(id));
+
+    assert.equal((await makeGallery({ expiresIn: 'forever' })).res.statusCode, 400);
+    const forever = await makeGallery({});
+    assert.equal(forever.res.statusCode, 201);
+    assert.equal(forever.res.body.expiresAt, null);
+    assert.equal(markerOf(forever.id), undefined);
+
+    const week = await makeGallery({ expiresIn: '7d' });
+    assert.equal(week.res.statusCode, 201);
+    const left = Date.parse(week.res.body.expiresAt) - Date.now();
+    assert.ok(left > EXPIRY['7d'] - 60000 && left <= EXPIRY['7d'], 'expiry is seven days from the commit, not the client value');
+    assert.equal(markerOf(week.id), `shares-expiry/${Date.parse(week.res.body.expiresAt)}-${week.id}.json`);
+    const live = await callRoute(shareManifestRoute, shareReq('GET', null, { query: { id: week.id } }));
+    assert.equal(live.statusCode, 200);
+    assert.equal(live.body.manifest.kind, 'gallery');
+    assert.equal(live.body.manifest.gallery.items[0].label, 'First');
+    assert.equal(live.body.manifest.expiresAt, week.res.body.expiresAt);
+
+    // Deleting a link takes its expiry marker with it.
+    const gone = await makeGallery({ expiresIn: '1d' });
+    assert.ok(markerOf(gone.id));
+    assert.equal((await callRoute(shareDeleteRoute, shareReq('POST', { id: gone.id, key: gone.key }))).statusCode, 204);
+    assert.equal(markerOf(gone.id), undefined);
+
+    // Move the week-long link's expiry into the past.
+    const entries = memoryStoreEntries();
+    const past = Date.now() - 1000;
+    const mPath = `shares/${week.id}/manifest.json`;
+    const stored = JSON.parse(entries.get(mPath).body.toString('utf8'));
+    entries.delete(mPath);
+    await shareStore().put(mPath, JSON.stringify({ ...stored, expiresAt: new Date(past).toISOString() }), { contentType: 'application/json' });
+    entries.delete(markerOf(week.id));
+    await shareStore().put(`shares-expiry/${past}-${week.id}.json`, '{}', { contentType: 'application/json' });
+    await shareStore().put('shares-expiry/not-a-marker.json', '{}', { contentType: 'application/json' });
+
+    const lapsed = await callRoute(shareManifestRoute, shareReq('GET', null, { query: { id: week.id } }));
+    assert.equal(lapsed.statusCode, 404);
+    assert.match(lapsed.body.error, /expired/);
+    assert.ok(entries.has(`shares/${week.id}/0.png`), 'files wait for the sweep');
+
+    const swept2 = await callRoute(shareSweepRoute, shareReq('GET', null, { headers: { authorization: 'Bearer cron' } }));
+    assert.equal(swept2.body.expired, 1);
+    assert.ok(![...entries.keys()].some((k) => k.includes(week.id)), 'the expired share and its marker are gone');
+    assert.ok(!entries.has('shares-expiry/not-a-marker.json'));
+    assert.ok(entries.has(`shares/${forever.id}/manifest.json`), 'a link with no expiry stays');
+    assert.ok(entries.has(`shares/${b.id}/manifest.json`));
+
     // A store connected the newer way (OIDC + BLOB_STORE_ID, no read-write token) counts as set up.
     delete process.env.SHARE_STORE;
     process.env.BLOB_STORE_ID = 'store_abc';
@@ -990,9 +1264,13 @@ async function testWaitlistRoutes() {
     await callRoute(waitlistJoin, shareReq('POST', { email: 'grace@example.org', source: 'made-up' }, from('1.1.1.5')));
     assert.equal(listed().length, 2);
     // Nothing readable in the (public) store: not in the name, not in the body.
+    // Names and bodies are random-looking base64, which now and then spells a
+    // short word like "ada" by chance (about 1 run in 100), so look for the
+    // addresses themselves: base64 has no "@" or ".".
+    const readable = /ada@|grace@|@example|example\.(com|org)/i;
     for (const k of listed()) {
-      assert.ok(!/ada|grace|example/i.test(k));
-      assert.ok(!/ada|grace|example/i.test(memoryStoreEntries().get(k).body.toString('utf8')));
+      assert.ok(!readable.test(k));
+      assert.ok(!readable.test(memoryStoreEntries().get(k).body.toString('utf8')));
     }
 
     assert.equal((await callRoute(waitlistExport, shareReq('GET'))).statusCode, 401);
@@ -1045,6 +1323,9 @@ const tests = [
   testCommitStepEmitsAfterApply,
   testHistoryLabels,
   testVersionsNormalizeAndPersist,
+  testTourCoreTargets,
+  testBokehTiltAndPull,
+  testPrintCoreLayout,
   testShareCoreIdsAndKeys,
   testShareCoreManifest,
   testSharePlayersInlineCleanly,

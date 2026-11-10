@@ -63,9 +63,29 @@ function chip(ctx, text, x, y) {
   ctx.restore();
 }
 
-// kind: 'image' | 'tour' | 'compare'
-// frames: image -> [canvas]; tour -> [firstStepCanvas]; compare -> [before, after]
-export function makePoster(kind, frames, { steps = 0 } = {}) {
+// v42 — a gallery: up to four frames as tiles, with a count chip.
+function galleryPoster(frames, count) {
+  const { c, ctx } = base();
+  const tiles = frames.slice(0, 4);
+  const cols = tiles.length === 1 ? 1 : 2, rows = tiles.length > 2 ? 2 : 1;
+  const gap = 24, padX = 70, padY = 56;
+  const cw = (W - padX * 2 - gap * (cols - 1)) / cols, ch = (H - padY * 2 - gap * (rows - 1)) / rows;
+  tiles.forEach((f, i) => {
+    const s = Math.min(cw / f.width, ch / f.height);
+    const w = Math.round(f.width * s), h = Math.round(f.height * s);
+    const col = i % cols, row = Math.floor(i / cols);
+    const r = { w, h, x: Math.round(padX + col * (cw + gap) + (cw - w) / 2), y: Math.round(padY + row * (ch + gap) + (ch - h) / 2) };
+    framed(ctx, () => ctx.drawImage(f, r.x, r.y, r.w, r.h), r);
+  });
+  if (count > 1) chip(ctx, `${count} images`, padX, H - padY - 30);
+  return c;
+}
+
+// kind: 'image' | 'tour' | 'compare' | 'gallery'
+// frames: image -> [canvas]; tour -> [firstStepCanvas]; compare -> [before, after];
+//         gallery -> the first few images
+export function makePoster(kind, frames, { steps = 0, count = 0 } = {}) {
+  if (kind === 'gallery') return galleryPoster(frames, count);
   const { c, ctx } = base();
   const first = frames[0];
   const r = fit(first.width, first.height, W - 120, H - 100);

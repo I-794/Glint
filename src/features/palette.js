@@ -90,6 +90,8 @@ export function registerCommands() {
     { id: 'export-jpeg',      label: 'Export as JPEG',        icon: '📥', run: () => { state.exportSettings.format = 'jpeg'; exportImage(); } },
     { id: 'export-webp',      label: 'Export as WebP',        icon: '📥', run: () => { state.exportSettings.format = 'webp'; exportImage(); } },
     { id: 'export-html',      label: 'Export as HTML Card',   icon: '🌐', run: exportAsHTML },
+    // v42 — print-ready PDF (paper size, bleed, crop marks)
+    { id: 'export-print-pdf', label: 'Export print PDF',      icon: '🖨', run: () => import('./print-pdf.js').then((m) => m.exportPrintPdf()), when: () => !!state.image },
     { id: 'copy-clipboard',   label: 'Copy to Clipboard',     icon: '📋', run: copyToClipboard },
     { id: 'load-url',         label: 'Load from URL',         icon: '🔗', run: focusUrlLoad },
     { id: 'code-studio',      label: 'Open Code Snippet Studio', icon: '</>', run: openCodeStudio },
@@ -128,6 +130,10 @@ export function registerCommands() {
       when: () => state.mode === 'board' },
     { id: 'exportBoard', label: 'Board: export PNG', icon: 'download', group: 'File',
       run: () => import('./board.js').then(m => m.exportBoard()),
+      when: () => state.mode === 'board' },
+    // v42 — the tour map on the board.
+    { id: 'board-tour-links', label: 'Board: show or hide tour links', icon: '⇢', group: 'View',
+      run: () => import('./board.js').then(m => m.toggleTourLinks()),
       when: () => state.mode === 'board' },
     // v32.1 — board layout commands (previously reachable only via the agent).
     { id: 'boardFit', label: 'Board: fit to screen', icon: '⌧', group: 'View', keys: '0',
@@ -230,7 +236,10 @@ export function registerCommands() {
     { id: 'look-paste-code', label: 'Looks: Apply a look code', icon: '◐', run: pasteLookCode },
     { id: 'look-import', label: 'Looks: Import a .glintlook file', icon: '◐', run: importLookFile },
     { id: 'bokeh-detect', label: 'Bokeh: Detect subject', icon: '◉', run: () => import('./bokeh-ui.js').then((m) => m.detectSubject()), when: () => !!state.image },
-    { id: 'bokeh-toggle', label: 'Bokeh: Toggle background blur', icon: '◉', run: () => { if (!state.bokeh?.maskDataUrl) { showStatus('Detect the subject first'); return; } saveStateToHistory(); state.bokeh.enabled = !state.bokeh.enabled; render(); window.__updateUIFromState?.(); } },
+    { id: 'bokeh-toggle', label: 'Bokeh: Toggle background blur', icon: '◉', run: () => { if (state.bokeh?.mode !== 'tilt' && !state.bokeh?.maskDataUrl) { showStatus('Detect the subject first'); return; } saveStateToHistory(); state.bokeh.enabled = !state.bokeh.enabled; render(); window.__updateUIFromState?.(); window.__motionStudioRefresh?.(); } },
+    // v42 — tilt-shift + focus pull
+    { id: 'bokeh-tilt-shift', label: 'Bokeh: Toggle tilt-shift', icon: '◉', run: () => import('./bokeh-ui.js').then((m) => m.toggleTiltShift()), when: () => !!state.image && !state.video.loaded },
+    { id: 'bokeh-focus-pull', label: 'Bokeh: Toggle focus pull', icon: '◉', run: () => import('./bokeh-ui.js').then((m) => m.toggleFocusPull()), when: () => !!state.bokeh?.enabled && !state.video.loaded },
     { id: 'ai-enhance',       label: 'AI Auto-Enhance',      icon: '✨', run: () => document.getElementById('ai-enhance-btn')?.click() },
     { id: 'style-watercolor', label: 'Style: Watercolor',    icon: '🎨', run: () => document.querySelector('[data-style-preset="watercolor"]')?.click() },
     { id: 'style-sketch',     label: 'Style: Sketch',        icon: '✏️', run: () => document.querySelector('[data-style-preset="sketch"]')?.click() },
@@ -242,6 +251,9 @@ export function registerCommands() {
     { id: 'share-link-design',  label: 'Share: Create a link to this design', icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('image')), when: () => !!state.image },
     { id: 'share-link-tour',    label: 'Share: Create a link to the tour',    icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('tour')), when: () => pageCount() >= 2 },
     { id: 'share-link-compare', label: 'Share: Create a link to the before / after', icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('compare')), when: () => !!(state.compare?.beforeSrc && state.image) },
+    // v42 — the Roll and Pins as gallery links
+    { id: 'share-link-roll',    label: 'Share: Create a link to the Roll', icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('roll')), when: () => state.mode === 'single' && !!window.__rollCommands?.hasShots() },
+    { id: 'share-link-pins',    label: "Share: Create a link to this page's pins", icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('pins')), when: () => state.mode === 'single' && !!state.image && Array.isArray(state.versions) && state.versions.length > 0 },
     { id: 'share-links-open',   label: 'Share: Your links',  icon: '🔗', run: () => { const s = document.getElementById('share-section'); if (s) { revealSection(s); s.scrollIntoView({ block: 'start', behavior: 'smooth' }); } } },
     { id: 'generate-qr',      label: 'Generate QR Code for the last link', icon: '📱', run: () => document.getElementById('qr-btn')?.click(), when: () => !document.getElementById('share-result')?.hidden },
     { id: 'export-gif',       label: 'Export as GIF',         icon: '🎬', run: () => document.getElementById('gif-export-btn')?.click() },
