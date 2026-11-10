@@ -234,7 +234,10 @@ export function registerCommands() {
     { id: 'look-paste-code', label: 'Looks: Apply a look code', icon: '◐', run: pasteLookCode },
     { id: 'look-import', label: 'Looks: Import a .glintlook file', icon: '◐', run: importLookFile },
     { id: 'bokeh-detect', label: 'Bokeh: Detect subject', icon: '◉', run: () => import('./bokeh-ui.js').then((m) => m.detectSubject()), when: () => !!state.image },
-    { id: 'bokeh-toggle', label: 'Bokeh: Toggle background blur', icon: '◉', run: () => { if (!state.bokeh?.maskDataUrl) { showStatus('Detect the subject first'); return; } saveStateToHistory(); state.bokeh.enabled = !state.bokeh.enabled; render(); window.__updateUIFromState?.(); } },
+    { id: 'bokeh-toggle', label: 'Bokeh: Toggle background blur', icon: '◉', run: () => { if (state.bokeh?.mode !== 'tilt' && !state.bokeh?.maskDataUrl) { showStatus('Detect the subject first'); return; } saveStateToHistory(); state.bokeh.enabled = !state.bokeh.enabled; render(); window.__updateUIFromState?.(); window.__motionStudioRefresh?.(); } },
+    // v42 — tilt-shift + focus pull
+    { id: 'bokeh-tilt-shift', label: 'Bokeh: Toggle tilt-shift', icon: '◉', run: () => import('./bokeh-ui.js').then((m) => m.toggleTiltShift()), when: () => !!state.image && !state.video.loaded },
+    { id: 'bokeh-focus-pull', label: 'Bokeh: Toggle focus pull', icon: '◉', run: () => import('./bokeh-ui.js').then((m) => m.toggleFocusPull()), when: () => !!state.bokeh?.enabled && !state.video.loaded },
     { id: 'ai-enhance',       label: 'AI Auto-Enhance',      icon: '✨', run: () => document.getElementById('ai-enhance-btn')?.click() },
     { id: 'style-watercolor', label: 'Style: Watercolor',    icon: '🎨', run: () => document.querySelector('[data-style-preset="watercolor"]')?.click() },
     { id: 'style-sketch',     label: 'Style: Sketch',        icon: '✏️', run: () => document.querySelector('[data-style-preset="sketch"]')?.click() },

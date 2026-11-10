@@ -83,6 +83,11 @@ const IDS = [
   'light-dark-section', 'ld-flip-btn', 'ld-engine', 'ld-ai-note', 'ld-scene', 'ld-pair', 'ld-status', 'ld-controls',
   'ld-surface', 'ld-surface-value', 'ld-protect', 'ld-protect-value', 'ld-off-btn', 'ld-export-pair',
   'bokeh-amount', 'bokeh-amount-value', 'bokeh-highlights', 'bokeh-highlights-value', 'bokeh-shape',
+  // v42 — tilt-shift + focus pull
+  'bokeh-mode', 'bokeh-tilt-controls', 'bokeh-tilt-pos', 'bokeh-tilt-pos-value', 'bokeh-tilt-width', 'bokeh-tilt-width-value',
+  'bokeh-tilt-feather', 'bokeh-tilt-feather-value', 'bokeh-tilt-angle', 'bokeh-tilt-angle-value',
+  'bokeh-pull-enabled', 'bokeh-pull-note', 'bokeh-pull-controls', 'bokeh-pull-from', 'bokeh-pull-from-value', 'bokeh-pull-from-label',
+  'bokeh-pull-to', 'bokeh-pull-to-value', 'bokeh-pull-to-label',
   // v38 — Curves & Levels + Looks
   'ct-tabs', 'ct-curve', 'ct-black', 'ct-black-value', 'ct-gamma', 'ct-gamma-value', 'ct-white', 'ct-white-value',
   'ct-reset-channel', 'ct-reset-all', 'looks-list', 'looks-save-btn', 'looks-copy-btn', 'looks-paste-btn',

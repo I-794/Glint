@@ -246,7 +246,8 @@
 
         <div class="sidebar-section" data-group="adjust">
             <h3 class="section-title">Bokeh</h3>
-            <p class="info-text" style="margin-bottom:12px;">Keep the subject sharp and blur the background like a camera lens. Detection runs in your browser.</p>
+            <p class="info-text" style="margin-bottom:12px;">Blur like a camera lens. Keep the subject sharp, or keep one band sharp for a tilt-shift look.</p>
+            <div class="control-group"><label class="control-label">Keep sharp</label><select class="control-input" id="bokeh-mode"><option value="subject">The subject</option><option value="tilt">A band (tilt-shift)</option></select></div>
             <button class="btn btn-primary" style="width:100%;margin-bottom:6px;" id="bokeh-detect-btn">Detect subject</button>
             <div id="bokeh-progress" class="ai-progress" style="display:none;">
                 <div class="ai-progress-bar"><div class="ai-progress-fill" style="width:0%"></div></div>
@@ -258,6 +259,20 @@
                 <div class="control-group"><label class="control-label">Blur Amount</label><div class="range-group"><input type="range" class="range-input" id="bokeh-amount" min="2" max="40" value="12"><span class="range-value" id="bokeh-amount-value">12</span></div></div>
                 <div class="control-group"><label class="control-label">Highlights</label><div class="range-group"><input type="range" class="range-input" id="bokeh-highlights" min="0" max="100" value="40"><span class="range-value" id="bokeh-highlights-value">40%</span></div></div>
                 <div class="control-group"><label class="control-label">Highlight Shape</label><select class="control-input" id="bokeh-shape"><option value="circle">Circle</option><option value="hexagon">Hexagon</option></select></div>
+                <div id="bokeh-tilt-controls" style="display:none;">
+                    <div class="divider"></div>
+                    <div class="control-group"><label class="control-label">Band Position</label><div class="range-group"><input type="range" class="range-input" id="bokeh-tilt-pos" min="0" max="100" value="50"><span class="range-value" id="bokeh-tilt-pos-value">50%</span></div></div>
+                    <div class="control-group"><label class="control-label">Band Width</label><div class="range-group"><input type="range" class="range-input" id="bokeh-tilt-width" min="0" max="100" value="20"><span class="range-value" id="bokeh-tilt-width-value">20%</span></div></div>
+                    <div class="control-group"><label class="control-label">Softness</label><div class="range-group"><input type="range" class="range-input" id="bokeh-tilt-feather" min="2" max="100" value="30"><span class="range-value" id="bokeh-tilt-feather-value">30%</span></div></div>
+                    <div class="control-group"><label class="control-label">Angle</label><div class="range-group"><input type="range" class="range-input" id="bokeh-tilt-angle" min="-90" max="90" value="0"><span class="range-value" id="bokeh-tilt-angle-value">0°</span></div></div>
+                </div>
+                <div class="divider"></div>
+                <div class="toggle-switch"><span class="toggle-label">Focus pull</span><label class="switch"><input type="checkbox" id="bokeh-pull-enabled"><span class="slider"></span></label></div>
+                <p class="info-text" id="bokeh-pull-note" style="margin-top:6px;"></p>
+                <div id="bokeh-pull-controls" style="display:none;margin-top:10px;">
+                    <div class="control-group"><label class="control-label" id="bokeh-pull-from-label">Start</label><div class="range-group"><input type="range" class="range-input" id="bokeh-pull-from" min="0" max="100" value="15"><span class="range-value" id="bokeh-pull-from-value">15%</span></div></div>
+                    <div class="control-group"><label class="control-label" id="bokeh-pull-to-label">End</label><div class="range-group"><input type="range" class="range-input" id="bokeh-pull-to" min="0" max="100" value="85"><span class="range-value" id="bokeh-pull-to-value">85%</span></div></div>
+                </div>
             </div>
         </div>
 

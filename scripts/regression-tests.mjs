@@ -15,6 +15,8 @@ import { history, saveStateToHistory, undo, redo, historyTimeline, goToStep, pee
 import { describeChange } from '../src/state/history-labels.js';
 import { makeVersion, normalizeVersions, MAX_VERSIONS, isSafeThumb } from '../src/state/versions-core.js';
 import { normalizeTour, resolveTourTargets, tourLinks } from '../src/state/tour-core.js';
+import { bokehDefaults, normalizeBokeh, tiltBand, pullEase, lensBlur } from '../src/render/bokeh-core.js';
+import { localProgress } from '../src/state/motion-clock.js';
 import { createHmac, randomBytes } from 'node:crypto';
 import { store as shareStore, memoryStoreEntries } from '../api/_share.js';
 import shareStatusRoute from '../api/_share-status.js';
@@ -784,6 +786,73 @@ function testTourCoreTargets() {
   assert.equal(SCHEMA_VERSION, 26);
 }
 
+// v42 — tilt-shift and the focus pull.
+function testBokehTiltAndPull() {
+  // A v34 block gains the new fields and keeps its mask.
+  const old = normalizeBokeh({ enabled: true, amount: 20, highlights: 0.2, shape: 'hexagon', maskDataUrl: 'data:image/png;base64,AA', maskSig: '1.600' });
+  assert.equal(old.mode, 'subject');
+  assert.equal(old.maskDataUrl, 'data:image/png;base64,AA');
+  assert.deepEqual(old.tilt, bokehDefaults().tilt);
+  assert.deepEqual(old.pull, bokehDefaults().pull);
+  assert.equal(old.shape, 'hexagon');
+
+  const bad = normalizeBokeh({ enabled: 'yes', amount: 'lots', mode: 'sideways', shape: 'star', tilt: { pos: 7, width: -1, feather: 0, angle: 400 }, pull: { enabled: 1, from: null, to: 2 } });
+  assert.equal(bad.enabled, false);
+  assert.equal(bad.amount, 12);
+  assert.equal(bad.mode, 'subject');
+  assert.equal(bad.shape, 'circle');
+  assert.deepEqual(bad.tilt, { pos: 1, width: 0, feather: 0.02, angle: 90 });
+  assert.deepEqual(bad.pull, { enabled: false, from: 0.15, to: 1 });
+  assert.deepEqual(normalizeBokeh(null), bokehDefaults());
+
+  const migrated = normalizeProject({ schemaVersion: 25, design: { bokeh: { enabled: true, amount: 8, mode: 'tilt' } } });
+  assert.equal(migrated.design.bokeh.mode, 'tilt');
+  assert.equal(migrated.design.bokeh.tilt.width, 0.2);
+
+  // A horizontal band: the line runs straight down through the centre.
+  const band = tiltBand({ pos: 0.5, width: 0.2, feather: 0.4, angle: 0 }, 400, 200);
+  assert.equal(band.span, 200);
+  assert.ok(Math.abs(band.line.x0 - 200) < 1e-9 && Math.abs(band.line.x1 - 200) < 1e-9);
+  assert.equal(band.line.y0, -100);
+  assert.equal(band.line.y1, 300);
+  assert.equal(band.half, 20);
+  // Half blur fades in from the band edge (20px) to 60px, full blur from 60 to 100.
+  const at = (px) => 0.5 + px / 400;
+  assert.deepEqual(band.mid.map((s) => s[1]), [1, 1, 0, 0, 1, 1]);
+  assert.ok(Math.abs(band.mid[3][0] - at(20)) < 1e-9 && Math.abs(band.mid[4][0] - at(60)) < 1e-9);
+  assert.ok(Math.abs(band.full[3][0] - at(60)) < 1e-9 && Math.abs(band.full[4][0] - at(100)) < 1e-9);
+  for (const stops of [band.mid, band.full]) {
+    for (let i = 1; i < stops.length; i++) assert.ok(stops[i][0] >= stops[i - 1][0], 'stops must not go backwards');
+  }
+  // Position moves the centre along the line; 90 degrees makes the band vertical.
+  assert.equal(tiltBand({ pos: 0.25, width: 0.2, feather: 0.4, angle: 0 }, 400, 200).centre.y, 50);
+  const upright = tiltBand({ pos: 1, width: 0.1, feather: 0.2, angle: 90 }, 400, 200);
+  assert.equal(upright.span, 400);
+  assert.ok(Math.abs(upright.centre.x - 0) < 1e-9 && Math.abs(upright.centre.y - 100) < 1e-9);
+  assert.equal(tiltBand({ pos: 0.5, width: 0.2, feather: 0.4, angle: 0 }, 400, 200, 1).centre.y, 200);
+
+  assert.equal(pullEase(0), 0);
+  assert.equal(pullEase(1), 1);
+  assert.equal(pullEase(0.5), 0.5);
+  assert.equal(pullEase(5), 1);
+
+  // A flat image stays flat under the lens blur; a radius under 0.5 copies.
+  const flat = new Uint8ClampedArray(4 * 16).fill(120);
+  assert.deepEqual(Array.from(lensBlur(flat, 4, 4, 2, 'circle', 0.4)), Array.from(flat));
+  assert.deepEqual(Array.from(lensBlur(flat, 4, 4, 0.2)), Array.from(flat));
+
+  // The focus lane is read through the shared clock, and only while it drives.
+  const saved = state.timeline;
+  try {
+    state.timeline = { ...saved, _driving: true, currentTime: 500, lanes: [{ id: 'focus', kind: 'focus', target: null, clips: [{ start: 0, duration: 2000 }] }] };
+    assert.equal(localProgress('focus', null, null), 0.25);
+    state.timeline._driving = false;
+    assert.equal(localProgress('focus', null, null), null);
+  } finally {
+    state.timeline = saved;
+  }
+}
+
 function shareHmac(secret, msg) {
   return createHmac('sha256', secret).update(msg).digest();
 }
@@ -1035,6 +1104,7 @@ const tests = [
   testHistoryLabels,
   testVersionsNormalizeAndPersist,
   testTourCoreTargets,
+  testBokehTiltAndPull,
   testShareCoreIdsAndKeys,
   testShareCoreManifest,
   testSharePlayersInlineCleanly,

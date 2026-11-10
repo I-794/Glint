@@ -8,7 +8,7 @@
 
 import { state } from './state.js';
 import { upgradeSpotlight } from '../render/spotlight-geom.js';
-import { bokehDefaults } from '../render/bokeh-core.js';
+import { normalizeBokeh } from '../render/bokeh-core.js';
 import { normalizeCompare } from '../render/compare-core.js';
 import { normalizeRoll, serializeRoll, rollRuntime, applyOverrides } from '../render/roll-core.js';
 import { cropSource, ensureCropDefaults } from '../render/crop-core.js';
@@ -230,8 +230,9 @@ export function ensureBrandDefaults(design) {
 
 // v34 — guarantee every applied design carries a `bokeh` block, so a page that
 // predates v34 never inherits the previous page's mask via Object.assign.
+// v42 — schema 26: the block is also repaired and gains mode / tilt / pull.
 export function ensureBokehDefaults(design) {
-  if (design && !design.bokeh) design.bokeh = bokehDefaults();
+  if (design) design.bokeh = normalizeBokeh(design.bokeh);
   return design;
 }
 
