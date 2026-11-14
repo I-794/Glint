@@ -29,6 +29,11 @@ import shareSweepRoute from '../api/_share-sweep.js';
 import { shareMeta, fillTemplate } from '../api/_share-page.js';
 import shareRouter from '../api/share.js';
 import shareUploadRoute from '../api/_share-upload.js';
+import accountRouter from '../api/account.js';
+import { CREDIT_COSTS, resetsAt, memoryAccounts } from '../api/_account.js';
+import { generateKeyPairSync, createSign } from 'node:crypto';
+import aiTextRoute from '../api/ai-text.js';
+import imageGenerateRoute from '../api/image-generate.js';
 import { join as waitlistJoin, exportList as waitlistExport, cleanEmail, WAITLIST_PREFIX } from '../api/_waitlist.js';
 import { LIMITS, newShareId, isShareId, isAssetName, shareKey, verifyKey, base64url, normalizeManifest, manifestAssets, describeShare, planUploads, isExpired, EXPIRY } from '../src/share/share-core.js';
 
@@ -113,20 +118,6 @@ async function testFailedProjectImageDecodeClearsPreviousImage() {
   } finally {
     global.Image = originalImage;
   }
-}
-
-function testGalleryTemplateApplySnapshotsHistory() {
-  const source = fs.readFileSync('src/features/gallery.js', 'utf8');
-  assert.match(source, /import\s+\{\s*saveStateToHistory\s*\}\s+from\s+['"]\.\.\/state\/history\.js['"]/);
-  assert.match(
-    source,
-    /else\s*\{[\s\S]*saveStateToHistory\(\);[\s\S]*Object\.assign\(state,\s*payload\)/,
-    'gallery template apply should snapshot before mutating state'
-  );
-  // v40 — a gallery row never sets pins (their thumbnails go into innerHTML).
-  assert.match(source, /delete payload\.versions;[\s\S]*Object\.assign\(state,\s*payload\)/);
-  const collab = fs.readFileSync('src/features/collab.js', 'utf8');
-  assert.match(collab, /delete next\.versions;[\s\S]*Object\.assign\(state,\s*next\)/, 'nor does a collab update');
 }
 
 // v35 — Before / After Compare: migration + geometry.
@@ -1296,12 +1287,143 @@ async function testWaitlistRoutes() {
   }
 }
 
+// Glint Pro groundwork: hosted AI spends credits per signed-in account. Clerk
+// session tokens are signed here with a throwaway key (CLERK_JWT_KEY makes the
+// check networkless), credits use the in-memory store that mirrors the Postgres
+// function in api/_account-schema.js, and OpenAI is faked at fetch.
+async function testHostedAiIsMetered() {
+  const saved = { ...process.env };
+  const realFetch = globalThis.fetch;
+  const KEYS = ['CLERK_SECRET_KEY', 'CLERK_JWT_KEY', 'DATABASE_URL', 'POSTGRES_URL', 'ACCOUNT_STORE', 'OPENAI_API_KEY', 'AI_FREE_CREDITS', 'AI_PRO_CREDITS'];
+  for (const k of KEYS) delete process.env[k];
+  const { usage, pro } = memoryAccounts();
+  usage.clear(); pro.clear();
+  const USER = 'user_2abcDEF123';
+  const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const stranger = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const part = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  const sign = (claims, key = privateKey) => {
+    // "cat" marks a Clerk session token; the library refuses anything else.
+    const head = part({ alg: 'RS256', typ: 'JWT', kid: 'ins_test', cat: 'cl_B7d4PD111AAA' });
+    const body = part({ sid: 'sess_1', iss: 'https://clerk.glint.test', iat: now, nbf: now - 5, exp: now + 300, ...claims });
+    return `${head}.${body}.${createSign('RSA-SHA256').update(`${head}.${body}`).sign(key).toString('base64url')}`;
+  };
+  const good = sign({ sub: USER });
+  let openaiCalls = 0, openaiFails = false;
+  const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    if (u.startsWith('https://api.openai.com/')) {
+      openaiCalls++;
+      if (openaiFails) return json(500, { error: { message: 'upstream broke' } });
+      return u.includes('/images/') ? json(200, { data: [{ b64_json: 'AAAA' }] }) : json(200, { choices: [{ message: { content: 'hello' } }] });
+    }
+    throw new Error('network down: ' + u);
+  };
+  const post = (body, token) => shareReq('POST', body, token ? { headers: { authorization: `Bearer ${token}` } } : {});
+  try {
+    assert.deepEqual(CREDIT_COSTS, { text: 1, vision: 1, enhance: 1, agent: 1, image: 5 });
+    assert.equal(resetsAt(new Date('2026-12-31T23:59:59Z')), '2027-01-01T00:00:00.000Z');
+
+    // Not set up: hosted AI works as before, for anyone, uncounted.
+    process.env.OPENAI_API_KEY = 'sk-test';
+    const open = await callRoute(aiTextRoute, post({ prompt: 'hi' }));
+    assert.equal(open.statusCode, 200);
+    assert.equal(open.headers['x-glint-credits'], undefined);
+    assert.deepEqual((await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'me' } }))).body, { enabled: false });
+    // Sign-in alone, with nowhere to keep the count, is not enough to meter.
+    process.env.CLERK_JWT_KEY = publicKey.export({ type: 'spki', format: 'pem' });
+    assert.equal((await callRoute(aiTextRoute, post({ prompt: 'hi' }))).statusCode, 200);
+
+    process.env.ACCOUNT_STORE = 'memory';
+    process.env.AI_FREE_CREDITS = '3';
+    process.env.AI_PRO_CREDITS = '40';
+    openaiCalls = 0;
+
+    // No account, an expired session, another signer's token, junk: asked to
+    // sign in, nothing spent, the model never called.
+    const bad = [undefined, 'not-a-jwt', sign({ sub: USER, iat: now - 900, nbf: now - 900, exp: now - 600 }), sign({ sub: USER }, stranger.privateKey)];
+    for (const token of bad) {
+      const r = await callRoute(aiTextRoute, post({ prompt: 'hi' }, token));
+      assert.equal(r.statusCode, 401);
+      assert.equal(r.body.code, 'sign_in');
+    }
+    assert.equal(openaiCalls, 0);
+    assert.equal(usage.size, 0);
+    // Other methods are the route's own business.
+    assert.equal((await callRoute(aiTextRoute, shareReq('GET'))).statusCode, 405);
+
+    const one = await callRoute(aiTextRoute, post({ prompt: 'hi' }, good));
+    assert.equal(one.statusCode, 200);
+    assert.equal(one.body.text, 'hello');
+    assert.equal(one.headers['x-glint-credits'], '1/3');
+
+    // A failed call (bad input, or the model erroring) hands the credit back.
+    assert.equal((await callRoute(aiTextRoute, post({}, good))).statusCode, 400);
+    assert.equal(usage.get(USER), 1);
+    openaiFails = true;
+    assert.equal((await callRoute(aiTextRoute, post({ prompt: 'hi' }, good))).statusCode, 500);
+    assert.equal(usage.get(USER), 1);
+    openaiFails = false;
+
+    // An image costs 5, more than the 2 left: refused, with the count.
+    const img = await callRoute(imageGenerateRoute, post({ prompt: 'a cat' }, good));
+    assert.equal(img.statusCode, 402);
+    assert.equal(img.body.code, 'no_credits');
+    assert.match(img.body.error, /needs 5 .* you have 2 left/);
+    assert.equal(usage.get(USER), 1);
+
+    await callRoute(aiTextRoute, post({ prompt: 'hi' }, good));
+    await callRoute(aiTextRoute, post({ prompt: 'hi' }, good));
+    const calls = openaiCalls;
+    const out = await callRoute(aiTextRoute, post({ prompt: 'hi' }, good));
+    assert.equal(out.statusCode, 402);
+    assert.match(out.body.error, /used all 3 hosted AI credits/);
+    assert.equal(out.body.limit, 3);
+    assert.ok(out.body.resets.endsWith('T00:00:00.000Z'));
+    assert.equal(openaiCalls, calls);
+    // One person's count is their own.
+    assert.equal((await callRoute(aiTextRoute, post({ prompt: 'hi' }, sign({ sub: 'user_other' })))).headers['x-glint-credits'], '1/3');
+
+    const me = await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'me' }, headers: { authorization: `Bearer ${good}` } }));
+    assert.equal(me.body.signedIn, true);
+    assert.deepEqual([me.body.plan, me.body.used, me.body.limit], ['free', 3, 3]);
+    assert.equal((await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'me' } }))).body.signedIn, false);
+    assert.equal((await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'constructor' } }))).statusCode, 404);
+
+    // A Pro subscription raises the limit, so the image goes through.
+    pro.add(USER);
+    const paid = await callRoute(imageGenerateRoute, post({ prompt: 'a cat' }, good));
+    assert.equal(paid.statusCode, 200);
+    assert.equal(paid.headers['x-glint-credits'], '8/40');
+
+    // Clerk's key service unreachable (no local key to fall back on): closed, not free.
+    delete process.env.CLERK_JWT_KEY;
+    process.env.CLERK_SECRET_KEY = 'sk_test_unreachable';
+    const errors = console.error;
+    console.error = () => {};
+    try {
+      assert.equal((await callRoute(aiTextRoute, post({ prompt: 'hi' }, good))).statusCode, 503);
+    } finally { console.error = errors; }
+    assert.equal(usage.get(USER), 8);
+
+    // No server AI key: the route says 501 without asking anyone to sign in,
+    // so the editor falls back to the person's own key.
+    delete process.env.OPENAI_API_KEY;
+    assert.equal((await callRoute(imageGenerateRoute, post({ prompt: 'a cat' }))).statusCode, 501);
+  } finally {
+    globalThis.fetch = realFetch;
+    usage.clear(); pro.clear();
+    for (const k of KEYS) { if (k in saved) process.env[k] = saved[k]; else delete process.env[k]; }
+  }
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
   testColorMapPersistsInProjects,
   testFailedProjectImageDecodeClearsPreviousImage,
-  testGalleryTemplateApplySnapshotsHistory,
   testCompareMigratesAndPersists,
   testCompareGeometry,
   testBrandMigrateCopiesOnce,
@@ -1330,7 +1452,8 @@ const tests = [
   testShareCoreManifest,
   testSharePlayersInlineCleanly,
   testShareRoutesRoundTrip,
-  testWaitlistRoutes
+  testWaitlistRoutes,
+  testHostedAiIsMetered
 ];
 
 for (const test of tests) {

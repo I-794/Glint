@@ -7,8 +7,11 @@
 // Response (200 JSON):  { text: string }
 
 import { requirePost, parseBody, ApiError, openAIChat } from './_shared.js';
+import { metered } from './_account.js';
 
-export default async function handler(req, res) {
+export default metered('text', handler);
+
+async function handler(req, res) {
   if (!requirePost(req, res)) return;
   try {
     const { prompt, json = false, system } = parseBody(req);

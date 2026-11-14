@@ -1,271 +1,140 @@
-import { showNotification } from '../ui/notification.js';
-import { askConfirm } from '../ui/dialog.js';
+// Sign-in, through Clerk. Glint works without an account; signing in is how
+// the hosted AI counts its free monthly credits (see features/account.js).
+//
+// Clerk's browser bundles are loaded from the Clerk instance itself (its
+// "Frontend API", whose host is encoded in the publishable key), so nothing
+// is added to Glint's own build and a copy of Glint without a key loads
+// nothing and shows no sign-in at all.
 
-const CFG_KEY = 'glint_supabase_cfg';
+const PUBLISHABLE_KEY = (import.meta.env
+  && (import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)) || '';
 
-let supabaseClient = null;
-let currentUser = null;
+let clerk = null;
+let loading = null;
+let failed = false;
+let currentUserId = null;
 const listeners = [];
 
 export function onAuthChange(fn) { listeners.push(fn); }
-function emit() { listeners.forEach(fn => fn(currentUser)); }
+function emit() { listeners.forEach((fn) => { try { fn(getUser()); } catch (e) { console.error(e); } }); }
 
-function loadLocalConfig() {
-  try { return JSON.parse(localStorage.getItem(CFG_KEY)) || null; }
-  catch (e) { return null; }
-}
-function saveLocalConfig(cfg) {
-  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }
-  catch (e) {}
-}
-function clearLocalConfig() {
-  try { localStorage.removeItem(CFG_KEY); }
-  catch (e) {}
-}
-
-function getConfig() {
-  const local = loadLocalConfig();
-  if (local && local.url && local.anonKey) return local;
-  const envUrl = import.meta.env.VITE_SUPABASE_URL;
-  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  if (envUrl && envKey) return { url: envUrl, anonKey: envKey, source: 'env' };
-  return null;
+// The Frontend API host: the key is pk_<env>_<base64 of "host$">.
+export function frontendApiHost(key) {
+  const m = /^pk_(?:test|live)_([A-Za-z0-9+/=_-]+)$/.exec(String(key || ''));
+  if (!m) return '';
+  try {
+    const host = atob(m[1].replace(/-/g, '+').replace(/_/g, '/')).replace(/\$$/, '');
+    return /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/i.test(host) && host.includes('.') ? host : '';
+  } catch (e) {
+    return '';
+  }
 }
 
 export function isConfigured() {
-  return Boolean(getConfig());
+  return Boolean(frontendApiHost(PUBLISHABLE_KEY));
 }
 
-export function getUser() { return currentUser; }
+export function getUser() {
+  const u = clerk && clerk.user;
+  if (!u) return null;
+  const email = (u.primaryEmailAddress && u.primaryEmailAddress.emailAddress) || '';
+  return { id: u.id, email, name: u.fullName || u.username || email || 'You' };
+}
 
-export async function getClient() {
-  if (supabaseClient) return supabaseClient;
-  const cfg = getConfig();
-  if (!cfg) return null;
-  const { createClient } = await import('@supabase/supabase-js');
-  supabaseClient = createClient(
-    cfg.url,
-    cfg.anonKey,
-    { auth: { persistSession: true, autoRefreshToken: true } }
-  );
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  currentUser = session?.user || null;
-  supabaseClient.auth.onAuthStateChange((_event, sess) => {
-    currentUser = sess?.user || null;
+function addScript(src, attrs = {}) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.crossOrigin = 'anonymous';
+    Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
+    s.onload = resolve;
+    s.onerror = () => { s.remove(); reject(new Error('Could not load ' + src)); };
+    document.head.appendChild(s);
+  });
+}
+
+async function loadClerk() {
+  const host = frontendApiHost(PUBLISHABLE_KEY);
+  // The UI bundle first, then the SDK, which finds its key on its own tag.
+  await addScript(`https://${host}/npm/@clerk/ui@1/dist/ui.browser.js`);
+  await addScript(`https://${host}/npm/@clerk/clerk-js@6/dist/clerk.browser.js`, { 'data-clerk-publishable-key': PUBLISHABLE_KEY });
+  const instance = window.Clerk;
+  if (!instance) throw new Error('Clerk did not start');
+  await instance.load({ ui: { ClerkUI: window.__internal_ClerkUICtor } });
+  clerk = instance;
+  currentUserId = clerk.user ? clerk.user.id : null;
+  // Clerk calls this on every refresh of the session; only a change of person matters here.
+  clerk.addListener(({ user }) => {
+    const id = user ? user.id : null;
+    if (id === currentUserId) return;
+    currentUserId = id;
     renderAuthPill();
     emit();
   });
-  return supabaseClient;
+  return clerk;
 }
 
-function openModal() {
-  const m = document.getElementById('auth-modal');
-  if (m) m.classList.add('visible');
-}
-function closeModal() {
-  const m = document.getElementById('auth-modal');
-  if (m) m.classList.remove('visible');
-}
-
-function openSetupModal() {
-  const m = document.getElementById('cloud-setup-modal');
-  if (m) {
-    m.classList.add('visible');
-    const cfg = loadLocalConfig();
-    const urlInp = document.getElementById('cloud-setup-url');
-    const keyInp = document.getElementById('cloud-setup-key');
-    if (urlInp && cfg) urlInp.value = cfg.url || '';
-    if (keyInp && cfg) keyInp.value = cfg.anonKey || '';
+// Resolves to the Clerk instance, or null when sign-in is not set up or could
+// not load (offline, blocked). A later call tries again.
+export function ready() {
+  if (!isConfigured()) return Promise.resolve(null);
+  if (clerk) return Promise.resolve(clerk);
+  if (!loading) {
+    loading = loadClerk()
+      .then((c) => { failed = false; return c; })
+      .catch((e) => { failed = true; console.warn('[auth]', e.message); return null; })
+      .finally(() => { loading = null; });
   }
-}
-function closeSetupModal() {
-  const m = document.getElementById('cloud-setup-modal');
-  if (m) m.classList.remove('visible');
+  return loading;
 }
 
-async function saveCloudConfig() {
-  const url = document.getElementById('cloud-setup-url').value.trim();
-  const anonKey = document.getElementById('cloud-setup-key').value.trim();
-  if (!url || !anonKey) { showNotification('Both URL and anon key are required.', 'error'); return; }
-  if (!url.startsWith('https://') || !url.includes('.supabase.co')) {
-    showNotification('URL should look like https://xxx.supabase.co', 'error');
+// The signed-in person's session token for our own API, or '' when signed out.
+export async function getToken() {
+  const c = await ready();
+  if (!c || !c.session) return '';
+  try { return (await c.session.getToken()) || ''; } catch (e) { return ''; }
+}
+
+export async function openSignIn() {
+  const c = await ready();
+  if (!c) {
+    const { showNotification } = await import('../ui/notification.js');
+    showNotification('Sign-in could not load. Check your connection and try again.', 'error');
+    renderAuthPill();
     return;
   }
-  saveLocalConfig({ url, anonKey });
-  supabaseClient = null;
-  currentUser = null;
-  await getClient();
-  renderAuthPill();
-  closeSetupModal();
-  showNotification('Cloud configured. You can now sign in.', 'success');
-  openModal();
-}
-
-async function disconnectCloud() {
-  if (!await askConfirm('Disconnect cloud sync?', { message: 'Your local data stays, but sync will stop.', okLabel: 'Disconnect', danger: true })) return;
-  clearLocalConfig();
-  supabaseClient = null;
-  currentUser = null;
-  renderAuthPill();
-  closeSetupModal();
-  showNotification('Cloud disconnected.', 'success');
-}
-
-async function signUp() {
-  const c = await getClient();
-  if (!c) return;
-  const email = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value;
-  if (!email || !password) { showNotification('Enter email and password.', 'error'); return; }
-  const { error } = await c.auth.signUp({ email, password });
-  if (error) showNotification(error.message, 'error');
-  else { showNotification('Check your email to confirm your account.', 'success'); closeModal(); }
-}
-
-async function signIn() {
-  const c = await getClient();
-  if (!c) return;
-  const email = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value;
-  if (!email || !password) { showNotification('Enter email and password.', 'error'); return; }
-  const { error } = await c.auth.signInWithPassword({ email, password });
-  if (error) showNotification(error.message, 'error');
-  else { showNotification('Signed in.', 'success'); closeModal(); }
-}
-
-async function signInWithProvider(provider) {
-  const c = await getClient();
-  if (!c) return;
-  const { error } = await c.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin } });
-  if (error) showNotification(error.message, 'error');
-}
-
-async function signOut() {
-  const c = await getClient();
-  if (!c) return;
-  await c.auth.signOut();
-  showNotification('Signed out.', 'success');
+  if (c.user) return;
+  c.openSignIn();
 }
 
 function renderAuthPill() {
   const pill = document.getElementById('auth-pill');
   if (!pill) return;
-  if (!isConfigured()) {
-    pill.innerHTML = '<button class="btn btn-secondary" id="cloud-setup-btn" title="Connect a Supabase project">☁ <span class="btn-text">Set up cloud</span></button>';
-    document.getElementById('cloud-setup-btn').addEventListener('click', openSetupModal);
+  if (!isConfigured()) { pill.replaceChildren(); return; }
+  if (clerk && clerk.user) {
+    // Clerk's own account button: avatar, manage account, sign out.
+    const holder = document.createElement('span');
+    holder.id = 'auth-user-button';
+    holder.style.display = 'inline-flex';
+    pill.replaceChildren(holder);
+    clerk.mountUserButton(holder);
     return;
   }
-  if (currentUser) {
-    const name = currentUser.email || currentUser.user_metadata?.full_name || 'You';
-    pill.innerHTML = `
-      <span class="account-pill" title="${name}">👤 <span class="btn-text">${name.split('@')[0]}</span></span>
-      <button class="btn btn-secondary" id="auth-signout-btn" style="padding:6px 10px;">Sign out</button>
-    `;
-    document.getElementById('auth-signout-btn').addEventListener('click', signOut);
-  } else {
-    pill.innerHTML = `
-      <button class="btn btn-primary" id="auth-signin-btn">🔑 <span class="btn-text">Sign in</span></button>
-      <button class="btn btn-secondary" id="cloud-reconfigure-btn" title="Re-enter Supabase keys" style="padding:6px 8px;">⚙</button>
-    `;
-    document.getElementById('auth-signin-btn').addEventListener('click', openModal);
-    document.getElementById('cloud-reconfigure-btn').addEventListener('click', openSetupModal);
-  }
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn btn-secondary';
+  btn.id = 'auth-signin-btn';
+  btn.title = failed ? 'Sign-in could not load. Click to try again.' : 'Sign in for free hosted AI credits';
+  btn.textContent = 'Sign in';
+  btn.addEventListener('click', openSignIn);
+  pill.replaceChildren(btn);
 }
 
 export async function bindAuth() {
-  // Auth modal buttons
-  const signUpBtn = document.getElementById('auth-signup-btn');
-  const signInBtn = document.getElementById('auth-signin-modal-btn');
-  const googleBtn = document.getElementById('auth-google-btn');
-  const githubBtn = document.getElementById('auth-github-btn');
-  const closeBtn = document.getElementById('auth-modal-close');
-  const overlay = document.getElementById('auth-modal');
-  if (signUpBtn) signUpBtn.addEventListener('click', signUp);
-  if (signInBtn) signInBtn.addEventListener('click', signIn);
-  if (googleBtn) googleBtn.addEventListener('click', () => signInWithProvider('google'));
-  if (githubBtn) githubBtn.addEventListener('click', () => signInWithProvider('github'));
-  if (closeBtn) closeBtn.addEventListener('click', closeModal);
-  if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
-
-  // Cloud-setup modal buttons
-  const setupSaveBtn = document.getElementById('cloud-setup-save-btn');
-  const setupCloseBtn = document.getElementById('cloud-setup-close');
-  const setupDisconnectBtn = document.getElementById('cloud-setup-disconnect-btn');
-  const setupOverlay = document.getElementById('cloud-setup-modal');
-  const setupCopySqlBtn = document.getElementById('cloud-setup-copy-sql');
-  if (setupSaveBtn) setupSaveBtn.addEventListener('click', saveCloudConfig);
-  if (setupCloseBtn) setupCloseBtn.addEventListener('click', closeSetupModal);
-  if (setupDisconnectBtn) setupDisconnectBtn.addEventListener('click', disconnectCloud);
-  if (setupOverlay) setupOverlay.addEventListener('click', (e) => { if (e.target === setupOverlay) closeSetupModal(); });
-  if (setupCopySqlBtn) setupCopySqlBtn.addEventListener('click', async () => {
-    const sql = `create table if not exists public.templates (
-  user_id uuid not null references auth.users(id) on delete cascade,
-  name text not null,
-  payload jsonb not null,
-  updated_at timestamptz default now(),
-  primary key (user_id, name)
-);
-alter table public.templates enable row level security;
-create policy "users own templates" on public.templates
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
-create table if not exists public.projects (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  name text not null,
-  payload jsonb not null,
-  updated_at timestamptz default now()
-);
--- v12 — projects are keyed by id (not name); carry a thumbnail + created_at.
-alter table public.projects add column if not exists thumbnail text;
-alter table public.projects add column if not exists created_at timestamptz default now();
-alter table public.projects drop constraint if exists projects_user_id_name_key;
-alter table public.projects enable row level security;
-create policy "users own projects" on public.projects
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
--- v12 — version history snapshots for each project.
-create table if not exists public.project_versions (
-  id uuid primary key default gen_random_uuid(),
-  project_id uuid not null references public.projects(id) on delete cascade,
-  user_id uuid not null references auth.users(id) on delete cascade,
-  label text,
-  payload jsonb not null,
-  thumbnail text,
-  created_at timestamptz default now()
-);
-alter table public.project_versions enable row level security;
-create policy "users own project versions" on public.project_versions
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
--- v11.3 — public community gallery (templates + brand kits)
-create table if not exists public.gallery (
-  id uuid primary key default gen_random_uuid(),
-  author_id uuid not null references auth.users(id) on delete cascade,
-  kind text not null check (kind in ('template','brandkit')),
-  name text not null,
-  payload jsonb not null,
-  preview_url text,
-  likes int default 0,
-  created_at timestamptz default now()
-);
-alter table public.gallery enable row level security;
-create policy "gallery is publicly readable" on public.gallery
-  for select using (true);
-create policy "authors insert their gallery items" on public.gallery
-  for insert with check (auth.uid() = author_id);
-create policy "authors delete their gallery items" on public.gallery
-  for delete using (auth.uid() = author_id);`;
-    try {
-      await navigator.clipboard.writeText(sql);
-      showNotification('SQL copied — paste into Supabase SQL Editor.', 'success');
-    } catch (e) {
-      showNotification('Copy failed — see DEPLOY.md for the SQL.', 'error');
-    }
-  });
-
-  if (isConfigured()) {
-    await getClient();
-  }
   renderAuthPill();
+  if (!isConfigured()) return;
+  await ready();
+  renderAuthPill();
+  emit();
 }

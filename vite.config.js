@@ -123,6 +123,9 @@ function shareRoutes() {
 }
 
 export default defineConfig({
+  // Clerk's Marketplace install names its browser key NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  // whatever the framework, so let the build read it (src/features/auth.js).
+  envPrefix: ['VITE_', 'NEXT_PUBLIC_CLERK_'],
   root: '.',
   build: {
     outDir: 'dist',
@@ -163,7 +166,6 @@ export default defineConfig({
       },
       output: {
         manualChunks: {
-          'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-openai': ['openai'],
           'vendor-anthropic': ['@anthropic-ai/sdk'],
           'vendor-three': ['three'],

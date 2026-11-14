@@ -2,6 +2,7 @@ import { state } from '../state/state.js';
 import { showNotification } from '../ui/notification.js';
 import { getKey } from './api-keys.js';
 import { revealSection } from './studio-nav.js';
+import { hostedFetch } from './account.js';
 
 function imageToDataUrl(img) {
   const c = document.createElement('canvas');
@@ -42,11 +43,7 @@ function promptForKey() {
 
 async function tryHostedJson(path, body) {
   try {
-    const r = await fetch(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    const r = await hostedFetch(path, body);
     if (r.status === 404 || r.status === 501) return { fellThrough: true };
     const data = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(data.error || `Backend error ${r.status}`);

@@ -10,13 +10,16 @@
 // Response (200 JSON):  { text: string, toolCalls: [{ id, name, args }] }
 
 import { requirePost, parseBody, ApiError, openAIChat } from './_shared.js';
+import { metered } from './_account.js';
 
 // Only allow known tool-capable chat models (the client sends AGENT_MODELS.openai).
 // v30 model policy: gpt-5.5 for agent reasoning. Override with OPENAI_TEXT_MODEL.
 const DEFAULT_AGENT_MODEL = process.env.OPENAI_TEXT_MODEL || 'gpt-5.5';
 const ALLOWED_MODELS = [DEFAULT_AGENT_MODEL, 'gpt-5.5', 'gpt-4o', 'gpt-4o-mini'];
 
-export default async function handler(req, res) {
+export default metered('agent', handler);
+
+async function handler(req, res) {
   if (!requirePost(req, res)) return;
   try {
     const { messages, tools, model, max_tokens } = parseBody(req);

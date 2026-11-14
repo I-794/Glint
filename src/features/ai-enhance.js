@@ -3,6 +3,7 @@ import { el } from '../ui/elements.js';
 import { showNotification } from '../ui/notification.js';
 import { render } from '../render/render.js';
 import { saveStateToHistory } from '../state/history.js';
+import { hostedFetch } from './account.js';
 
 const STYLE_PRESETS = {
   watercolor: { brightness: 110, contrast: 90, saturation: 130, blur: 1, grayscale: 0, sepia: 15 },
@@ -54,14 +55,11 @@ function dataUrlToBase64(url) {
 
 async function tryHostedEnhance(dataUrl) {
   try {
-    const r = await fetch('/api/ai-enhance', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        image: dataUrlToBase64(dataUrl),
-        mimeType: 'image/jpeg'
-      })
-    });
+    // Quiet: without hosted AI this falls back to a local enhance, which works.
+    const r = await hostedFetch('/api/ai-enhance', {
+      image: dataUrlToBase64(dataUrl),
+      mimeType: 'image/jpeg'
+    }, { quiet: true });
     if (r.status === 404 || r.status === 501) return null;
     const data = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(data.error || `Backend error ${r.status}`);

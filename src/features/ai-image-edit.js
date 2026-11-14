@@ -12,6 +12,7 @@ import { showNotification } from '../ui/notification.js';
 import { getKey } from './api-keys.js';
 import { imageToDataUrl, loadImage, canvasToBlob, blobToBase64, nearestGptImageSize } from './ai-shared.js';
 import { revealSection } from './studio-nav.js';
+import { hostedFetch } from './account.js';
 
 function setStatus(msg) {
   const s = document.getElementById('ai-edit-status');
@@ -27,11 +28,7 @@ function needKeyHint() {
 
 async function tryProxy(path, body) {
   try {
-    const r = await fetch(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    const r = await hostedFetch(path, body);
     if (r.status === 501 || r.status === 404) return { fell_through: true };
     const data = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(data.error || `Proxy error ${r.status}`);

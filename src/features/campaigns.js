@@ -5,7 +5,6 @@
 
 import { showNotification } from '../ui/notification.js';
 import { askConfirm } from '../ui/dialog.js';
-import { getClient, getUser } from './auth.js';
 
 const KEY = 'glint_campaigns_v1';
 
@@ -95,102 +94,6 @@ async function downloadCampaign(id) {
     files = await regenerateFiles(record);
   }
   await downloadZip(files, `${(record.name || 'campaign').replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.zip`);
-}
-
-// ---------------------------------------------------------------------------
-// v30 — Optional Supabase mirror (additive, inert when unconfigured / signed out)
-// Mirrors gallery.js's client/user accessor + guard pattern against a `campaigns`
-// table: { user_id, name, config, preview_url, created_at }.
-// localStorage is always the offline source of truth; these are purely additive.
-// ---------------------------------------------------------------------------
-
-const CAMPAIGNS_BUCKET = 'campaigns';
-
-async function ensureCampaignsBucket(client) {
-  const { data } = await client.storage.getBucket(CAMPAIGNS_BUCKET);
-  if (!data) {
-    await client.storage.createBucket(CAMPAIGNS_BUCKET, { public: true, fileSizeLimit: 5242880 });
-  }
-}
-
-/**
- * Publish a saved campaign to the Supabase `campaigns` table.
- * Uploads the hero thumbnail (first thumb) to Storage; inserts a row with
- * { user_id, name, config: record, preview_url }.
- * Silently returns if Supabase is not configured or the user is not signed in.
- */
-export async function publishCampaign(id) {
-  const client = await getClient();
-  const user = getUser();
-  if (!client || !user) return; // inert — no notification, just skip
-
-  const record = getCampaign(id);
-  if (!record) return;
-
-  try {
-    await ensureCampaignsBucket(client);
-
-    // Upload hero thumbnail if present
-    let preview_url = null;
-    const heroThumb = (record.thumbs || [])[0];
-    if (heroThumb?.dataUrl) {
-      // Convert data URL → Blob for upload
-      const res = await fetch(heroThumb.dataUrl);
-      const blob = await res.blob();
-      const path = `${user.id}/${record.id}.png`;
-      const { error: upErr } = await client.storage
-        .from(CAMPAIGNS_BUCKET)
-        .upload(path, blob, { contentType: 'image/png', upsert: true });
-      if (!upErr) {
-        const { data: urlData } = client.storage.from(CAMPAIGNS_BUCKET).getPublicUrl(path);
-        preview_url = urlData?.publicUrl || null;
-      }
-    }
-
-    const { error: insErr } = await client.from('campaigns').insert({
-      user_id: user.id,
-      name: record.name || 'Campaign',
-      config: record,
-      preview_url
-    });
-    if (insErr) throw insErr;
-  } catch (e) {
-    // Additive mirror — log but don't surface errors to avoid spam on offline/unconfigured
-    console.warn('[campaigns] Supabase publish skipped:', e?.message || e);
-  }
-}
-
-/**
- * Pull campaigns owned by the signed-in user from Supabase and merge them
- * into the local store (via saveCampaign). Remote rows supplement but do not
- * overwrite local edits — local record wins if both have the same id.
- * Silently returns if Supabase is not configured or the user is not signed in.
- */
-export async function pullCampaigns() {
-  const client = await getClient();
-  const user = getUser();
-  if (!client || !user) return; // inert — no notification, just skip
-
-  try {
-    const { data, error } = await client
-      .from('campaigns')
-      .select('id, name, config, preview_url, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-
-    const local = loadCampaigns();
-    for (const row of data || []) {
-      // `config` holds the full campaign record; fall back to a minimal stub
-      const remote = row.config || { id: row.id, name: row.name, createdAt: Date.parse(row.created_at) };
-      // Prefer local record — it may have been edited since the last publish
-      if (!local[remote.id]) {
-        saveCampaign(remote);
-      }
-    }
-  } catch (e) {
-    console.warn('[campaigns] Supabase pull skipped:', e?.message || e);
-  }
 }
 
 function escapeHtml(s) {

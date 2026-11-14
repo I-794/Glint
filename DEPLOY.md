@@ -69,7 +69,7 @@ In the Vercel project dashboard → Settings → Domains → add your domain. Ve
 
 The app still works without these values for offline editing, local analysis,
 PWA install, and bring-your-own-key AI. Add them when you want hosted AI,
-accounts, cloud sync, or share links.
+accounts, or share links.
 
 ### Hosted AI backend
 
@@ -85,45 +85,22 @@ This enables the serverless routes in `api/` so visitors can use AI features
 without pasting their own key. If `OPENAI_API_KEY` is missing, those routes
 return `501` and the editor falls back to the existing browser-key flow.
 
-### Supabase (for accounts + cloud project sync)
+### Accounts and hosted AI credits (Clerk + Neon)
 
-Create a free Supabase project at https://supabase.com/, then in the Vercel project → Settings → Environment Variables, add:
+Sign-in is Clerk and the credit counts live in a Neon Postgres database. Add
+both from the Vercel project's **Storage / Marketplace** tab; each one adds its
+own environment variables, so there is nothing to copy by hand:
 
-| Name | Value |
-|------|-------|
-| `VITE_SUPABASE_URL` | from Supabase project Settings → API |
-| `VITE_SUPABASE_ANON_KEY` | from Supabase project Settings → API (the **anon public** key, safe to ship to browsers) |
+| Added by | Name | Used for |
+|------|-------|-------|
+| Clerk | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | The browser's sign-in (the build reads this name; `VITE_CLERK_PUBLISHABLE_KEY` also works) |
+| Clerk | `CLERK_SECRET_KEY` | The server checks session tokens with it |
+| Neon | `DATABASE_URL` | Plans and monthly credit counts |
 
-Both must start with `VITE_` so Vite exposes them to the client bundle.
-
-Then in your Supabase project, create the schema (SQL Editor → New Query):
-
-```sql
-create table if not exists public.templates (
-  user_id uuid not null references auth.users(id) on delete cascade,
-  name text not null,
-  payload jsonb not null,
-  updated_at timestamptz default now(),
-  primary key (user_id, name)
-);
-alter table public.templates enable row level security;
-create policy "users own templates" on public.templates
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
-create table if not exists public.projects (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  name text not null,
-  payload jsonb not null,
-  updated_at timestamptz default now(),
-  unique (user_id, name)
-);
-alter table public.projects enable row level security;
-create policy "users own projects" on public.projects
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-```
-
-In Supabase → Authentication → Providers, enable Email (default) and optionally Google/GitHub. For Google/GitHub, set the redirect URL to your Vercel domain.
+Redeploy after adding them. The server creates its two tables and one function
+in the database the first time it is used. Once both are present, hosted AI
+needs a signed-in account and spends credits (20 a month by default; see
+`docs/BACKEND.md`). Without them, hosted AI works for everyone as before.
 
 ### AI cloud features
 
@@ -137,7 +114,7 @@ See `docs/BACKEND.md` for the route list and what the backend adds.
 
 ### Bundle size & lazy loading
 
-v5 dependencies (Supabase SDK, OpenAI/Anthropic SDKs, Tesseract.js, @imgly/background-removal) are split into separate chunks via Vite's `manualChunks` and dynamically `import()`-ed only when the related feature is first used. Initial JS payload stays roughly the same as v4 (~30KB gzipped main bundle + small chunks).
+v5 dependencies (OpenAI/Anthropic SDKs, Tesseract.js, @imgly/background-removal) are split into separate chunks via Vite's `manualChunks` and dynamically `import()`-ed only when the related feature is first used. Initial JS payload stays roughly the same as v4 (~30KB gzipped main bundle + small chunks).
 
 The 23 MB `ort.wasm` (background-removal model) in `dist/` is **not loaded by default** — it's only fetched when the user clicks "Remove Background." Vercel serves it as a static asset like any other.
 

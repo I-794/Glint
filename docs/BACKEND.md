@@ -25,6 +25,7 @@ the Vite frontend.
 | `POST /api/ai-enhance` | Suggests CSS filter values. Returns `{ filters }`. |
 | `POST /api/image-generate` | Generates a PNG. Returns `{ b64 }`. |
 | `POST /api/image-edit` | Inpaints/outpaints a PNG. Returns `{ b64 }`. |
+| `GET /api/account?op=me` | Accounts. With a Clerk session token: `{ plan, used, limit, resets }` for this month's hosted AI credits. `{ enabled: false }` when metering is not set up. |
 | `GET /api/share-status` | v41 share links. Returns `{ enabled }`. |
 | `POST /api/share-create` | Reserves a share id; returns the owner key and the planned file paths. |
 | `POST /api/share-upload` | The Blob client's upload handshake: a presigned PUT for one planned file. |
@@ -51,13 +52,32 @@ every file in `api/` without a leading underscore counts as one.
 | `BLOB_STORE_ID` or `BLOB_READ_WRITE_TOKEN` | Yes for share links | Added by Vercel when a Blob store is connected to the project. Newer stores add `BLOB_STORE_ID` (the SDK signs in with the deployment's OIDC token); older ones add `BLOB_READ_WRITE_TOKEN`. Either works. |
 | `SHARE_SIGNING_SECRET` | Yes for share links | 32+ random bytes (base64). Signs the owner key that lets someone delete their link. Changing it orphans every existing key. |
 | `SHARE_REPORT_EMAIL` | No | Shows a "Report this link" mailto on shared pages. |
-| `CRON_SECRET` | Set by Vercel | Authorizes the daily `/api/share-sweep` run. |
+| `CRON_SECRET` | Yes for the sweep and the waitlist export | A long random string you add yourself; Vercel then sends it with cron requests. Authorizes the daily `/api/share-sweep` run and `/api/waitlist-export`. Without it both answer 401. |
 | `SHARE_STORE` | Tests only | `memory` swaps Blob for an in-process store. |
+| `CLERK_SECRET_KEY` | Yes for AI credits | Added by the Clerk Marketplace install. The server verifies session tokens with it. |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Yes for sign-in | Added by Clerk. Read at build time by the editor (`VITE_CLERK_PUBLISHABLE_KEY` also works). |
+| `CLERK_JWT_KEY` | No | Clerk's PEM public key. Lets the server verify tokens without a network call. |
+| `DATABASE_URL` | Yes for AI credits | Added by the Neon Marketplace install (`POSTGRES_URL` also works). Clerk plus a database turns metering on. |
+| `ACCOUNT_STORE` | Tests only | `memory` keeps credit counts in the process. |
+| `AI_FREE_CREDITS` / `AI_PRO_CREDITS` | No | Monthly hosted AI credits per account. Default 20 and 500. |
+
+## Accounts and hosted AI credits
+
+Sign-in is Clerk; plans and credit counts live in Neon Postgres. Add both from
+the Vercel Marketplace and redeploy. From then on the six hosted AI routes
+(`ai-text`, `ai-vision`, `ai-enhance`, `ai-agent`, `image-generate`,
+`image-edit`) verify the caller's Clerk session token and spend credits through
+the `glint_use_credits` Postgres function: 1 per text, vision, enhance or agent
+call, 5 per image. A call that fails gets its credits back. Without a token the
+route answers `401 { code: 'sign_in' }`, over the limit `402 { code:
+'no_credits' }`, and the editor falls back to the visitor's own API key. The
+schema (`api/_account-schema.js`) installs itself the first time the database
+is used. To give an account Pro by hand, insert a row into `subscriptions` with
+its Clerk user id (`user_...`). Remove the Clerk or database variables to turn
+metering off again.
 
 Share links (v41) are stored in Vercel Blob under `shares/<id>/`: the rendered
 images, a `poster.webp` for link previews, and a `manifest.json` that names its
 images by file name only. Shared files are cached for an hour, so a deleted
 link can take up to an hour to disappear from the CDN.
 
-Supabase is still used separately for accounts, cloud projects, templates,
-the community gallery, and live collaboration.

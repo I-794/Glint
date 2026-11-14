@@ -22,8 +22,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
+    "@clerk/backend": "^3.29.0",
     "@imgly/background-removal": "^1.6.0",
-    "@supabase/supabase-js": "^2.45.4",
+    "@neondatabase/serverless": "^1.2.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.8.2",
     "fflate": "^0.8.3",

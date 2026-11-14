@@ -29,6 +29,7 @@
                 <span>Glint <span style="font-size:13px;font-weight:400;color:var(--text-secondary);">v42 · Junction</span></span>
             </div>
             <div class="header-actions">
+                <span id="ai-credits" class="account-pill" style="display:none;"></span>
                 <span id="auth-pill" style="display:inline-flex;gap:6px;align-items:center;margin-right:4px;"></span>
                 <div class="ui-mode-toggle" id="ui-mode-toggle" role="group" aria-label="Interface mode">
                     <button type="button" data-mode="simple" title="Simple mode: just the essential tools">Simple</button>
@@ -1414,22 +1415,11 @@
                 <span class="control-label">Your links</span>
                 <div class="share-list" id="share-list"></div>
             </div>
-            <div class="divider"></div>
-            <label class="control-label">👥 Live collaboration</label>
-            <p class="info-text" style="margin:4px 0 8px;">Start a session and share the link; edits and cursors sync live. Requires cloud setup.</p>
-            <button class="btn btn-primary" style="width:100%;" id="collab-start-btn">👥 Start live session</button>
-            <div id="collab-link-box" style="display:none;margin-top:8px;">
-                <div style="display:flex;gap:8px;">
-                    <input type="text" class="control-input" id="collab-link" readonly style="flex:1;font-size:11px;">
-                    <button class="btn btn-secondary" id="collab-copy-btn">Copy</button>
-                </div>
-            </div>
-            <p class="info-text" id="collab-status" style="min-height:14px;margin-top:6px;"></p>
         </div>
 
         <div class="sidebar-section" data-group="project" data-simple>
             <h3 class="section-title">📁 Projects</h3>
-            <p class="info-text" style="margin-bottom:8px;">Your work autosaves to a project and is versioned automatically. Sign in to sync across devices.</p>
+            <p class="info-text" style="margin-bottom:8px;">Your work autosaves to a project in this browser and is versioned automatically.</p>
             <div class="project-current">
                 <span class="project-current-name" id="projects-current-name">No project yet</span>
                 <span class="project-current-status" id="projects-status"></span>
@@ -1466,20 +1456,6 @@
             </div>
             <button class="btn btn-secondary" style="width:100%;" id="deck-present-btn">▶ Present deck</button>
             <p class="info-text" id="deck-status" style="min-height:14px;margin-top:6px;"></p>
-        </div>
-
-        <div class="sidebar-section" id="gallery-panel" data-group="project">
-            <h3 class="section-title">🌐 Community Gallery</h3>
-            <p class="info-text" style="margin-bottom:8px;">Publish a design or Brand Kit for everyone, or browse and apply others'. Sign in to publish; anyone can browse.</p>
-            <input type="text" class="control-input" id="gallery-name" placeholder="Name your submission" style="margin-bottom:8px;">
-            <div style="display:flex;gap:8px;margin-bottom:8px;">
-                <button class="btn btn-primary" style="flex:1;" id="gallery-publish-template">⬆ Publish design</button>
-                <button class="btn btn-secondary" style="flex:1;" id="gallery-publish-brandkit">⬆ Brand Kit</button>
-            </div>
-            <input type="text" class="control-input" id="gallery-search" placeholder="Search the gallery…" style="margin-bottom:8px;">
-            <button class="btn btn-secondary" style="width:100%;margin-bottom:8px;" id="gallery-browse-btn">🔄 Browse gallery</button>
-            <p class="info-text" id="gallery-status" style="min-height:14px;"></p>
-            <div id="gallery-list"></div>
         </div>
 
         <div class="sidebar-section" data-group="project" data-simple>
@@ -1606,50 +1582,6 @@
         <button class="sticker-cat-btn" data-cat="callouts">Callouts</button>
     </div>
     <div class="sticker-grid" id="sticker-grid"></div>
-</div>
-
-<div class="auth-modal-overlay" id="cloud-setup-modal">
-    <div class="auth-modal" style="max-width:520px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-            <h3>☁ Connect to Supabase</h3>
-            <button class="btn btn-secondary" id="cloud-setup-close" style="padding:4px 10px;">✕</button>
-        </div>
-        <p class="info-text" style="margin:8px 0 12px;">Bring your own free Supabase project to enable accounts + cloud sync. Your URL and anon key are stored only in your browser.</p>
-        <ol style="font-size:12px;color:var(--text-secondary);padding-left:18px;line-height:1.6;margin-bottom:12px;">
-            <li>Create a free project at <a href="https://supabase.com" target="_blank" style="color:var(--accent-primary);">supabase.com</a></li>
-            <li>Project Settings → API → copy your <strong>Project URL</strong> and <strong>anon public</strong> key</li>
-            <li>SQL Editor → New Query → paste the schema (use <button class="btn btn-secondary" id="cloud-setup-copy-sql" style="padding:2px 8px;font-size:11px;">📋 Copy SQL</button>) → Run</li>
-            <li>Authentication → URL Configuration → add your site URL to <strong>Redirect URLs</strong></li>
-        </ol>
-        <label class="control-label">Project URL</label>
-        <input type="text" class="control-input" id="cloud-setup-url" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off">
-        <label class="control-label" style="margin-top:8px;">anon public key</label>
-        <input type="password" class="control-input" id="cloud-setup-key" placeholder="eyJhbGciOi..." autocomplete="off">
-        <div class="auth-modal-actions">
-            <button class="btn btn-primary" id="cloud-setup-save-btn">Save &amp; Sign in</button>
-            <button class="btn btn-secondary" id="cloud-setup-disconnect-btn">Disconnect</button>
-        </div>
-    </div>
-</div>
-
-<div class="auth-modal-overlay" id="auth-modal">
-    <div class="auth-modal">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-            <h3>Sign in to Glint</h3>
-            <button class="btn btn-secondary" id="auth-modal-close" style="padding:4px 10px;">✕</button>
-        </div>
-        <p class="info-text" style="margin:8px 0 12px;">Optional. Sync your templates, custom fonts, and projects across devices.</p>
-        <input type="email" class="control-input" id="auth-email" placeholder="you@example.com" autocomplete="email">
-        <input type="password" class="control-input" id="auth-password" placeholder="password" autocomplete="current-password">
-        <div class="auth-modal-actions">
-            <button class="btn btn-primary" id="auth-signin-modal-btn">Sign in</button>
-            <button class="btn btn-secondary" id="auth-signup-btn">Sign up</button>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:8px;">
-            <button class="btn btn-secondary" id="auth-google-btn" style="flex:1;">Google</button>
-            <button class="btn btn-secondary" id="auth-github-btn" style="flex:1;">GitHub</button>
-        </div>
-    </div>
 </div>
 
 <div class="auth-modal-overlay" id="versions-modal">
