@@ -30,7 +30,8 @@ import { shareMeta, fillTemplate } from '../api/_share-page.js';
 import shareRouter from '../api/share.js';
 import shareUploadRoute from '../api/_share-upload.js';
 import accountRouter from '../api/account.js';
-import { CREDIT_COSTS, resetsAt } from '../api/_account.js';
+import { CREDIT_COSTS, resetsAt, memoryAccounts } from '../api/_account.js';
+import { generateKeyPairSync, createSign } from 'node:crypto';
 import aiTextRoute from '../api/ai-text.js';
 import imageGenerateRoute from '../api/image-generate.js';
 import { join as waitlistJoin, exportList as waitlistExport, cleanEmail, WAITLIST_PREFIX } from '../api/_waitlist.js';
@@ -117,20 +118,6 @@ async function testFailedProjectImageDecodeClearsPreviousImage() {
   } finally {
     global.Image = originalImage;
   }
-}
-
-function testGalleryTemplateApplySnapshotsHistory() {
-  const source = fs.readFileSync('src/features/gallery.js', 'utf8');
-  assert.match(source, /import\s+\{\s*saveStateToHistory\s*\}\s+from\s+['"]\.\.\/state\/history\.js['"]/);
-  assert.match(
-    source,
-    /else\s*\{[\s\S]*saveStateToHistory\(\);[\s\S]*Object\.assign\(state,\s*payload\)/,
-    'gallery template apply should snapshot before mutating state'
-  );
-  // v40 — a gallery row never sets pins (their thumbnails go into innerHTML).
-  assert.match(source, /delete payload\.versions;[\s\S]*Object\.assign\(state,\s*payload\)/);
-  const collab = fs.readFileSync('src/features/collab.js', 'utf8');
-  assert.match(collab, /delete next\.versions;[\s\S]*Object\.assign\(state,\s*next\)/, 'nor does a collab update');
 }
 
 // v35 — Before / After Compare: migration + geometry.
@@ -1300,45 +1287,41 @@ async function testWaitlistRoutes() {
   }
 }
 
-// Glint Pro groundwork: hosted AI spends credits per signed-in account. Supabase
-// and OpenAI are faked at fetch; the credit function mirrors supabase/glint-pro.sql.
+// Glint Pro groundwork: hosted AI spends credits per signed-in account. Clerk
+// session tokens are signed here with a throwaway key (CLERK_JWT_KEY makes the
+// check networkless), credits use the in-memory store that mirrors the Postgres
+// function in api/_account-schema.js, and OpenAI is faked at fetch.
 async function testHostedAiIsMetered() {
   const saved = { ...process.env };
   const realFetch = globalThis.fetch;
-  const KEYS = ['SUPABASE_URL', 'VITE_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'OPENAI_API_KEY', 'AI_FREE_CREDITS', 'AI_PRO_CREDITS'];
+  const KEYS = ['CLERK_SECRET_KEY', 'CLERK_JWT_KEY', 'DATABASE_URL', 'POSTGRES_URL', 'ACCOUNT_STORE', 'OPENAI_API_KEY', 'AI_FREE_CREDITS', 'AI_PRO_CREDITS'];
   for (const k of KEYS) delete process.env[k];
-  const USER = '11111111-2222-3333-4444-555555555555';
-  const used = new Map();
-  const pro = new Set();
-  let openaiCalls = 0, openaiFails = false, supabaseDown = false;
+  const { usage, pro } = memoryAccounts();
+  usage.clear(); pro.clear();
+  const USER = 'user_2abcDEF123';
+  const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const stranger = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const part = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  const sign = (claims, key = privateKey) => {
+    // "cat" marks a Clerk session token; the library refuses anything else.
+    const head = part({ alg: 'RS256', typ: 'JWT', kid: 'ins_test', cat: 'cl_B7d4PD111AAA' });
+    const body = part({ sid: 'sess_1', iss: 'https://clerk.glint.test', iat: now, nbf: now - 5, exp: now + 300, ...claims });
+    return `${head}.${body}.${createSign('RSA-SHA256').update(`${head}.${body}`).sign(key).toString('base64url')}`;
+  };
+  const good = sign({ sub: USER });
+  let openaiCalls = 0, openaiFails = false;
   const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
-  globalThis.fetch = async (url, init = {}) => {
+  globalThis.fetch = async (url) => {
     const u = String(url);
-    if (u.startsWith('https://proj.supabase.co/')) {
-      if (supabaseDown) throw new Error('network');
-      assert.equal(init.headers.apikey, 'svc');
-      if (u.endsWith('/auth/v1/user')) return init.headers.Authorization === 'Bearer good.jwt.token' ? json(200, { id: USER, email: 'ada@example.com' }) : json(401, { msg: 'bad jwt' });
-      if (u.endsWith('/rest/v1/rpc/glint_use_credits')) {
-        assert.equal(init.headers.Authorization, 'Bearer svc');
-        const a = JSON.parse(init.body);
-        const plan = pro.has(a.p_user) ? 'pro' : 'free';
-        const limit = plan === 'pro' ? a.p_pro_limit : a.p_free_limit;
-        const now = used.get(a.p_user) || 0;
-        let allowed = true;
-        if (a.p_cost > 0) { if (now + a.p_cost <= limit) used.set(a.p_user, now + a.p_cost); else allowed = false; }
-        else if (a.p_cost < 0) used.set(a.p_user, Math.max(0, now + a.p_cost));
-        return json(200, { allowed, used: used.get(a.p_user) || 0, limit, plan });
-      }
-    }
     if (u.startsWith('https://api.openai.com/')) {
       openaiCalls++;
       if (openaiFails) return json(500, { error: { message: 'upstream broke' } });
       return u.includes('/images/') ? json(200, { data: [{ b64_json: 'AAAA' }] }) : json(200, { choices: [{ message: { content: 'hello' } }] });
     }
-    throw new Error('unexpected fetch ' + u);
+    throw new Error('network down: ' + u);
   };
   const post = (body, token) => shareReq('POST', body, token ? { headers: { authorization: `Bearer ${token}` } } : {});
-  const good = 'good.jwt.token';
   try {
     assert.deepEqual(CREDIT_COSTS, { text: 1, vision: 1, enhance: 1, agent: 1, image: 5 });
     assert.equal(resetsAt(new Date('2026-12-31T23:59:59Z')), '2027-01-01T00:00:00.000Z');
@@ -1349,20 +1332,25 @@ async function testHostedAiIsMetered() {
     assert.equal(open.statusCode, 200);
     assert.equal(open.headers['x-glint-credits'], undefined);
     assert.deepEqual((await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'me' } }))).body, { enabled: false });
+    // Sign-in alone, with nowhere to keep the count, is not enough to meter.
+    process.env.CLERK_JWT_KEY = publicKey.export({ type: 'spki', format: 'pem' });
+    assert.equal((await callRoute(aiTextRoute, post({ prompt: 'hi' }))).statusCode, 200);
 
-    process.env.SUPABASE_URL = 'https://proj.supabase.co/';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'svc';
+    process.env.ACCOUNT_STORE = 'memory';
     process.env.AI_FREE_CREDITS = '3';
     process.env.AI_PRO_CREDITS = '40';
     openaiCalls = 0;
 
-    // No account, or a token Supabase does not know: asked to sign in, nothing spent or called.
-    for (const token of [undefined, 'bad.jwt.token', 'not-a-jwt']) {
+    // No account, an expired session, another signer's token, junk: asked to
+    // sign in, nothing spent, the model never called.
+    const bad = [undefined, 'not-a-jwt', sign({ sub: USER, iat: now - 900, nbf: now - 900, exp: now - 600 }), sign({ sub: USER }, stranger.privateKey)];
+    for (const token of bad) {
       const r = await callRoute(aiTextRoute, post({ prompt: 'hi' }, token));
       assert.equal(r.statusCode, 401);
       assert.equal(r.body.code, 'sign_in');
     }
     assert.equal(openaiCalls, 0);
+    assert.equal(usage.size, 0);
     // Other methods are the route's own business.
     assert.equal((await callRoute(aiTextRoute, shareReq('GET'))).statusCode, 405);
 
@@ -1373,10 +1361,10 @@ async function testHostedAiIsMetered() {
 
     // A failed call (bad input, or the model erroring) hands the credit back.
     assert.equal((await callRoute(aiTextRoute, post({}, good))).statusCode, 400);
-    assert.equal(used.get(USER), 1);
+    assert.equal(usage.get(USER), 1);
     openaiFails = true;
     assert.equal((await callRoute(aiTextRoute, post({ prompt: 'hi' }, good))).statusCode, 500);
-    assert.equal(used.get(USER), 1);
+    assert.equal(usage.get(USER), 1);
     openaiFails = false;
 
     // An image costs 5, more than the 2 left: refused, with the count.
@@ -1384,7 +1372,7 @@ async function testHostedAiIsMetered() {
     assert.equal(img.statusCode, 402);
     assert.equal(img.body.code, 'no_credits');
     assert.match(img.body.error, /needs 5 .* you have 2 left/);
-    assert.equal(used.get(USER), 1);
+    assert.equal(usage.get(USER), 1);
 
     await callRoute(aiTextRoute, post({ prompt: 'hi' }, good));
     await callRoute(aiTextRoute, post({ prompt: 'hi' }, good));
@@ -1395,6 +1383,8 @@ async function testHostedAiIsMetered() {
     assert.equal(out.body.limit, 3);
     assert.ok(out.body.resets.endsWith('T00:00:00.000Z'));
     assert.equal(openaiCalls, calls);
+    // One person's count is their own.
+    assert.equal((await callRoute(aiTextRoute, post({ prompt: 'hi' }, sign({ sub: 'user_other' })))).headers['x-glint-credits'], '1/3');
 
     const me = await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'me' }, headers: { authorization: `Bearer ${good}` } }));
     assert.equal(me.body.signedIn, true);
@@ -1408,10 +1398,15 @@ async function testHostedAiIsMetered() {
     assert.equal(paid.statusCode, 200);
     assert.equal(paid.headers['x-glint-credits'], '8/40');
 
-    // Supabase unreachable: closed, not free.
-    supabaseDown = true;
-    assert.equal((await callRoute(aiTextRoute, post({ prompt: 'hi' }, good))).statusCode, 503);
-    supabaseDown = false;
+    // Clerk's key service unreachable (no local key to fall back on): closed, not free.
+    delete process.env.CLERK_JWT_KEY;
+    process.env.CLERK_SECRET_KEY = 'sk_test_unreachable';
+    const errors = console.error;
+    console.error = () => {};
+    try {
+      assert.equal((await callRoute(aiTextRoute, post({ prompt: 'hi' }, good))).statusCode, 503);
+    } finally { console.error = errors; }
+    assert.equal(usage.get(USER), 8);
 
     // No server AI key: the route says 501 without asking anyone to sign in,
     // so the editor falls back to the person's own key.
@@ -1419,6 +1414,7 @@ async function testHostedAiIsMetered() {
     assert.equal((await callRoute(imageGenerateRoute, post({ prompt: 'a cat' }))).statusCode, 501);
   } finally {
     globalThis.fetch = realFetch;
+    usage.clear(); pro.clear();
     for (const k of KEYS) { if (k in saved) process.env[k] = saved[k]; else delete process.env[k]; }
   }
 }
@@ -1428,7 +1424,6 @@ const tests = [
   testFetchUrlUsesManualRedirects,
   testColorMapPersistsInProjects,
   testFailedProjectImageDecodeClearsPreviousImage,
-  testGalleryTemplateApplySnapshotsHistory,
   testCompareMigratesAndPersists,
   testCompareGeometry,
   testBrandMigrateCopiesOnce,

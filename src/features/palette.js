@@ -32,7 +32,6 @@ import { addPage, pageCount } from './pages.js';
 import { toggleBoardMode, enterBoardMode } from './board.js';
 import { setGroup, revealSection } from './studio-nav.js';
 import { seedFromUrl } from './seed.js';
-import { openGalleryBrowse } from './gallery.js';
 import { exportVideoMp4, exportVideoGif } from './video-export.js';
 import { resetOnboarding } from './welcome.js';
 import { canInstallApp, installApp } from './install-app.js';
@@ -299,9 +298,6 @@ export function registerCommands() {
     { id: 'video-play',       label: 'Video: Play/Pause clip', icon: '🎬', run: togglePlay },
     { id: 'video-mp4',        label: 'Video: Export MP4',    icon: '⬇', run: exportVideoMp4 },
     { id: 'video-gif',        label: 'Video: Export GIF',    icon: '⬇', run: exportVideoGif },
-    { id: 'gallery-browse',   label: 'Browse community gallery', icon: '🌐', run: openGalleryBrowse },
-    { id: 'gallery-publish',  label: 'Publish design to gallery', icon: '⬆', run: () => document.getElementById('gallery-publish-template')?.click() },
-    { id: 'collab-start',     label: 'Live collaboration: Start/leave session', icon: '👥', run: () => document.getElementById('collab-start-btn')?.click() },
     { id: 'reset-onboarding', label: 'Reset onboarding tour', icon: '🧭', run: () => { resetOnboarding(); showStatus('Onboarding reset'); } },
     { id: 'brand-brain-apply', label: 'Apply Brand',          icon: '🎨', run: () => import('./brand-brain.js').then(m => m.applyBrand()), when: () => !!state.brand?.enabled },
     // v33 — Aperture QoL

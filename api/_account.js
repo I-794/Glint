@@ -1,14 +1,19 @@
 // Glint Pro groundwork: accounts and hosted AI credits.
 //
-// Sign-in is Supabase Auth (the editor already has it). This module is the
-// server side: it checks the caller's login token with Supabase, then spends
-// credits through one atomic Postgres function (supabase/glint-pro.sql), which
-// also works out the plan. Nothing here trusts the browser.
+// Sign-in is Clerk; plans and credit counts live in Postgres (Neon). This
+// module is the server side: it verifies the caller's Clerk session token,
+// then spends credits through one atomic Postgres function
+// (api/_account-schema.js), which also works out the plan. Nothing here
+// trusts the browser.
 //
-// Metering is on only when the deployment has SUPABASE_SERVICE_ROLE_KEY and a
-// Supabase URL. Without them every hosted AI route behaves as it did before.
+// Metering is on only when the deployment has a Clerk key and a database URL
+// (both arrive when Clerk and Neon are added from the Vercel Marketplace).
+// Without them every hosted AI route behaves as it did before.
 
+import { verifyToken } from '@clerk/backend';
+import { neon } from '@neondatabase/serverless';
 import { ApiError, serverOpenAIKey } from './_shared.js';
+import { SCHEMA, USE_CREDITS } from './_account-schema.js';
 
 // What one call costs. Image models cost far more to run than text ones.
 export const CREDIT_COSTS = { text: 1, vision: 1, enhance: 1, agent: 1, image: 5 };
@@ -19,12 +24,16 @@ const posInt = (value, fallback) => {
 };
 
 export function accountConfig() {
-  const url = String(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const memory = process.env.ACCOUNT_STORE === 'memory';   // tests only
+  const secretKey = process.env.CLERK_SECRET_KEY || '';
+  const jwtKey = process.env.CLERK_JWT_KEY || '';           // optional: verify without a network call
+  const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
   return {
-    enabled: Boolean(/^https:\/\//.test(url) && serviceKey),
-    url,
-    serviceKey,
+    enabled: Boolean((secretKey || jwtKey) && (memory || databaseUrl)),
+    memory,
+    secretKey,
+    jwtKey,
+    databaseUrl,
     freeCredits: posInt(process.env.AI_FREE_CREDITS, 20),
     proCredits: posInt(process.env.AI_PRO_CREDITS, 500),
   };
@@ -47,40 +56,72 @@ export function readBearer(req) {
 
 const unavailable = () => new ApiError(503, 'Hosted AI could not check your account just now. Try again in a moment.');
 
-// Ask Supabase who this token belongs to. Null means not signed in (or a token
-// from some other Supabase project, which the editor also allows).
+// Who does this Clerk session token belong to? Null means not signed in: no
+// token, an expired one, or one this Clerk instance did not sign.
 export async function userFromToken(cfg, token) {
   if (!token) return null;
-  let r;
   try {
-    r = await fetch(`${cfg.url}/auth/v1/user`, { headers: { apikey: cfg.serviceKey, Authorization: `Bearer ${token}` } });
+    const claims = await verifyToken(token, cfg.jwtKey ? { jwtKey: cfg.jwtKey } : { secretKey: cfg.secretKey });
+    const id = claims && typeof claims.sub === 'string' ? claims.sub : '';
+    return /^[A-Za-z0-9_-]{1,128}$/.test(id) ? { id } : null;
   } catch (e) {
+    // "token-..." reasons are about the token itself. Anything else (a wrong
+    // secret key, Clerk's key service unreachable) is our side failing.
+    if (typeof e.reason === 'string' && e.reason.startsWith('token-')) return null;
+    console.error('[account] could not verify a session token:', e.reason || e.message);
     throw unavailable();
   }
-  if (r.status === 401 || r.status === 403) return null;
-  if (!r.ok) throw unavailable();
-  const user = await r.json().catch(() => null);
-  if (!user || typeof user.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(user.id)) return null;
-  return { id: user.id, email: typeof user.email === 'string' ? user.email : '' };
+}
+
+// ── credit stores ────────────────────────────────────────────────────────────
+
+// Tests: the same rules as the Postgres function, in memory.
+const memoryUsage = new Map();
+const memoryPro = new Set();
+export function memoryAccounts() { return { usage: memoryUsage, pro: memoryPro }; }
+function memoryUse(user, cost, freeLimit, proLimit) {
+  const plan = memoryPro.has(user) ? 'pro' : 'free';
+  const limit = plan === 'pro' ? proLimit : freeLimit;
+  const now = memoryUsage.get(user) || 0;
+  let allowed = true;
+  if (cost > 0) { if (now + cost <= limit) memoryUsage.set(user, now + cost); else allowed = false; }
+  else if (cost < 0) memoryUsage.set(user, Math.max(0, now + cost));
+  return { allowed, used: memoryUsage.get(user) || 0, limit, plan };
+}
+
+let sqlClient = null, sqlUrl = '';
+function db(cfg) {
+  if (!sqlClient || sqlUrl !== cfg.databaseUrl) { sqlClient = neon(cfg.databaseUrl); sqlUrl = cfg.databaseUrl; }
+  return sqlClient;
+}
+
+// 42883: the function is missing; 42P01: a table is missing. Either way the
+// database has not been set up yet, which the server does itself, once.
+const needsSchema = (e) => e && (e.code === '42883' || e.code === '42P01');
+
+async function postgresUse(cfg, args) {
+  const sql = db(cfg);
+  try {
+    return (await sql.query(USE_CREDITS, args))[0].r;
+  } catch (e) {
+    if (!needsSchema(e)) throw e;
+    for (const statement of SCHEMA) await sql.query(statement);
+    return (await sql.query(USE_CREDITS, args))[0].r;
+  }
 }
 
 // cost > 0 spends, cost < 0 refunds, 0 only reads.
 export async function useCredits(cfg, userId, cost) {
-  let r;
+  let out;
   try {
-    r = await fetch(`${cfg.url}/rest/v1/rpc/glint_use_credits`, {
-      method: 'POST',
-      headers: { apikey: cfg.serviceKey, Authorization: `Bearer ${cfg.serviceKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ p_user: userId, p_cost: cost, p_free_limit: cfg.freeCredits, p_pro_limit: cfg.proCredits }),
-    });
+    out = cfg.memory
+      ? memoryUse(userId, cost, cfg.freeCredits, cfg.proCredits)
+      : await postgresUse(cfg, [userId, cost, cfg.freeCredits, cfg.proCredits]);
   } catch (e) {
+    console.error('[account] credits query failed:', e.code || '', e.message);
     throw unavailable();
   }
-  const out = r.ok ? await r.json().catch(() => null) : null;
-  if (!out || typeof out.used !== 'number' || typeof out.limit !== 'number') {
-    if (!r.ok) console.error('[account] glint_use_credits failed with status', r.status);
-    throw unavailable();
-  }
+  if (!out || typeof out.used !== 'number' || typeof out.limit !== 'number') throw unavailable();
   return { allowed: out.allowed !== false, used: out.used, limit: out.limit, plan: out.plan === 'pro' ? 'pro' : 'free' };
 }
 

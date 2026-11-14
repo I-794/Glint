@@ -3,7 +3,7 @@
 // signed-in person's token so the server can count credits. When the server
 // says "sign in" or "out of credits" this explains why, and otherwise stays
 // out of the way: a person with their own API key never sees any of it.
-import { getClient, onAuthChange, isConfigured, openSignIn } from './auth.js';
+import { getToken, onAuthChange, isConfigured, openSignIn } from './auth.js';
 import { getKey } from './api-keys.js';
 import { showNotification } from '../ui/notification.js';
 import { track } from './analytics.js';
@@ -11,16 +11,7 @@ import { track } from './analytics.js';
 let usage = null;       // { used, limit, plan, resets } once known
 let lastBlock = null;   // { message, at } for the Design Agent's reply
 
-async function token() {
-  if (!isConfigured()) return '';
-  try {
-    const client = await getClient();
-    const { data } = await client.auth.getSession();
-    return (data && data.session && data.session.access_token) || '';
-  } catch (e) {
-    return '';
-  }
-}
+const token = () => getToken();
 
 const hasOwnKey = () => Boolean(getKey('openai') || getKey('anthropic'));
 
@@ -110,6 +101,6 @@ export async function hostedFetch(path, body, { quiet = false } = {}) {
 }
 
 export function bindAccount() {
+  // bindAuth() announces the first sign-in state once Clerk has loaded.
   onAuthChange(() => { refreshAccount(); });
-  if (isConfigured()) refreshAccount();
 }

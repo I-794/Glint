@@ -61,7 +61,6 @@ import { bindAiImageEdit } from './features/ai-image-edit.js';
 import { bindScreenshotEditor } from './features/ai-screenshot-editor.js';
 import { bindAuth } from './features/auth.js';
 import { bindAccount } from './features/account.js';
-import { bindCloudSync } from './features/cloud-sync.js';
 import { bindProjects } from './features/projects.js';
 import { bindCampaigns } from './features/campaigns.js';
 import { bindPages } from './features/pages.js';
@@ -70,13 +69,11 @@ import { bindSeed } from './features/seed.js';
 import { bindA11y } from './ui/a11y.js';
 import { bindStaleBuildReload } from './ui/stale-build.js';
 import { bindTours } from './features/tours.js';
-import { bindGallery } from './features/gallery.js';
 import { bindCrop } from './features/crop.js';
 import { bindResetButton } from './features/reset.js';
 import { bindShare } from './features/share.js';
 import { bindShareLinks } from './features/share-links.js';
 import { bindPrintPdf } from './features/print-pdf.js';   // v42
-import { bindCollab } from './features/collab.js';
 import { bindAiEnhance } from './features/ai-enhance.js';
 import { bindAnimation } from './features/animation.js';
 import { bindKenBurns } from './features/ken-burns.js';
@@ -180,7 +177,6 @@ function init() {
   bindScreenshotEditor();   // v30 — Magic Edit panel
   bindAccount();   // before bindAuth, so it hears the first sign-in state
   bindAuth();
-  bindCloudSync();
   bindPages();
   bindBoard();     // v32 — Open Canvas board surface
   bindSeed();       // v32 — Seed: URL -> board cards
@@ -189,13 +185,11 @@ function init() {
   bindTours();
   bindProjects();
   bindCampaigns();
-  bindGallery();
   bindCrop();
   bindResetButton();
   bindShare();
   bindShareLinks();
   bindPrintPdf();       // v42 — Junction: print-ready PDF
-  bindCollab();
   bindAiEnhance();
   bindAnimation();
   bindKenBurns();

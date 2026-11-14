@@ -57,7 +57,7 @@ you see is exactly what you download.
 - **AI (optional)** — a design agent that composes a look from a sentence, background generation, subject isolation, OCR, vision, outpaint, and magic eraser.
 - **Motion** — Ken Burns, per-element animation, a timeline, in-browser screen recording, and GIF or MP4 export.
 - **Output** — PNG, JPEG, WebP, GIF, MP4, multi-page PDF decks, and ZIP for batches and App Store sets at every store size.
-- **Projects** — save, version history, and optional cloud sync. A Cmd-K command palette ties it together.
+- **Projects** — save and version history, kept in your browser. A Cmd-K command palette ties it together.
 
 See the full list at [snapshotpro.xyz/features](https://snapshotpro.xyz/features/).
 
@@ -72,8 +72,8 @@ npm run preview  # serve the built dist/
 
 Vanilla JavaScript and Vite, no framework. The editor lives at `/editor/`; the marketing and
 info pages are separate Vite inputs (see `rollupOptions.input` in `vite.config.js`). 3D mockups
-use three.js, optional AI runs through Vercel serverless functions in `api/`, and cloud sync
-is optional via Supabase. Architecture notes are in [`CLAUDE.md`](CLAUDE.md); deployment is in
+use three.js, optional AI runs through Vercel serverless functions in `api/`, and optional
+sign-in (Clerk) with a small Postgres database (Neon) counts hosted AI credits. Architecture notes are in [`CLAUDE.md`](CLAUDE.md); deployment is in
 [`DEPLOY.md`](DEPLOY.md).
 
 ## Contributing

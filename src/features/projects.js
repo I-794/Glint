@@ -2,7 +2,7 @@
 //
 // Turns the editor from a single ephemeral canvas into a project workspace:
 //  • Local-first store so "never lose a design" works offline and without a
-//    Supabase account; cloud sync layers on when signed in. v34: projects live
+//    an account. v34: projects live
 //    in IndexedDB (src/state/project-db.js) because a large photo plus its
 //    versions overflows phone localStorage; the whole store is kept in memory
 //    (`cache`) so call sites stay synchronous. On every healthy load, any
@@ -18,7 +18,7 @@
 //
 // v13: a project's `payload` is now a *document* (multiple pages). Serialization
 // is delegated to pages.js (serializeDocument / applyDocument); this module owns
-// persistence, the dashboard, version history, and cloud sync.
+// persistence, the dashboard and version history.
 
 import { state } from '../state/state.js';
 import { showNotification } from '../ui/notification.js';
@@ -27,7 +27,6 @@ import { escapeHTML } from '../utils/dom.js';
 import { onHistoryChange } from '../state/history.js';
 import { makeThumb, uid } from './document.js';
 import { serializeDocument, applyDocument, onDocumentChange, pageCount } from './pages.js';
-import { getClient, getUser, onAuthChange } from './auth.js';
 import { idbAvailable, idbGet, idbUpdate, idbReset } from '../state/project-db.js';
 
 const STORE_KEY = 'glint_projects_v12';
@@ -425,7 +424,6 @@ function newProject(name) {
   activeId = id;
   setActiveKey(id);
   writeStore(store);
-  pushProjectToCloud(store[id]);
   // v30 — Brand Brain enforcement: a new project starts on-brand.
   if (state.brand && state.brand.enforce && state.brand.enabled) {
     import('./brand-brain.js').then(m => m.applyBrand());
@@ -471,16 +469,13 @@ function saveActive({ versionLabel } = {}) {
       createdAt: Date.now(),
       auto: !named
     });
-    const justAdded = p.versions[0];
     // Keep all named versions; cap auto versions.
     const namedV = p.versions.filter(v => !v.auto);
     const autoV = p.versions.filter(v => v.auto).slice(0, MAX_AUTO_VERSIONS);
     p.versions = [...namedV, ...autoV].sort((a, b) => b.createdAt - a.createdAt);
-    pushVersionToCloud(p.id, justAdded);
   }
 
   const res = writeStore(store);
-  pushProjectToCloud(p);
   reportWrite(res, p.updatedAt);
   return p;
 }
@@ -548,7 +543,6 @@ function restoreVersion(versionId) {
   p.payload = v.payload;   // shared: stored payloads are never mutated
   touch(p);
   writeStore(store);
-  pushProjectToCloud(p);
   applyDocument(cloneDoc(v.payload));
   closeVersionsModal();
   renderPanel();
@@ -571,7 +565,6 @@ function forkVersion(versionId) {
   activeId = id;
   setActiveKey(id);
   writeStore(store);
-  pushProjectToCloud(store[id]);
   applyDocument(cloneDoc(v.payload));
   closeVersionsModal();
   renderPanel();
@@ -590,7 +583,6 @@ async function renameProject(id) {
   p.name = name.trim() || p.name;
   touch(p);
   writeStore(store);
-  pushProjectToCloud(p);
   renderPanel();
 }
 
@@ -606,7 +598,6 @@ function duplicateProject(id) {
   };
   markDirty(nid);
   writeStore(store);
-  pushProjectToCloud(store[nid]);
   renderPanel();
   showNotification(`Duplicated "${p.name}".`, 'success');
 }
@@ -623,73 +614,8 @@ async function deleteProject(id) {
   dirtyIds.delete(id);
   writeStore(store);
   if (activeId === id) { activeId = null; setActiveKey(null); }
-  deleteProjectFromCloud(id);
   renderPanel();
   showNotification('Project deleted.', 'success');
-}
-
-// ── Cloud sync (best-effort; local stays the source of truth) ────────────────
-async function pushProjectToCloud(p) {
-  try {
-    const user = getUser(); const c = await getClient();
-    if (!user || !c || !p) return;
-    await c.from('projects').upsert({
-      id: p.id, user_id: user.id, name: p.name,
-      payload: p.payload, thumbnail: p.thumbnail,
-      updated_at: new Date(p.updatedAt).toISOString()
-    }, { onConflict: 'id' });
-  } catch (e) { /* offline / not configured — local copy is safe */ }
-}
-async function pushVersionToCloud(projectId, v) {
-  try {
-    const user = getUser(); const c = await getClient();
-    if (!user || !c || !v) return;
-    await c.from('project_versions').upsert({
-      id: v.id, project_id: projectId, user_id: user.id,
-      label: v.label, payload: v.payload, thumbnail: v.thumbnail,
-      created_at: new Date(v.createdAt).toISOString()
-    }, { onConflict: 'id' });
-  } catch (e) { /* best-effort */ }
-}
-async function deleteProjectFromCloud(id) {
-  try {
-    const user = getUser(); const c = await getClient();
-    if (!user || !c) return;
-    await c.from('projects').delete().eq('id', id).eq('user_id', user.id);
-  } catch (e) { /* best-effort */ }
-}
-async function pullCloud() {
-  try {
-    await readyP;
-    const user = getUser(); const c = await getClient();
-    if (!user || !c) return;
-    const { data: projs } = await c.from('projects')
-      .select('id, name, payload, thumbnail, updated_at').eq('user_id', user.id);
-    if (!projs) return;
-    const { data: vers } = await c.from('project_versions')
-      .select('id, project_id, label, payload, thumbnail, created_at').eq('user_id', user.id);
-    const store = loadStore();
-    let added = 0;
-    projs.forEach(row => {
-      const cloudUpdated = new Date(row.updated_at).getTime();
-      const local = store[row.id];
-      if (!local || cloudUpdated > local.updatedAt) {
-        store[row.id] = {
-          id: row.id, name: row.name, payload: row.payload, thumbnail: row.thumbnail,
-          createdAt: local ? local.createdAt : cloudUpdated, updatedAt: cloudUpdated,
-          versions: (vers || []).filter(v => v.project_id === row.id).map(v => ({
-            id: v.id, label: v.label, payload: v.payload, thumbnail: v.thumbnail,
-            createdAt: new Date(v.created_at).getTime(), auto: !v.label
-          })).sort((a, b) => b.createdAt - a.createdAt)
-        };
-        markDirty(row.id);
-        if (!local) added++;
-      }
-    });
-    writeStore(store);
-    if (added > 0) showNotification(`Synced ${added} project${added === 1 ? '' : 's'} from cloud.`, 'success');
-    renderPanel();
-  } catch (e) { /* best-effort */ }
 }
 
 // ── UI: sidebar panel ────────────────────────────────────────────────────────
@@ -818,9 +744,6 @@ export function bindProjects() {
   const overlay = document.getElementById('versions-modal');
   if (closeBtn) closeBtn.addEventListener('click', closeVersionsModal);
   if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closeVersionsModal(); });
-
-  // Pull cloud projects whenever a user signs in.
-  onAuthChange(u => { if (u) pullCloud(); });
 
   // v34: flush a pending autosave when the page is hidden or unloaded.
   document.addEventListener('visibilitychange', () => {
