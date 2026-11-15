@@ -61,6 +61,7 @@ import { bindAiImageEdit } from './features/ai-image-edit.js';
 import { bindScreenshotEditor } from './features/ai-screenshot-editor.js';
 import { bindAuth } from './features/auth.js';
 import { bindAccount } from './features/account.js';
+import { bindAccountPanel } from './features/account-panel.js';
 import { bindProjects } from './features/projects.js';
 import { bindCampaigns } from './features/campaigns.js';
 import { bindPages } from './features/pages.js';
@@ -176,6 +177,7 @@ function init() {
   bindAiImageEdit();
   bindScreenshotEditor();   // v30 — Magic Edit panel
   bindAccount();   // before bindAuth, so it hears the first sign-in state
+  bindAccountPanel();
   bindAuth();
   bindPages();
   bindBoard();     // v32 — Open Canvas board surface

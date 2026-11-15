@@ -253,6 +253,7 @@ export function registerCommands() {
     // v42 — the Roll and Pins as gallery links
     { id: 'share-link-roll',    label: 'Share: Create a link to the Roll', icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('roll')), when: () => state.mode === 'single' && !!window.__rollCommands?.hasShots() },
     { id: 'share-link-pins',    label: "Share: Create a link to this page's pins", icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('pins')), when: () => state.mode === 'single' && !!state.image && Array.isArray(state.versions) && state.versions.length > 0 },
+    { id: 'account-open',       label: 'Account: Plan and AI credits', icon: '◎', run: () => import('./account-panel.js').then((m) => m.openAccountPanel()) },
     { id: 'share-links-open',   label: 'Share: Your links',  icon: '🔗', run: () => { const s = document.getElementById('share-section'); if (s) { revealSection(s); s.scrollIntoView({ block: 'start', behavior: 'smooth' }); } } },
     { id: 'generate-qr',      label: 'Generate QR Code for the last link', icon: '📱', run: () => document.getElementById('qr-btn')?.click(), when: () => !document.getElementById('share-result')?.hidden },
     { id: 'export-gif',       label: 'Export as GIF',         icon: '🎬', run: () => document.getElementById('gif-export-btn')?.click() },

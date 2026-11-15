@@ -1388,6 +1388,7 @@ async function testHostedAiIsMetered() {
 
     const me = await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'me' }, headers: { authorization: `Bearer ${good}` } }));
     assert.equal(me.body.signedIn, true);
+    assert.equal(me.body.proCredits, 40, 'the account route tells the panel what Pro gives');
     assert.deepEqual([me.body.plan, me.body.used, me.body.limit], ['free', 3, 3]);
     assert.equal((await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'me' } }))).body.signedIn, false);
     assert.equal((await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'constructor' } }))).statusCode, 404);

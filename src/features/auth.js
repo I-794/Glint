@@ -108,6 +108,17 @@ export async function openSignIn() {
   c.openSignIn();
 }
 
+// Clerk's own "manage account" window (email, password, delete account).
+export async function openUserProfile() {
+  const c = await ready();
+  if (c && c.user) c.openUserProfile();
+}
+
+export async function signOut() {
+  const c = await ready();
+  if (c && c.user) await c.signOut();
+}
+
 function renderAuthPill() {
   const pill = document.getElementById('auth-pill');
   if (!pill) return;

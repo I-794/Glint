@@ -9,13 +9,22 @@ import { showNotification } from '../ui/notification.js';
 import { track } from './analytics.js';
 
 let usage = null;       // { used, limit, plan, resets } once known
+let offer = null;       // { costs, freeCredits, proCredits, hosted } from the account route
+let loadFailed = false; // the last look at the account did not get an answer
+const watchers = [];
 let lastBlock = null;   // { message, at } for the Design Agent's reply
 
 const token = () => getToken();
 
-const hasOwnKey = () => Boolean(getKey('openai') || getKey('anthropic'));
+export const hasOwnKey = () => Boolean(getKey('openai') || getKey('anthropic'));
 
-function resetDay(iso) {
+// What the account panel shows. `usage` is null while signed out or unknown.
+export function getAccount() {
+  return { usage, offer, loadFailed };
+}
+export function onAccountChange(fn) { watchers.push(fn); }
+
+export function resetDay(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', timeZone: 'UTC' });
@@ -29,12 +38,13 @@ function renderChip() {
   chip.style.display = '';
   chip.textContent = `${left} AI credit${left === 1 ? '' : 's'}`;
   const day = usage.resets ? resetDay(usage.resets) : '';
-  chip.title = `${left} of ${usage.limit} hosted AI credits left this month${usage.plan === 'pro' ? ' (Glint Pro)' : ''}.${day ? ` They start over on ${day}.` : ''} Your own API key does not use credits.`;
+  chip.title = `${left} of ${usage.limit} hosted AI credits left this month${usage.plan === 'pro' ? ' (Glint Pro)' : ''}.${day ? ` They start over on ${day}.` : ''} Click for your account.`;
 }
 
 function setUsage(next) {
   usage = next;
   renderChip();
+  watchers.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } });
 }
 
 let refreshing = null;
@@ -45,14 +55,16 @@ export function refreshAccount() {
 
 async function loadAccount() {
   const t = await token();
-  if (!t) { setUsage(null); return; }
   try {
-    const r = await fetch('/api/account?op=me', { headers: { Authorization: `Bearer ${t}` }, cache: 'no-store' });
+    const r = await fetch('/api/account?op=me', { headers: t ? { Authorization: `Bearer ${t}` } : {}, cache: 'no-store' });
     const type = r.headers.get('content-type') || '';
     const data = r.ok && type.includes('json') ? await r.json() : null;
+    loadFailed = !data;
+    offer = data && data.enabled ? { costs: data.costs || {}, freeCredits: data.freeCredits, proCredits: data.proCredits, hosted: Boolean(data.hosted) } : null;
     if (data && data.enabled && data.hosted && data.signedIn) setUsage({ used: data.used, limit: data.limit, plan: data.plan, resets: data.resets });
     else setUsage(null);
   } catch (e) {
+    loadFailed = true;
     setUsage(null);
   }
 }
