@@ -1057,6 +1057,33 @@ kbd {
     border: 1px solid var(--border-color); border-radius: var(--radius-pill);
     font-size: 11px;
 }
+button.account-pill { color: var(--text-primary); font-family: inherit; cursor: pointer; transition: border-color 0.15s ease; }
+button.account-pill:hover { border-color: var(--accent-line); }
+button.account-pill:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 2px; }
+/* ─── Account panel (src/features/account-panel.js) ─── */
+.glint-dialog.account-panel { width: min(400px, calc(100vw - 32px)); }
+.account-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.account-head h3 { margin: 0; font-weight: 600; font-size: 15px; letter-spacing: -0.2px; }
+.account-close { background: none; border: 0; color: var(--text-secondary); font-size: 14px; line-height: 1; padding: 6px; border-radius: var(--radius-sm); cursor: pointer; }
+.account-close:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+.account-who { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.account-who-text { min-width: 0; }
+.account-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-email { font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-plan { flex: none; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: var(--radius-pill); border: 1px solid var(--border-color); background: var(--bg-tertiary); }
+.account-plan.is-pro { background: var(--accent-primary); border-color: var(--accent-primary); color: var(--on-accent); }
+.account-box { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; margin-bottom: 12px; background: var(--bg-primary); }
+.account-count { display: flex; align-items: baseline; gap: 8px; }
+.account-count strong { font-size: 30px; font-weight: 600; letter-spacing: -1px; line-height: 1; font-variant-numeric: tabular-nums; }
+.account-count span { font-size: 12px; color: var(--text-secondary); }
+.account-bar { height: 6px; border-radius: 3px; background: var(--bg-tertiary); margin: 12px 0 10px; overflow: hidden; }
+.account-bar i { display: block; height: 100%; border-radius: 3px; background: var(--accent-primary); transition: width 0.3s ease; }
+.account-note { margin: 0; font-size: 12px; line-height: 1.5; color: var(--text-secondary); }
+.account-note + .account-note { margin-top: 6px; }
+.account-box h4 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+.account-box .btn { margin-top: 10px; width: 100%; text-align: center; text-decoration: none; display: block; }
+.account-actions { display: flex; gap: 8px; margin-top: 4px; }
+.account-actions .btn { flex: 1; }
 .auth-modal-overlay {
     position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);

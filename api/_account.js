@@ -199,7 +199,7 @@ export async function me(req, res) {
     if (req.method !== 'GET') throw new ApiError(405, 'Method not allowed');
     const cfg = accountConfig();
     if (!cfg.enabled) { res.status(200).json({ enabled: false }); return; }
-    const base = { enabled: true, hosted: Boolean(serverOpenAIKey()), costs: CREDIT_COSTS, freeCredits: cfg.freeCredits };
+    const base = { enabled: true, hosted: Boolean(serverOpenAIKey()), costs: CREDIT_COSTS, freeCredits: cfg.freeCredits, proCredits: cfg.proCredits };
     const user = await userFromToken(cfg, readBearer(req));
     if (!user) { res.status(200).json({ ...base, signedIn: false }); return; }
     const usage = await useCredits(cfg, user.id, 0);

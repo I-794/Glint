@@ -38,7 +38,9 @@ the status and the next steps.
 - Checkout and webhook with a merchant of record (Lemon Squeezy was the pick),
   as new ops in `api/account.js`.
 - Vercel Pro plan before charging anyone (Hobby is non-commercial).
-- An account panel in the editor (plan, credits, upgrade, manage billing).
+- The account panel is built (click the credits chip, or Cmd-K "Account"):
+  plan, credits left, costs, waitlist link, manage account, sign out. Add the
+  Upgrade and Manage billing buttons to it when checkout exists.
 - Share link perks for Pro, then real prices on the pricing page.
 - Watch whether 20 free credits is enough: the Design Agent spends one per
   step. Tune with `AI_FREE_CREDITS`.
