@@ -60,8 +60,8 @@ async function loadAccount() {
     const type = r.headers.get('content-type') || '';
     const data = r.ok && type.includes('json') ? await r.json() : null;
     loadFailed = !data;
-    offer = data && data.enabled ? { costs: data.costs || {}, freeCredits: data.freeCredits, proCredits: data.proCredits, hosted: Boolean(data.hosted) } : null;
-    if (data && data.enabled && data.hosted && data.signedIn) setUsage({ used: data.used, limit: data.limit, plan: data.plan, resets: data.resets });
+    offer = data && data.enabled ? { costs: data.costs || {}, freeCredits: data.freeCredits, proCredits: data.proCredits, hosted: Boolean(data.hosted), billing: Boolean(data.billing), priceLabel: typeof data.priceLabel === 'string' ? data.priceLabel : '' } : null;
+    if (data && data.enabled && data.hosted && data.signedIn) setUsage({ used: data.used, limit: data.limit, plan: data.plan, resets: data.resets, canManage: Boolean(data.subscription && data.subscription.canManage) });
     else setUsage(null);
   } catch (e) {
     loadFailed = true;
@@ -110,6 +110,59 @@ export async function hostedFetch(path, body, { quiet = false } = {}) {
   // generic "add a key" message; this lands just after and says why.
   if (!quiet && !hasOwnKey()) setTimeout(() => showNotification(message, 'info', { action, duration: 9000 }), 80);
   return new Response(JSON.stringify({ error: message }), { status: 501, headers: { 'Content-Type': 'application/json' } });
+}
+
+// POST to one of the billing routes as the signed-in person. Resolves to
+// { ok, status, data }; never throws.
+async function billingPost(op, body = {}) {
+  try {
+    const t = await token();
+    const r = await fetch(`/api/account?op=${op}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+      body: JSON.stringify(body),
+    });
+    return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) };
+  } catch (e) {
+    return { ok: false, status: 0, data: {} };
+  }
+}
+
+// Send the person to Stripe's checkout page for Glint Pro. Resolves to false
+// (after saying why) when it could not start.
+export async function startCheckout() {
+  track('pro_checkout', { step: 'start' });
+  const { ok, data } = await billingPost('checkout');
+  if (ok && typeof data.url === 'string' && data.url.startsWith('https://')) {
+    window.location.assign(data.url);
+    return true;
+  }
+  if (data.code === 'already_pro') { showNotification('You are already on Glint Pro.', 'info'); refreshAccount(); return false; }
+  if (data.code === 'sign_in') { showNotification('Sign in first, then upgrade.', 'info', { action: { label: 'Sign in', run: openSignIn } }); return false; }
+  showNotification(data.error || 'Checkout could not start. Try again in a moment.', 'error');
+  return false;
+}
+
+// Stripe's own page for cancelling or changing the card.
+export async function openBillingPortal() {
+  const { ok, data } = await billingPost('portal');
+  if (ok && typeof data.url === 'string' && data.url.startsWith('https://')) {
+    window.location.assign(data.url);
+    return true;
+  }
+  showNotification(data.error || 'Billing could not open. Try again in a moment.', 'error');
+  return false;
+}
+
+// Back from checkout with ?pro=success&session_id=...: have the server read
+// the result from Stripe so the plan is right at once, without waiting for
+// the webhook. Resolves to 'pro', 'pending' or 'failed'.
+export async function confirmCheckout(sessionId) {
+  const { ok, data } = await billingPost('confirm', { session_id: sessionId });
+  await refreshAccount();
+  if (!ok) return 'failed';
+  if (data.plan === 'pro') { track('pro_checkout', { step: 'done' }); return 'pro'; }
+  return 'pending';
 }
 
 export function bindAccount() {

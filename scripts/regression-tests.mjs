@@ -1420,6 +1420,181 @@ async function testHostedAiIsMetered() {
   }
 }
 
+
+// Glint Pro billing: checkout, the return from checkout, the webhook and the
+// billing portal, against a stand-in for Stripe's API.
+async function testBillingRoutes() {
+  const saved = { ...process.env };
+  const realFetch = globalThis.fetch;
+  const KEYS = ['CLERK_SECRET_KEY', 'CLERK_JWT_KEY', 'DATABASE_URL', 'POSTGRES_URL', 'ACCOUNT_STORE', 'OPENAI_API_KEY', 'AI_FREE_CREDITS', 'AI_PRO_CREDITS', 'STRIPE_SECRET_KEY', 'STRIPE_PRICE_ID', 'STRIPE_API_VERSION', 'STRIPE_MANAGED_PAYMENTS', 'PRO_PRICE_LABEL'];
+  for (const k of KEYS) delete process.env[k];
+  const { usage, pro, subs } = memoryAccounts();
+  usage.clear(); pro.clear(); subs.clear();
+  const USER = 'user_buyer1', OTHER = 'user_other2';
+  const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const part = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  const sign = (sub) => {
+    const head = part({ alg: 'RS256', typ: 'JWT', kid: 'ins_test', cat: 'cl_B7d4PD111AAA' });
+    const body = part({ sid: 'sess_1', iss: 'https://clerk.glint.test', iat: now, nbf: now - 5, exp: now + 300, sub });
+    return `${head}.${body}.${createSign('RSA-SHA256').update(`${head}.${body}`).sign(privateKey).toString('base64url')}`;
+  };
+  const buyer = sign(USER), other = sign(OTHER);
+
+  // The stand-in Stripe: what it holds, and every call made to it.
+  const stripe = { sessions: {}, subscriptions: {}, events: {}, calls: [] };
+  const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  globalThis.fetch = async (url, init = {}) => {
+    const u = new URL(String(url));
+    if (u.origin !== 'https://api.stripe.com') throw new Error('network down: ' + u);
+    const form = Object.fromEntries(new URLSearchParams(init.body || ''));
+    stripe.calls.push({ method: init.method, path: u.pathname, form, headers: init.headers });
+    const missing = json(404, { error: { message: 'No such object', code: 'resource_missing' } });
+    if (init.method === 'POST' && u.pathname === '/v1/checkout/sessions') {
+      const id = 'cs_test_' + 'a'.repeat(20) + Object.keys(stripe.sessions).length;
+      stripe.sessions[id] = { id, status: 'open', client_reference_id: form.client_reference_id, subscription: null, url: 'https://checkout.stripe.test/' + id };
+      return json(200, stripe.sessions[id]);
+    }
+    if (init.method === 'POST' && u.pathname === '/v1/billing_portal/sessions') return json(200, { url: 'https://billing.stripe.test/' + form.customer });
+    let m;
+    if ((m = /^\/v1\/checkout\/sessions\/(.+)$/.exec(u.pathname))) return stripe.sessions[m[1]] ? json(200, stripe.sessions[m[1]]) : missing;
+    if ((m = /^\/v1\/subscriptions\/(.+)$/.exec(u.pathname))) return stripe.subscriptions[m[1]] ? json(200, stripe.subscriptions[m[1]]) : missing;
+    if ((m = /^\/v1\/events\/(.+)$/.exec(u.pathname))) return stripe.events[m[1]] ? json(200, stripe.events[m[1]]) : missing;
+    return missing;
+  };
+  const post = (op, body, token) => shareReq('POST', body, { query: { op }, headers: token ? { authorization: `Bearer ${token}` } : {} });
+  const me = async (token) => (await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'me' }, headers: { authorization: `Bearer ${token}` } }))).body;
+  const errors = console.error;
+  try {
+    process.env.CLERK_JWT_KEY = publicKey.export({ type: 'spki', format: 'pem' });
+    process.env.ACCOUNT_STORE = 'memory';
+    process.env.OPENAI_API_KEY = 'sk-test';
+    process.env.AI_FREE_CREDITS = '3';
+    process.env.AI_PRO_CREDITS = '40';
+
+    // No Stripe settings: nothing is on sale and nothing calls out.
+    assert.equal((await callRoute(accountRouter, post('checkout', {}, buyer))).statusCode, 501);
+    assert.equal((await callRoute(accountRouter, post('webhook', { id: 'evt_12345678' }))).statusCode, 501);
+    assert.equal((await me(buyer)).billing, false);
+    assert.equal(stripe.calls.length, 0);
+
+    process.env.STRIPE_SECRET_KEY = 'sk_test_abc';
+    process.env.STRIPE_PRICE_ID = 'price_123abc';
+    process.env.PRO_PRICE_LABEL = '$8 a month';
+    const info = await me(buyer);
+    assert.deepEqual([info.billing, info.priceLabel, info.plan, info.subscription], [true, '$8 a month', 'free', undefined]);
+
+    // Checkout needs a signed-in person and only accepts POST.
+    const anon = await callRoute(accountRouter, post('checkout', {}));
+    assert.deepEqual([anon.statusCode, anon.body.code], [401, 'sign_in']);
+    assert.equal((await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'checkout' }, headers: { authorization: `Bearer ${buyer}` } }))).statusCode, 405);
+    assert.equal(stripe.calls.length, 0);
+
+    const started = await callRoute(accountRouter, post('checkout', {}, buyer));
+    assert.equal(started.statusCode, 200);
+    assert.ok(started.body.url.startsWith('https://checkout.stripe.test/cs_test_'));
+    const call = stripe.calls.at(-1);
+    assert.equal(call.headers.Authorization, 'Bearer sk_test_abc');
+    assert.equal(call.form.mode, 'subscription');
+    assert.equal(call.form['line_items[0][price]'], 'price_123abc');
+    assert.equal(call.form['managed_payments[enabled]'], 'true');
+    assert.equal(call.form.client_reference_id, USER);
+    assert.equal(call.form['subscription_data[metadata][glint_user]'], USER);
+    assert.equal(call.form.success_url, 'https://glint.test/editor/?pro=success&session_id={CHECKOUT_SESSION_ID}');
+    assert.equal(call.form.customer, undefined);
+    for (const banned of ['automatic_tax[enabled]', 'payment_method_types[0]', 'tax_id_collection[enabled]']) assert.equal(call.form[banned], undefined);
+    const sessionId = started.body.url.split('/').pop();
+
+    // Back from checkout before paying: still free. A stranger cannot claim it.
+    assert.deepEqual((await callRoute(accountRouter, post('confirm', { session_id: sessionId }, buyer))).body, { plan: 'free', pending: true });
+    assert.equal((await callRoute(accountRouter, post('confirm', { session_id: sessionId }, other))).statusCode, 404);
+    assert.equal((await callRoute(accountRouter, post('confirm', { session_id: '../v1/customers' }, buyer))).statusCode, 400);
+    assert.equal((await me(buyer)).plan, 'free');
+
+    // The payment goes through.
+    const end = now + 30 * 86400;
+    stripe.subscriptions.sub_1 = { id: 'sub_1', status: 'active', customer: 'cus_9', metadata: { glint_user: USER }, items: { data: [{ current_period_end: end }] } };
+    Object.assign(stripe.sessions[sessionId], { status: 'complete', subscription: 'sub_1' });
+    assert.equal((await callRoute(accountRouter, post('confirm', { session_id: sessionId }, other))).statusCode, 404);
+    assert.equal((await me(other)).plan, 'free');
+    assert.deepEqual((await callRoute(accountRouter, post('confirm', { session_id: sessionId }, buyer))).body, { plan: 'pro', pending: false });
+    const paid = await me(buyer);
+    assert.deepEqual([paid.plan, paid.limit, paid.subscription.canManage], ['pro', 40, true]);
+    assert.equal(subs.get(USER).current_period_end, new Date(end * 1000).toISOString());
+
+    // Already Pro: no second checkout. The portal opens for the right customer.
+    const again = await callRoute(accountRouter, post('checkout', {}, buyer));
+    assert.deepEqual([again.statusCode, again.body.code], [409, 'already_pro']);
+    assert.equal((await callRoute(accountRouter, post('portal', {}, buyer))).body.url, 'https://billing.stripe.test/cus_9');
+    assert.equal(stripe.calls.at(-1).form.return_url, 'https://glint.test/editor/');
+    assert.equal((await callRoute(accountRouter, post('portal', {}, other))).statusCode, 404);
+
+    // The webhook trusts only what Stripe itself returns for the event id.
+    console.error = () => {};
+    const forged = await callRoute(accountRouter, post('webhook', { id: 'evt_forged12345', type: 'customer.subscription.deleted', data: { object: { id: 'sub_1', status: 'canceled', metadata: { glint_user: USER } } } }));
+    assert.equal(forged.statusCode, 400);
+    assert.equal((await callRoute(accountRouter, post('webhook', { id: 'sub_1' }))).statusCode, 400);
+    assert.equal((await callRoute(accountRouter, post('webhook', {}))).statusCode, 400);
+    assert.equal((await me(buyer)).plan, 'pro');
+
+    // A real event whose body lies: the stored row follows Stripe, not the body.
+    stripe.events.evt_real0000001 = { id: 'evt_real0000001', type: 'customer.subscription.updated', data: { object: { id: 'sub_1' } } };
+    assert.equal((await callRoute(accountRouter, post('webhook', { id: 'evt_real0000001', data: { object: { id: 'sub_1', status: 'canceled' } } }))).statusCode, 200);
+    assert.equal((await me(buyer)).plan, 'pro');
+
+    // Payment fails later: no longer Pro, even though a period end is in the future at Stripe.
+    stripe.subscriptions.sub_1.status = 'past_due';
+    assert.equal((await callRoute(accountRouter, post('webhook', { id: 'evt_real0000001' }))).statusCode, 200);
+    assert.equal((await me(buyer)).plan, 'free');
+    assert.equal(subs.get(USER).current_period_end, null);
+    stripe.subscriptions.sub_1.status = 'active';
+    await callRoute(accountRouter, post('webhook', { id: 'evt_real0000001' }));
+    assert.equal((await me(buyer)).plan, 'pro');
+
+    // Cancelled and ended (say, refunded): free at once.
+    Object.assign(stripe.subscriptions.sub_1, { status: 'canceled', ended_at: now - 10 });
+    stripe.events.evt_real0000002 = { id: 'evt_real0000002', type: 'customer.subscription.deleted', data: { object: { id: 'sub_1' } } };
+    assert.equal((await callRoute(accountRouter, post('webhook', { id: 'evt_real0000002' }))).statusCode, 200);
+    assert.equal((await me(buyer)).plan, 'free');
+
+    // Subscribing again reuses the customer; checkout.session.completed alone is enough.
+    const second = await callRoute(accountRouter, post('checkout', {}, buyer));
+    assert.equal(second.statusCode, 200);
+    assert.equal(stripe.calls.at(-1).form.customer, 'cus_9');
+    const secondId = second.body.url.split('/').pop();
+    stripe.subscriptions.sub_2 = { id: 'sub_2', status: 'active', customer: 'cus_9', metadata: {}, items: { data: [{ current_period_end: end }] } };
+    Object.assign(stripe.sessions[secondId], { status: 'complete', subscription: 'sub_2' });
+    stripe.events.evt_real0000003 = { id: 'evt_real0000003', type: 'checkout.session.completed', data: { object: { id: secondId, subscription: 'sub_2', client_reference_id: USER } } };
+    assert.equal((await callRoute(accountRouter, post('webhook', { id: 'evt_real0000003' }))).statusCode, 200);
+    assert.equal((await me(buyer)).plan, 'pro');
+    // Late news about the old, ended subscription does not undo the new one.
+    assert.equal((await callRoute(accountRouter, post('webhook', { id: 'evt_real0000002' }))).statusCode, 200);
+    assert.equal((await me(buyer)).plan, 'pro');
+    assert.equal(subs.get(USER).provider_subscription_id, 'sub_2');
+    // Events we do not act on are acknowledged.
+    stripe.events.evt_real0000004 = { id: 'evt_real0000004', type: 'invoice.paid', data: { object: { id: 'in_1' } } };
+    assert.equal((await callRoute(accountRouter, post('webhook', { id: 'evt_real0000004' }))).statusCode, 200);
+
+    // Stripe down: checkout says so (502) and the webhook asks to be retried.
+    globalThis.fetch = async () => { throw new Error('offline'); };
+    subs.delete(USER);
+    assert.equal((await callRoute(accountRouter, post('checkout', {}, buyer))).statusCode, 502);
+    assert.equal((await callRoute(accountRouter, post('webhook', { id: 'evt_real0000003' }))).statusCode, 502);
+
+    // Selling directly (not through Managed Payments) leaves the flag out.
+    process.env.STRIPE_MANAGED_PAYMENTS = '0';
+    let sent = null;
+    globalThis.fetch = async (url, init) => { sent = Object.fromEntries(new URLSearchParams(init.body || '')); return json(200, { id: 'cs_test_x', url: 'https://checkout.stripe.test/x' }); };
+    assert.equal((await callRoute(accountRouter, post('checkout', {}, buyer))).statusCode, 200);
+    assert.equal(sent['managed_payments[enabled]'], undefined);
+  } finally {
+    console.error = errors;
+    globalThis.fetch = realFetch;
+    usage.clear(); pro.clear(); subs.clear();
+    for (const k of KEYS) { if (k in saved) process.env[k] = saved[k]; else delete process.env[k]; }
+  }
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -1454,7 +1629,8 @@ const tests = [
   testSharePlayersInlineCleanly,
   testShareRoutesRoundTrip,
   testWaitlistRoutes,
-  testHostedAiIsMetered
+  testHostedAiIsMetered,
+  testBillingRoutes
 ];
 
 for (const test of tests) {

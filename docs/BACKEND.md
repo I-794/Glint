@@ -60,6 +60,11 @@ every file in `api/` without a leading underscore counts as one.
 | `DATABASE_URL` | Yes for AI credits | Added by the Neon Marketplace install (`POSTGRES_URL` also works). Clerk plus a database turns metering on. |
 | `ACCOUNT_STORE` | Tests only | `memory` keeps credit counts in the process. |
 | `AI_FREE_CREDITS` / `AI_PRO_CREDITS` | No | Monthly hosted AI credits per account. Default 20 and 500. |
+| `STRIPE_SECRET_KEY` | Yes for Glint Pro billing | Stripe secret key (a sandbox key while testing). Sensitive. Used for checkout, the billing portal and to re-read events and subscriptions. |
+| `STRIPE_PRICE_ID` | Yes for Glint Pro billing | The `price_...` id of the monthly Glint Pro price. With the key, this turns billing on. |
+| `PRO_PRICE_LABEL` | No | Price text shown in the account panel, for example `$8 a month`. |
+| `STRIPE_MANAGED_PAYMENTS` | No | `0` sells directly instead of through Managed Payments. Default on. |
+| `STRIPE_API_VERSION` | No | Overrides the pinned Stripe API version. |
 
 ## Accounts and hosted AI credits
 

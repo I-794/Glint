@@ -33,15 +33,38 @@ the status and the next steps.
 - Small leftover: the sign-in box says "glint-signin"; rename the application
   to Glint in Clerk's settings.
 
+## Billing: built, waiting for its settings
+
+Checkout is built on Stripe Checkout with Managed Payments (Stripe sells as
+the merchant of record). Lemon Squeezy was the first pick; its own sign-up now
+points to Managed Payments, so that is what was used. Nothing is on sale until
+the deployment has the settings below; until then the panel keeps showing the
+waitlist link.
+
+To switch it on, in a Stripe **sandbox** first:
+
+1. Stripe: turn on Managed Payments, create the product "Glint Pro" with the
+   tax code "Software as a service (SaaS) - personal use" and a monthly price.
+2. Vercel settings: `STRIPE_SECRET_KEY` (sandbox key, Sensitive),
+   `STRIPE_PRICE_ID` (`price_...`), `PRO_PRICE_LABEL` (for example
+   `$8 a month`). Redeploy.
+3. Stripe: add a webhook destination (snapshot events) for
+   `https://<site>/api/account?op=webhook` with `checkout.session.completed`
+   and the `customer.subscription.*` events. No signing secret is needed.
+4. Stripe: save the customer portal settings once, so Manage billing opens.
+5. Test with card 4242 4242 4242 4242: upgrade, see Pro and 500 credits,
+   cancel from Manage billing, see the plan end.
+
+This has only run against a stand-in Stripe and a local Postgres so far. The
+first sandbox run is the real test, including whether the pinned API version
+accepts `managed_payments`.
+
 ## Next
 
-- Checkout and webhook with a merchant of record (Lemon Squeezy was the pick),
-  as new ops in `api/account.js`.
-- Vercel Pro plan before charging anyone (Hobby is non-commercial).
-- The account panel is built (click the credits chip, or Cmd-K "Account"):
-  plan, credits left, costs, waitlist link, manage account, sign out. Add the
-  Upgrade and Manage billing buttons to it when checkout exists.
-- Share link perks for Pro, then real prices on the pricing page.
+- Go live: Vercel Pro plan first (Hobby is non-commercial), then the live
+  Stripe key and price, then real prices on the pricing page and the Pro card
+  there selling instead of collecting emails. Email the waitlist.
+- Share link perks for Pro.
 - Watch whether 20 free credits is enough: the Design Agent spends one per
   step. Tune with `AI_FREE_CREDITS`.
 
@@ -49,4 +72,6 @@ the status and the next steps.
 
 - The studio stays free; Pro covers the parts that cost money to run.
 - Starting numbers: about $8 a month, 20 free and 500 Pro credits.
+- Payments: Stripe Managed Payments. A lapsed payment drops the account to
+  Free at once (no grace period); it returns to Pro when the payment clears.
 - Glint Pro will be its own numbered release (v42 Junction shipped separately).
