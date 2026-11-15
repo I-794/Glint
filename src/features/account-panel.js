@@ -4,7 +4,8 @@
 // here once they exist. Everything is built with textContent; nothing from the
 // server or from Clerk is rendered as HTML.
 import { getUser, isConfigured, openSignIn, openUserProfile, signOut, onAuthChange } from './auth.js';
-import { getAccount, onAccountChange, refreshAccount, hasOwnKey, resetDay } from './account.js';
+import { getAccount, onAccountChange, refreshAccount, hasOwnKey, resetDay, startCheckout, openBillingPortal, confirmCheckout } from './account.js';
+import { showNotification } from '../ui/notification.js';
 
 let dlg = null;
 let body = null;
@@ -72,16 +73,52 @@ function creditsBox(usage, offer) {
   return box;
 }
 
-function proBox(usage, offer) {
+// A button that sends the person away to Stripe: it says so while it waits,
+// and comes back to life if the hand-off did not happen.
+function leavingButton(label, waiting, className, go) {
+  const b = button(label, className, async () => {
+    b.disabled = true;
+    b.textContent = waiting;
+    const left = await go();
+    if (!left) { b.disabled = false; b.textContent = label; }
+  });
+  return b;
+}
+
+function proBox(usage, offer, signedIn) {
   const box = node('div', 'account-box');
+  const billing = Boolean(offer && offer.billing);
   if (usage && usage.plan === 'pro') {
-    box.append(node('h4', '', 'You are on Glint Pro'), node('p', 'account-note', 'Thank you for backing Glint. Billing controls will show up here.'));
+    box.append(node('h4', '', 'You are on Glint Pro'), node('p', 'account-note', 'Thank you for backing Glint.'));
+    if (billing && usage.canManage) {
+      box.append(
+        node('p', 'account-note', 'Cancel, change your card or see receipts on the billing page, run by Stripe.'),
+        leavingButton('Manage billing', 'Opening billing...', 'btn-secondary', openBillingPortal),
+      );
+    }
     return box;
   }
   const pro = offer && offer.proCredits;
+  const credits = pro ? `${pro} hosted AI credits a month` : 'More hosted AI credits';
+  if (billing) {
+    const price = offer.priceLabel ? ` for ${offer.priceLabel}` : '';
+    box.append(
+      node('h4', '', 'Glint Pro'),
+      node('p', 'account-note', `${credits}${price}. Cancel any time. The studio itself stays free.`),
+    );
+    if (signedIn) {
+      box.append(
+        leavingButton('Upgrade to Glint Pro', 'Opening checkout...', 'btn-primary', startCheckout),
+        node('p', 'account-note', 'Payment is handled by Stripe, which sells Glint Pro on our behalf.'),
+      );
+    } else {
+      box.append(node('p', 'account-note', 'Sign in first, then upgrade from here.'));
+    }
+    return box;
+  }
   box.append(
     node('h4', '', 'Glint Pro is coming'),
-    node('p', 'account-note', `${pro ? `${pro} hosted AI credits a month` : 'More hosted AI credits'} and share links that last. The studio itself stays free.`),
+    node('p', 'account-note', `${credits} and share links that last. The studio itself stays free.`),
   );
   const link = node('a', 'btn btn-primary', 'Join the waitlist');
   link.href = '/pricing/#pro';
@@ -107,7 +144,7 @@ function render() {
       node('p', 'account-note', `A free account gives you ${free || 'a set of'} hosted AI credits every month. The studio needs no account, and neither does your own API key.`),
       button('Sign in', 'btn-primary', () => { dlg.close(); openSignIn(); }),
     );
-    parts.push(box, proBox(null, offer));
+    parts.push(box, proBox(null, offer, false));
   } else {
     const who = node('div', 'account-who');
     const text = node('div', 'account-who-text');
@@ -130,7 +167,7 @@ function render() {
       }
       parts.push(box);
     }
-    parts.push(proBox(usage, offer));
+    parts.push(proBox(usage, offer, true));
 
     const actions = node('div', 'account-actions');
     actions.append(
@@ -153,9 +190,41 @@ export function openAccountPanel() {
   if (isConfigured()) refreshAccount();
 }
 
+// Back from Stripe's checkout: ?pro=success&session_id=... or ?pro=cancel.
+// The address is cleaned at once, so a reload never repeats this.
+function handleCheckoutReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const result = params.get('pro');
+  if (!result) return;
+  const sessionId = params.get('session_id') || '';
+  params.delete('pro');
+  params.delete('session_id');
+  const rest = params.toString();
+  window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
+  if (result !== 'success' || !sessionId) return;
+  let done = false;
+  // Wait for sign-in to settle: the server only confirms for the buyer.
+  onAuthChange(async (user) => {
+    if (done || !user) return;
+    done = true;
+    const outcome = await confirmCheckout(sessionId);
+    if (outcome === 'pro') {
+      showNotification('Welcome to Glint Pro. Your credits are ready.', 'success', { duration: 7000 });
+      openAccountPanel();
+    } else if (outcome === 'pending') {
+      showNotification('Thanks. Your payment is still being confirmed; your plan updates as soon as it is.', 'info', { duration: 9000 });
+      setTimeout(() => refreshAccount(), 6000);
+    } else {
+      showNotification('Your payment could not be checked just now. If you paid, your plan updates within a minute.', 'info', { duration: 9000 });
+      setTimeout(() => refreshAccount(), 15000);
+    }
+  });
+}
+
 export function bindAccountPanel() {
   const chip = document.getElementById('ai-credits');
   if (chip) chip.addEventListener('click', openAccountPanel);
   onAccountChange(render);
   onAuthChange(render);
+  handleCheckoutReturn();
 }

@@ -54,7 +54,7 @@ export function readBearer(req) {
   return m && m[1].length < 4096 ? m[1] : '';
 }
 
-const unavailable = () => new ApiError(503, 'Hosted AI could not check your account just now. Try again in a moment.');
+export const unavailable = () => new ApiError(503, 'Hosted AI could not check your account just now. Try again in a moment.');
 
 // Who does this Clerk session token belong to? Null means not signed in: no
 // token, an expired one, or one this Clerk instance did not sign.
@@ -78,9 +78,16 @@ export async function userFromToken(cfg, token) {
 // Tests: the same rules as the Postgres function, in memory.
 const memoryUsage = new Map();
 const memoryPro = new Set();
-export function memoryAccounts() { return { usage: memoryUsage, pro: memoryPro }; }
+const memorySubs = new Map();   // user id -> subscription row, as api/_billing.js writes it
+export function memoryAccounts() { return { usage: memoryUsage, pro: memoryPro, subs: memorySubs }; }
+// The same test the Postgres function applies to a subscriptions row.
+function rowIsPro(row) {
+  if (!row || row.plan !== 'pro') return false;
+  if (row.status === 'active' || row.status === 'trialing') return true;
+  return Boolean(row.current_period_end) && new Date(row.current_period_end).getTime() > Date.now();
+}
 function memoryUse(user, cost, freeLimit, proLimit) {
-  const plan = memoryPro.has(user) ? 'pro' : 'free';
+  const plan = memoryPro.has(user) || rowIsPro(memorySubs.get(user)) ? 'pro' : 'free';
   const limit = plan === 'pro' ? proLimit : freeLimit;
   const now = memoryUsage.get(user) || 0;
   let allowed = true;
@@ -99,15 +106,20 @@ function db(cfg) {
 // database has not been set up yet, which the server does itself, once.
 const needsSchema = (e) => e && (e.code === '42883' || e.code === '42P01');
 
-async function postgresUse(cfg, args) {
+// One query, installing the schema first if the database turns out to be empty.
+export async function runSql(cfg, text, args) {
   const sql = db(cfg);
   try {
-    return (await sql.query(USE_CREDITS, args))[0].r;
+    return await sql.query(text, args);
   } catch (e) {
     if (!needsSchema(e)) throw e;
     for (const statement of SCHEMA) await sql.query(statement);
-    return (await sql.query(USE_CREDITS, args))[0].r;
+    return sql.query(text, args);
   }
+}
+
+async function postgresUse(cfg, args) {
+  return (await runSql(cfg, USE_CREDITS, args))[0].r;
 }
 
 // cost > 0 spends, cost < 0 refunds, 0 only reads.
@@ -192,6 +204,12 @@ export function metered(kind, handler) {
   };
 }
 
+// api/_billing.js plugs these in (it imports this module, so it cannot be
+// imported here): what `me` says about billing and the person's subscription.
+let billingInfo = null;
+let subscriptionSummary = null;
+export function useBilling(hooks) { billingInfo = hooks.info; subscriptionSummary = hooks.summary; }
+
 // GET /api/account?op=me: what the editor shows as "credits left".
 export async function me(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -199,11 +217,13 @@ export async function me(req, res) {
     if (req.method !== 'GET') throw new ApiError(405, 'Method not allowed');
     const cfg = accountConfig();
     if (!cfg.enabled) { res.status(200).json({ enabled: false }); return; }
-    const base = { enabled: true, hosted: Boolean(serverOpenAIKey()), costs: CREDIT_COSTS, freeCredits: cfg.freeCredits, proCredits: cfg.proCredits };
+    const billing = billingInfo ? billingInfo() : { billing: false };
+    const base = { enabled: true, hosted: Boolean(serverOpenAIKey()), costs: CREDIT_COSTS, freeCredits: cfg.freeCredits, proCredits: cfg.proCredits, ...billing };
     const user = await userFromToken(cfg, readBearer(req));
     if (!user) { res.status(200).json({ ...base, signedIn: false }); return; }
     const usage = await useCredits(cfg, user.id, 0);
-    res.status(200).json({ ...base, signedIn: true, plan: usage.plan, used: usage.used, limit: usage.limit, resets: resetsAt() });
+    const subscription = billing.billing && subscriptionSummary ? await subscriptionSummary(cfg, user.id) : null;
+    res.status(200).json({ ...base, signedIn: true, plan: usage.plan, used: usage.used, limit: usage.limit, resets: resetsAt(), ...(subscription ? { subscription } : {}) });
   } catch (e) {
     if (!(e instanceof ApiError)) console.error('[account]', e);
     res.status(e instanceof ApiError ? e.status : 500).json({ error: e instanceof ApiError ? e.message : 'Something went wrong. Try again.' });
