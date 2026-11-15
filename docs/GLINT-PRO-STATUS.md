@@ -14,24 +14,26 @@ the status and the next steps.
   Supabase, cloud sync, the community gallery and live collaboration are
   removed (PR #34).
 - Deployment settings: `CRON_SECRET` is set. Neon is connected as the store
-  "glint-db", which added `DATABASE_URL` for Production and Preview.
+  "glint-db", which added `DATABASE_URL` for Production and Preview. Clerk is
+  connected too (see below).
 
-## In progress: turning sign-in and metering on
+## Sign-in and metering: on and checked on the live site
 
-1. Neon: connected. Done.
-2. Clerk: add it from the Vercel Marketplace to the glint project. It should
-   add `CLERK_SECRET_KEY` and `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
-3. Redeploy, then check: the editor header shows "Sign in"; signing in shows
-   Clerk's account button and an "AI credits" chip; a hosted AI call while
-   signed out asks to sign in; `/api/account?op=me` answers with the plan.
-   This will be the first run against the real Clerk and Neon (so far they
-   were only tested with stand-ins and a local Postgres).
-4. Clerk starts in development mode. Going to a production instance needs a
-   DNS record on the site's domain.
+- Clerk is connected as "glint-signin" with a production instance on the
+  site's domain (`clerk.` and `accounts.` subdomains plus three mail records,
+  added to the domain's DNS). `CLERK_SECRET_KEY` and
+  `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` are set for Production and Preview.
+- Checked against the real Clerk and Neon: the editor shows Sign in, a new
+  account gets 20 credits (the schema installed itself), a Design Agent step
+  takes the chip to 19, and a signed-out hosted AI call answers `sign_in`.
+- A browser with its own API key saved never spends credits (by design), so
+  test metering in a private window.
+- Clerk's deployment check on Vercel is required: a production deploy waits
+  until Clerk's DNS and certificates are ready.
+- Small leftover: the sign-in box says "glint-signin"; rename the application
+  to Glint in Clerk's settings.
 
-Until step 3, hosted AI still works for everyone without an account.
-
-## Next, after sign-in works
+## Next
 
 - Checkout and webhook with a merchant of record (Lemon Squeezy was the pick),
   as new ops in `api/account.js`.
