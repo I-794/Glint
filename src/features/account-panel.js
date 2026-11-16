@@ -4,11 +4,12 @@
 // here once they exist. Everything is built with textContent; nothing from the
 // server or from Clerk is rendered as HTML.
 import { getUser, isConfigured, openSignIn, openUserProfile, signOut, onAuthChange } from './auth.js';
-import { getAccount, onAccountChange, refreshAccount, hasOwnKey, resetDay, startCheckout, openBillingPortal, confirmCheckout } from './account.js';
+import { getAccount, onAccountChange, refreshAccount, hasOwnKey, resetDay, startCheckout, openBillingPortal, confirmCheckout, pendingCheckout, forgetCheckout } from './account.js';
 import { showNotification } from '../ui/notification.js';
 
 let dlg = null;
 let body = null;
+let welcome = false;   // just upgraded: the Pro box says what that brings
 
 function node(tag, className, text) {
   const n = document.createElement(tag);
@@ -41,6 +42,7 @@ function build() {
   // Keys stay inside, so the editor's shortcuts never act behind the panel.
   dlg.addEventListener('keydown', (e) => e.stopPropagation());
   dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  dlg.addEventListener('close', () => { welcome = false; });
 }
 
 function costLine(costs) {
@@ -89,7 +91,17 @@ function proBox(usage, offer, signedIn) {
   const box = node('div', 'account-box');
   const billing = Boolean(offer && offer.billing);
   if (usage && usage.plan === 'pro') {
-    box.append(node('h4', '', 'You are on Glint Pro'), node('p', 'account-note', 'Thank you for backing Glint.'));
+    if (welcome) {
+      const list = node('ul', 'account-perks');
+      [
+        `${usage.limit} hosted AI credits every month, starting now`,
+        'They refill on the first of each month',
+        'Cancel or change your card any time from this panel',
+      ].forEach((line) => list.append(node('li', '', line)));
+      box.append(node('h4', '', 'Welcome to Glint Pro'), node('p', 'account-note', 'Thank you for backing Glint. Here is what you have now:'), list);
+    } else {
+      box.append(node('h4', '', 'You are on Glint Pro'), node('p', 'account-note', 'Thank you for backing Glint.'));
+    }
     if (billing && usage.canManage) {
       box.append(
         node('p', 'account-note', 'Cancel, change your card or see receipts on the billing page, run by Stripe.'),
@@ -190,27 +202,40 @@ export function openAccountPanel() {
   if (isConfigured()) refreshAccount();
 }
 
-// Back from Stripe's checkout: ?pro=success&session_id=... or ?pro=cancel.
-// The address is cleaned at once, so a reload never repeats this.
+// Back from Stripe's checkout. The address says how it went (#pro=success or
+// #pro=cancel) and this browser remembers which checkout it started, so the
+// server can read the result from Stripe at once. A checkout that was started
+// and never seen to finish (the tab was closed, the return landed elsewhere)
+// is checked quietly the next time the editor opens.
 function handleCheckoutReturn() {
-  const params = new URLSearchParams(window.location.search);
-  const result = params.get('pro');
-  if (!result) return;
-  const sessionId = params.get('session_id') || '';
-  params.delete('pro');
-  params.delete('session_id');
-  const rest = params.toString();
-  window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
-  if (result !== 'success' || !sessionId) return;
+  const fromHash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const fromQuery = new URLSearchParams(window.location.search);
+  const result = fromHash.get('pro') || fromQuery.get('pro');
+  if (result) {
+    // Clean the address at once, so a reload never repeats this.
+    fromQuery.delete('pro');
+    fromQuery.delete('session_id');
+    const rest = fromQuery.toString();
+    window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : ''));
+  }
+  const saved = pendingCheckout();
+  if (result === 'cancel') { forgetCheckout(); return; }
+  if (!saved) return;
+  const cameBack = result === 'success';
   let done = false;
   // Wait for sign-in to settle: the server only confirms for the buyer.
   onAuthChange(async (user) => {
     if (done || !user) return;
     done = true;
-    const outcome = await confirmCheckout(sessionId);
+    const outcome = await confirmCheckout(saved.id);
     if (outcome === 'pro') {
-      showNotification('Welcome to Glint Pro. Your credits are ready.', 'success', { duration: 7000 });
+      forgetCheckout();
+      welcome = true;
+      showNotification('Welcome to Glint Pro.', 'success', { duration: 7000 });
       openAccountPanel();
+    } else if (!cameBack) {
+      // Never finished, as far as Stripe knows. Stop asking after an hour.
+      if (Date.now() - saved.at > 3600 * 1000) forgetCheckout();
     } else if (outcome === 'pending') {
       showNotification('Thanks. Your payment is still being confirmed; your plan updates as soon as it is.', 'info', { duration: 9000 });
       setTimeout(() => refreshAccount(), 6000);
