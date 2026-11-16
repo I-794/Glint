@@ -1500,7 +1500,8 @@ async function testBillingRoutes() {
     assert.equal(call.form['managed_payments[enabled]'], 'true');
     assert.equal(call.form.client_reference_id, USER);
     assert.equal(call.form['subscription_data[metadata][glint_user]'], USER);
-    assert.equal(call.form.success_url, 'https://glint.test/editor/?pro=success&session_id={CHECKOUT_SESSION_ID}');
+    assert.equal(call.form.success_url, 'https://glint.test/editor/#pro=success');
+    assert.ok(started.body.id.startsWith('cs_test_'));
     assert.equal(call.form.customer, undefined);
     for (const banned of ['automatic_tax[enabled]', 'payment_method_types[0]', 'tax_id_collection[enabled]']) assert.equal(call.form[banned], undefined);
     const sessionId = started.body.url.split('/').pop();

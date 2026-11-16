@@ -128,12 +128,29 @@ async function billingPost(op, body = {}) {
   }
 }
 
+// The checkout this browser started and has not seen the end of yet.
+const CHECKOUT_KEY = 'glint_pro_checkout';
+export function pendingCheckout() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CHECKOUT_KEY) || 'null');
+    if (saved && typeof saved.id === 'string' && /^cs_/.test(saved.id) && Date.now() - saved.at < 24 * 3600 * 1000) return saved;
+    if (saved) localStorage.removeItem(CHECKOUT_KEY);
+  } catch (e) { /* nothing saved */ }
+  return null;
+}
+export function forgetCheckout() {
+  try { localStorage.removeItem(CHECKOUT_KEY); } catch (e) { /* nothing saved */ }
+}
+
 // Send the person to Stripe's checkout page for Glint Pro. Resolves to false
 // (after saying why) when it could not start.
 export async function startCheckout() {
   track('pro_checkout', { step: 'start' });
   const { ok, data } = await billingPost('checkout');
   if (ok && typeof data.url === 'string' && data.url.startsWith('https://')) {
+    // Remembered here so the editor can confirm the payment when the person
+    // comes back, however they come back.
+    try { localStorage.setItem(CHECKOUT_KEY, JSON.stringify({ id: String(data.id || ''), at: Date.now() })); } catch (e) { /* private mode */ }
     window.location.assign(data.url);
     return true;
   }

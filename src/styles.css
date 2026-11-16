@@ -1082,6 +1082,8 @@ button.account-pill:focus-visible { outline: 2px solid var(--accent-line); outli
 .account-note + .account-note { margin-top: 6px; }
 .account-box h4 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
 .account-box .btn { margin-top: 10px; width: 100%; text-align: center; text-decoration: none; display: block; }
+.account-perks { margin: 8px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.7; color: var(--text-primary); }
+.account-perks li::marker { color: var(--accent-primary); }
 .account-actions { display: flex; gap: 8px; margin-top: 4px; }
 .account-actions .btn { flex: 1; }
 .auth-modal-overlay {

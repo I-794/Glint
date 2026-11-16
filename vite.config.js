@@ -225,6 +225,10 @@ export default defineConfig({
         // v41 — the worker answers unknown navigations with the cached homepage.
         // Share links (/s/<id>) and API routes must always reach the network, or
         // a returning visitor opening a link would see the homepage instead.
+        // The pages read their own query strings (?look=, ?ext=); without this a
+        // returning visitor's /editor/?look=... misses the cached page and falls
+        // back to the homepage.
+        ignoreURLParametersMatching: [/./],
         navigateFallbackDenylist: [/^\/s\//, /^\/api\//],
         manifestTransforms: [async (entries) => ({
           // v41 — the share viewer is opened from links, never offline; keep it out.

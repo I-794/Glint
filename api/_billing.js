@@ -214,15 +214,18 @@ export async function checkout(req, res) {
       client_reference_id: user.id,
       'metadata[glint_user]': user.id,
       'subscription_data[metadata][glint_user]': user.id,
-      success_url: `${origin}/editor/?pro=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/editor/?pro=cancel`,
+      // The result rides in the fragment, and the editor remembers the session
+      // id itself: a query string would miss the service worker's cached editor
+      // page and land a returning visitor on the homepage instead.
+      success_url: `${origin}/editor/#pro=success`,
+      cancel_url: `${origin}/editor/#pro=cancel`,
     };
     if (cfg.managed) params['managed_payments[enabled]'] = 'true';
     // Someone who subscribed before keeps one customer record at Stripe.
     if (row && /^cus_[A-Za-z0-9]+$/.test(String(row.provider_customer_id || ''))) params.customer = row.provider_customer_id;
     const session = await stripe(cfg, 'POST', '/v1/checkout/sessions', params);
     if (!session.url) throw new StripeError(502, 'Checkout session has no url');
-    res.status(200).json({ url: session.url });
+    res.status(200).json({ url: session.url, id: session.id });
   } catch (e) {
     fail(res, e);
   }
