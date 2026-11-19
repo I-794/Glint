@@ -29,6 +29,25 @@ The following skills were installed from third-party sources.
   as vanilla HTML/CSS: `taste-skill` for building new pages (it built /merge/,
   /studio-intelligence/ and the changelog), `redesign-skill` for polishing existing ones.
 
+## stitch-skills
+- Source: https://github.com/google-labs-code/stitch-skills
+- Author: Google Labs
+- License: Apache-2.0 (see `LICENSE.stitch-skills`)
+- Version: commit 4cf4db8
+- Installed: 2026-11-19
+- Skills: code-to-design, design-md, enhance-prompt, extract-design-md,
+  extract-static-html, generate-design, manage-design-system, react-components,
+  react-native, react-vite-dashboard, remotion, shadcn-ui, site-md, stitch-loop,
+  taste-design, upload-to-stitch
+- Copied unmodified from `plugins/*/skills/` into one flat folder, because
+  `npx plugins add ... --scope project` does not support this source for Claude Code.
+  Paths inside the skills that start with `stitch-skills/plugins/<plugin>/skills/`
+  map to `.claude/skills/` here.
+- Most of these need the Google Stitch MCP server and a Stitch API key, which this
+  repo does not configure. The React, React Native, shadcn and Remotion skills target
+  other stacks; they are not conventions for this repo (vanilla JS + Vite).
+  `taste-skill` stays the required design skill for the marketing pages.
+
 These were vendored directly into `.claude/skills/` (rather than installed via the
 Claude Code plugin marketplace) so they are version-controlled and available to all
 sessions on this repo, including Claude Code on the web.
