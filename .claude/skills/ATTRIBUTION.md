@@ -35,18 +35,12 @@ The following skills were installed from third-party sources.
 - License: Apache-2.0 (see `LICENSE.stitch-skills`)
 - Version: commit 4cf4db8
 - Installed: 2026-11-19
-- Skills: code-to-design, design-md, enhance-prompt, extract-design-md,
-  extract-static-html, generate-design, manage-design-system, react-components,
-  react-native, react-vite-dashboard, remotion, shadcn-ui, site-md, stitch-loop,
-  taste-design, upload-to-stitch
-- Copied unmodified from `plugins/*/skills/` into one flat folder, because
-  `npx plugins add ... --scope project` does not support this source for Claude Code.
-  Paths inside the skills that start with `stitch-skills/plugins/<plugin>/skills/`
-  map to `.claude/skills/` here.
-- Most of these need the Google Stitch MCP server and a Stitch API key, which this
-  repo does not configure. The React, React Native, shadcn and Remotion skills target
-  other stacks; they are not conventions for this repo (vanilla JS + Vite).
-  `taste-skill` stays the required design skill for the marketing pages.
+- Skills: extract-design-md (copied unmodified from
+  `plugins/stitch-design/skills/extract-design-md/`)
+- Only this one skill is kept. It reads the codebase and writes a DESIGN.md, and
+  needs no Stitch account. The other 15 skills in the source (Stitch MCP tools,
+  React / React Native / shadcn / Remotion builders, `taste-design`) were left out:
+  they need the Stitch MCP server or target other stacks.
 
 These were vendored directly into `.claude/skills/` (rather than installed via the
 Claude Code plugin marketplace) so they are version-controlled and available to all
