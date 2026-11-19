@@ -29,6 +29,19 @@ The following skills were installed from third-party sources.
   as vanilla HTML/CSS: `taste-skill` for building new pages (it built /merge/,
   /studio-intelligence/ and the changelog), `redesign-skill` for polishing existing ones.
 
+## stitch-skills
+- Source: https://github.com/google-labs-code/stitch-skills
+- Author: Google Labs
+- License: Apache-2.0 (see `LICENSE.stitch-skills`)
+- Version: commit 4cf4db8
+- Installed: 2026-11-19
+- Skills: extract-design-md (copied unmodified from
+  `plugins/stitch-design/skills/extract-design-md/`)
+- Only this one skill is kept. It reads the codebase and writes a DESIGN.md, and
+  needs no Stitch account. The other 15 skills in the source (Stitch MCP tools,
+  React / React Native / shadcn / Remotion builders, `taste-design`) were left out:
+  they need the Stitch MCP server or target other stacks.
+
 These were vendored directly into `.claude/skills/` (rather than installed via the
 Claude Code plugin marketplace) so they are version-controlled and available to all
 sessions on this repo, including Claude Code on the web.
