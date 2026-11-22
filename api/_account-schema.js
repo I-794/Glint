@@ -72,6 +72,44 @@ export const SCHEMA = [
     return json_build_object('allowed', v_allowed, 'used', v_used, 'limit', v_limit, 'plan', v_plan);
   end;
   $fn$`,
+  // v43 — Keepsake: hosted "Your links", share view counts, and Pro cloud sync.
+  // Adding new tables (never altering existing ones) lets runSql() auto-install
+  // them whenever a query first hits a 42P01 missing-table error.
+  `create table if not exists user_shares (
+    share_id text primary key,
+    user_id text not null,
+    kind text not null,
+    title text not null default '',
+    poster_url text,
+    expires_at timestamptz,
+    created_at timestamptz not null default now()
+  )`,
+  `create index if not exists user_shares_user_idx on user_shares (user_id, created_at desc)`,
+  `create table if not exists share_views (
+    share_id text primary key,
+    views integer not null default 0 check (views >= 0),
+    last_viewed_at timestamptz not null default now()
+  )`,
+  `create table if not exists user_projects (
+    user_id text not null,
+    project_id text not null,
+    name text not null,
+    thumbnail text,
+    payload text not null,
+    size_bytes integer not null default 0 check (size_bytes >= 0),
+    created_at bigint not null,
+    updated_at bigint not null,
+    deleted boolean not null default false,
+    primary key (user_id, project_id)
+  )`,
+  `create index if not exists user_projects_user_idx on user_projects (user_id, updated_at desc)`,
+  `create table if not exists user_libraries (
+    user_id text not null,
+    kind text not null,
+    data text not null,
+    updated_at bigint not null,
+    primary key (user_id, kind)
+  )`,
 ];
 
 export const USE_CREDITS = 'select glint_use_credits($1::text, $2::int, $3::int, $4::int) as r';

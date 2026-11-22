@@ -4,6 +4,7 @@
 // markers in shares-expiry/ (the time is in each marker's name).
 import { ApiError } from './_shared.js';
 import { requireEnabled, store, sendError, PENDING_PREFIX, EXPIRY_PREFIX } from './_share.js';
+import { accountConfig, memoryAccounts, runSql } from './_account.js';
 import { sharePrefix, isShareId, MANIFEST_NAME } from '../src/share/share-core.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -38,11 +39,27 @@ export default async function handler(req, res) {
       if (!hit) { due.push({ marker: m.pathname, id: null }); continue; }
       if (Number(hit[1]) <= now) due.push({ marker: m.pathname, id: hit[2] });
     }
+    const sweptIds = [];
     for (const d of due.slice(0, Math.max(0, MAX_PER_RUN - markers.length))) {
       if (!d.id) { await st.del([d.marker]); continue; }
       const files = await st.list(sharePrefix(d.id));
       await st.del([...files.map((f) => f.pathname), d.marker]);
       if (files.length) expired++;
+      sweptIds.push(d.id);
+    }
+    const acctCfg = accountConfig();
+    if (acctCfg.enabled && sweptIds.length) {
+      try {
+        if (acctCfg.memory) {
+          const { shares, views } = memoryAccounts();
+          sweptIds.forEach((id) => { shares.delete(id); views.delete(id); });
+        } else {
+          await runSql(acctCfg, 'delete from user_shares where share_id = any($1::text[])', [sweptIds]);
+          await runSql(acctCfg, 'delete from share_views where share_id = any($1::text[])', [sweptIds]);
+        }
+      } catch (e) {
+        console.error('[share-sweep] cleanup', e.message);
+      }
     }
     console.log(`[share-sweep] removed ${removed} unpublished share(s), ${expired} expired link(s)`);
     res.status(200).json({ removed, expired });

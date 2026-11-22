@@ -59,12 +59,17 @@ This has only run against a stand-in Stripe and a local Postgres so far. The
 first sandbox run is the real test, including whether the pinned API version
 accepts `managed_payments`.
 
+## Built for v43 Keepsake (on `feat/v43-keepsake`)
+
+- **Hosted "Your links" & view counts:** Signed-in links bind to the account (`user_shares`), aggregate views count on `/api/share-view` (`share_views`), Pro users see synced links across devices and can delete any owned link with their session.
+- **Pro expiry perk:** Once Stripe billing is active, free/anonymous links cap at 30 days while Glint Pro keeps links indefinitely.
+- **Cross-device cloud sync:** Pro accounts sync projects (up to 3.6 MB/project, 40 projects, 50 MB total, with tombstones and conflict protection) plus Looks, Brand Kits, and Templates in private Neon Postgres (`user_projects`, `user_libraries`).
+- **Dynamic pricing page:** `/pricing/` reads `/api/account?op=me` and automatically switches the Pro card from the waitlist to the live price and Upgrade CTA (`/editor/#pro=upgrade`) as soon as `STRIPE_SECRET_KEY` and `STRIPE_PRICE_ID` are set.
+
 ## Next
 
-- Go live: Vercel Pro plan first (Hobby is non-commercial), then the live
-  Stripe key and price, then real prices on the pricing page and the Pro card
-  there selling instead of collecting emails. Email the waitlist.
-- Share link perks for Pro.
+- Test billing in a Stripe sandbox on the preview deployment (`feat/v43-keepsake`) using the steps above.
+- Go live: Vercel Pro plan first (Hobby is non-commercial), then add the live Stripe key, price id, and `PRO_PRICE_LABEL` in Vercel. Email the waitlist.
 - Watch whether 20 free credits is enough: the Design Agent spends one per
   step. Tune with `AI_FREE_CREDITS`.
 
@@ -74,4 +79,4 @@ accepts `managed_payments`.
 - Starting numbers: about $8 a month, 20 free and 500 Pro credits.
 - Payments: Stripe Managed Payments. A lapsed payment drops the account to
   Free at once (no grace period); it returns to Pro when the payment clears.
-- Glint Pro will be its own numbered release (v42 Junction shipped separately).
+- Glint Pro ships as **v43 Keepsake** (v42 Junction shipped separately).

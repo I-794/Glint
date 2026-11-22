@@ -22,24 +22,32 @@ import { renderSnapshotFull } from '../render/history-thumbs.js';
 import { ensureCompareImage } from '../render/compare.js';
 import { escapeHTML } from '../utils/dom.js';
 import { track } from './analytics.js';
+import { getToken, onAuthChange } from './auth.js';
+import { isPro, onAccountChange, accountFetch } from './account.js';
+import { openAccountPanel } from './account-panel.js';
+import { mergeShareLists, isSafeThumbUrl } from '../state/sync-core.js';
 
 const STORE_KEY = 'glint_shares';
 const MAX_RECORDS = 50;
 const MAX_EDGE = 4096;
 const STALL_MS = 20000;
 // v42 — `roll` and `pins` are what the panel offers; both publish a `gallery`.
-const KIND_NAME = { image: 'Design', tour: 'Tour', compare: 'Before / after', roll: 'Roll', pins: 'Pins' };
+const KIND_NAME = { image: 'Design', tour: 'Tour', compare: 'Before / after', roll: 'Roll', pins: 'Pins', gallery: 'Gallery' };
 const KIND_ORDER = ['image', 'tour', 'compare', 'roll', 'pins'];
 const EXPIRY_KEY = 'glint_share_expiry';
 
 // ── status ───────────────────────────────────────────────────────────────────
 
 let statusPromise = null;
+let freeMaxExpiry = 'never';
 export function shareStatus() {
   if (!statusPromise) {
     statusPromise = fetch('/api/share-status', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : { enabled: false }))
-      .then((j) => !!(j && j.enabled))
+      .then((j) => {
+        freeMaxExpiry = j && j.freeMaxExpiry === '30d' ? '30d' : 'never';
+        return !!(j && j.enabled);
+      })
       .catch(() => false);
   }
   return statusPromise;
@@ -231,10 +239,11 @@ async function collect(kind, onStage, signal) {
   throw new Error('Unknown kind');
 }
 
-async function postJson(path, body, signal) {
+async function postJson(path, body, signal, bearerToken = '') {
+  const headers = { 'Content-Type': 'application/json', ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}) };
   const r = await fetch(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
     signal,
   });
@@ -323,11 +332,13 @@ export async function createShareLink(kind, { title = '', expiresIn = 'never', o
   const names = created.uploads.map((u) => u.name);
   const fileNames = names.slice(0, job.files.length);
   const manifest = { kind: manifestKind, title, poster: names[names.length - 1], ...job.build(fileNames) };
+  const bearer = await getToken();
   const committed = await postJson('/api/share-commit', {
     id: created.id, key: created.key, manifest,
     expiresIn: Object.prototype.hasOwnProperty.call(EXPIRY, expiresIn) ? expiresIn : 'never',
-  }, signal);
+  }, signal, bearer);
 
+  const clampNote = committed.clampedExpiry ? 'Free links last up to 30 days. Upgrade to Glint Pro to keep links up.' : '';
   const rec = {
     id: created.id,
     kind,
@@ -336,7 +347,7 @@ export async function createShareLink(kind, { title = '', expiresIn = 'never', o
     key: created.key,
     createdAt: new Date().toISOString(),
     expiresAt: committed.expiresAt || null,   // v42
-    note: job.note || '',
+    note: job.note || clampNote,
     imageUrl: kind === 'image' ? urls[0] : null,
     posterUrl: urls[urls.length - 1],
     w: job.poster.width,
@@ -344,18 +355,21 @@ export async function createShareLink(kind, { title = '', expiresIn = 'never', o
     thumb: thumbOf(job.poster),
   };
   writeShares([rec, ...readShares().filter((r) => r.id !== rec.id)]);
+  if (isPro()) remoteShares = [rec, ...remoteShares.filter((r) => r.id !== rec.id)];
   track('share_link', { kind });
   return rec;
 }
 
 export async function deleteShareLink(id) {
-  const rec = readShares().find((r) => r.id === id);
+  const rec = mergeShareLists(readShares(), remoteShares).find((r) => r.id === id);
   if (!rec) return false;
+  const bearer = await getToken();
   try {
-    await postJson('/api/share-delete', { id: rec.id, key: rec.key });
+    await postJson('/api/share-delete', { id: rec.id, ...(rec.key ? { key: rec.key } : {}) }, undefined, bearer);
   } catch (e) {
     if (e.status !== 404) throw e;
   }
+  remoteShares = remoteShares.filter((r) => r.id !== id);
   writeShares(readShares().filter((r) => r.id !== id));
   return true;
 }
@@ -365,6 +379,9 @@ export async function deleteShareLink(id) {
 let currentKind = 'image';
 let current = null;        // the record shown in the result card
 let running = null;        // AbortController of the upload in flight
+let remoteShares = [];     // v43 — synced links + view counts for Glint Pro
+const claimedIds = new Set();
+let syncingShares = false;
 
 const $ = (id) => document.getElementById(id);
 
@@ -477,10 +494,77 @@ function relTime(iso) {
   return new Date(t).toLocaleDateString([], { month: 'short', day: 'numeric', year: new Date(t).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
 }
 
+function syncExpiryControl() {
+  const expiry = $('share-expiry');
+  const note = $('share-pro-note');
+  const restricted = freeMaxExpiry === '30d' && !isPro();
+  if (expiry) {
+    const neverOpt = expiry.querySelector('option[value="never"]');
+    if (neverOpt) {
+      neverOpt.disabled = restricted;
+      neverOpt.textContent = restricted ? 'Until you delete it (Glint Pro)' : 'Until you delete it';
+    }
+    if (restricted && expiry.value === 'never') expiry.value = '30d';
+  }
+  if (note) {
+    if (restricted) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'share-pro-link';
+      btn.textContent = 'Glint Pro';
+      btn.addEventListener('click', openAccountPanel);
+      note.replaceChildren('Free links last up to 30 days. ', btn, ' keeps links up with view counts.');
+      note.hidden = false;
+    } else {
+      note.hidden = true;
+      note.replaceChildren();
+    }
+  }
+}
+
+async function syncRemoteShares() {
+  const refreshBtn = $('share-refresh-btn');
+  if (refreshBtn) refreshBtn.hidden = !isPro();
+  if (!isPro()) {
+    if (remoteShares.length) {
+      remoteShares = [];
+      claimedIds.clear();
+      renderList();
+    }
+    return;
+  }
+  if (!(await shareStatus()) || syncingShares) return;
+  syncingShares = true;
+  if (refreshBtn) refreshBtn.disabled = true;
+  try {
+    const unClaimed = readShares().filter((r) => r.id && r.key && !claimedIds.has(r.id));
+    if (unClaimed.length) {
+      const claimRes = await accountFetch('shares', {
+        method: 'POST',
+        body: {
+          claim: unClaimed.map((r) => ({
+            id: r.id, key: r.key, kind: r.kind, title: r.title || '',
+            posterUrl: r.posterUrl || null, createdAt: r.createdAt || null, expiresAt: r.expiresAt || null,
+          })),
+        },
+      });
+      if (claimRes.ok) unClaimed.forEach((r) => claimedIds.add(r.id));
+    }
+    const res = await accountFetch('shares');
+    if (res.ok && res.data && Array.isArray(res.data.shares)) {
+      remoteShares = res.data.shares;
+      renderList();
+    }
+  } finally {
+    syncingShares = false;
+    if (refreshBtn) refreshBtn.disabled = false;
+  }
+}
+
 function renderList() {
   const list = $('share-list');
   if (!list) return;
-  const recs = readShares();
+  const recs = mergeShareLists(readShares(), remoteShares);
   if (!recs.length) {
     list.innerHTML = '<p class="info-text share-empty">Links you make show up here.</p>';
     return;
@@ -489,9 +573,12 @@ function renderList() {
   recs.forEach((rec) => {
     const row = document.createElement('div');
     row.className = 'share-row';
-    const thumb = document.createElement(rec.thumb ? 'img' : 'div');
+    const thumbSrc = (rec.thumb && /^data:image\/jpeg;base64,/.test(rec.thumb))
+      ? rec.thumb
+      : (isSafeThumbUrl(rec.posterUrl) ? rec.posterUrl : null);
+    const thumb = document.createElement(thumbSrc ? 'img' : 'div');
     thumb.className = 'share-row-thumb';
-    if (rec.thumb && /^data:image\/jpeg;base64,/.test(rec.thumb)) { thumb.src = rec.thumb; thumb.alt = ''; }
+    if (thumbSrc) { thumb.src = thumbSrc; thumb.alt = ''; thumb.loading = 'lazy'; }
     const text = document.createElement('div');
     text.className = 'share-row-text';
     const t = document.createElement('div');
@@ -500,7 +587,10 @@ function renderList() {
     const meta = document.createElement('div');
     meta.className = 'share-row-meta';
     const exp = expiryText(rec);
-    meta.textContent = `${KIND_NAME[rec.kind] || ''}, ${relTime(rec.createdAt)}${exp ? `. ${exp}` : ''}`;
+    const viewsPart = typeof rec.views === 'number'
+      ? ` · ${rec.views} view${rec.views === 1 ? '' : 's'}`
+      : '';
+    meta.textContent = `${KIND_NAME[rec.kind] || ''}, ${relTime(rec.createdAt)}${viewsPart}${exp ? `. ${exp}` : ''}`;
     if (exp === 'Expired') row.classList.add('expired');
     text.append(t, meta);
     const actions = document.createElement('div');
@@ -515,22 +605,23 @@ function renderList() {
       b.onclick = fn;
       return b;
     };
+    const delBtn = mk('Delete', 'Delete link', async (e) => {
+      if (!await askConfirm('Delete this link?', { message: 'Anyone who has it will see that it is gone. This cannot be undone.', okLabel: 'Delete', danger: true })) return;
+      e.target.disabled = true;
+      try {
+        await deleteShareLink(rec.id);
+        if (current && current.id === rec.id) { current = null; const box = $('share-result'); if (box) box.hidden = true; }
+        renderList();
+        showNotification('Link deleted. It may take up to an hour to clear from caches.', 'success');
+      } catch (err) {
+        e.target.disabled = false;
+        showNotification(`Could not delete the link: ${err.message}`, 'error');
+      }
+    });
     actions.append(
       mk('Copy', 'Copy link', () => copyText(rec.url, 'Link copied.')),
       mk('Open', 'Open link', () => window.open(rec.url, '_blank', 'noopener')),
-      mk('Delete', 'Delete link', async (e) => {
-        if (!await askConfirm('Delete this link?', { message: 'Anyone who has it will see that it is gone. This cannot be undone.', okLabel: 'Delete', danger: true })) return;
-        e.target.disabled = true;
-        try {
-          await deleteShareLink(rec.id);
-          if (current && current.id === rec.id) { current = null; const box = $('share-result'); if (box) box.hidden = true; }
-          renderList();
-          showNotification('Link deleted. It may take up to an hour to clear from caches.', 'success');
-        } catch (err) {
-          e.target.disabled = false;
-          showNotification(`Could not delete the link: ${err.message}`, 'error');
-        }
-      }),
+      ...(rec.key || isPro() ? [delBtn] : []),
     );
     row.append(thumb, text, actions);
     list.append(row);
@@ -674,11 +765,17 @@ export function bindShareLinks() {
   shareStatus().then((on) => {
     $('share-links-on').hidden = !on;
     $('share-links-off').hidden = on;
+    syncExpiryControl();
+    if (on) syncRemoteShares();
   });
+  $('share-refresh-btn')?.addEventListener('click', () => syncRemoteShares());
+  onAccountChange(() => { syncExpiryControl(); syncRemoteShares(); });
+  onAuthChange(() => { syncExpiryControl(); syncRemoteShares(); });
   setKind('image');
   refreshKinds(true);
   renderList();
   window.__shareRefresh = refreshKinds;
+  window.__refreshShareLinks = syncRemoteShares;
   // Another tab may have made or deleted a link.
   window.addEventListener('storage', (e) => { if (e.key === STORE_KEY) renderList(); });
 }

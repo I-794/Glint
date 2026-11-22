@@ -21,7 +21,12 @@ import path from 'path';
 import * as SOURCES from './site-shots/sources.mjs';
 import { LOOKS } from '../src/state/site-looks.js';
 
-const BASE = (process.argv[2] || 'http://localhost:5173').replace(/\/+$/, '');
+const ARGS = process.argv.slice(2);
+const ONLY_ARG = ARGS.find((a) => a.startsWith('--only='));
+const ONLY = ONLY_ARG ? new Set(ONLY_ARG.slice(7).split(',').map((s) => s.trim()).filter(Boolean)) : null;
+const want = (name) => !ONLY || ONLY.has(name);
+const BASE_ARG = ARGS.find((a) => !a.startsWith('--'));
+const BASE = (BASE_ARG || 'http://localhost:5173').replace(/\/+$/, '');
 const OUT = 'public/shots';
 const QUALITY = 0.86;
 mkdirSync(OUT, { recursive: true });
@@ -412,6 +417,7 @@ function save(file, b64) {
 
 console.log('Rendering site shots with the editor at ' + BASE);
 for (const r of RECIPES) {
+  if (!want(r.file)) continue;
   await upload(r.source);
   await applyState(r.state, r.extras);
   save(r.file, await exportWebp());
@@ -420,6 +426,7 @@ for (const r of RECIPES) {
 // Multi-render cards: each variant is applied over the base and rendered with
 // renderInto, then the results are set side by side at matching heights.
 for (const m of MULTI) {
+  if (!want(m.file)) continue;
   await upload(m.source);
   const canvases = [];
   for (const v of m.variants) {
@@ -454,7 +461,7 @@ for (const m of MULTI) {
 }
 
 // App Store set: Set mode renders each panel at the real store size.
-{
+if (want(SET.file) || want('store-a') || want('store-b') || want('store-c')) {
   await upload(SET.panels[0].source);
   await applyState(SET.state);
   const b64 = await page.evaluate(async ({ set, panelSrcs, W, H, q }) => {
@@ -499,7 +506,7 @@ for (const m of MULTI) {
 }
 
 // Roll: develop three shots with one design, then lay them out as a sheet.
-{
+if (want(ROLL.file)) {
   await upload(ROLL.shots[0].source);
   await applyState(ROLL.state);
   const b64 = await page.evaluate(async ({ roll, srcs, W, H, q }) => {
@@ -546,7 +553,7 @@ for (const m of MULTI) {
 }
 
 // Focus: as-shot on the left, graded with a look on the right.
-{
+if (want(FOCUS.file)) {
   await upload(FOCUS.source);
   await applyState(FOCUS.state);
   const b64 = await page.evaluate(async ({ focus, W, H, q }) => {
@@ -584,7 +591,7 @@ for (const m of MULTI) {
 }
 
 // Glossifier: Before light, After dark, divider in the middle.
-{
+if (want(GLOSS.file)) {
   await upload(GLOSS.source);
   await applyState(GLOSS.state);
   const b64 = await page.evaluate(async ({ q }) => {
@@ -611,7 +618,7 @@ for (const m of MULTI) {
 }
 
 // Hindsight: three history steps of one design, oldest on the left.
-{
+if (want(HINDSIGHT.file)) {
   await upload(HINDSIGHT.source);
   await applyState(HINDSIGHT.state);
   const b64 = await page.evaluate(async ({ hs, W, H, q }) => {
@@ -657,7 +664,7 @@ for (const m of MULTI) {
 }
 
 // Hero: the editor UI itself with a design on the canvas.
-{
+if (want(HERO.file)) {
   await page.setViewportSize(HERO.viewport);
   await upload(HERO.source);
   await applyState(HERO.state);
@@ -695,7 +702,7 @@ const IRIS = {
     { source: 'landing', recipe: 'frosted-panel' }
   ]
 };
-{
+if (want(IRIS.tour.file) || want(IRIS.compare.file) || want('junction-tour')) {
   const BLOB = 'https://shots.public.blob.vercel-storage.com';
   const files = {};
   const steps = [];
@@ -754,6 +761,80 @@ const IRIS = {
     }, { src: png.toString('base64'), q: QUALITY });
     save(shot.file, b64);
   }
+}
+
+// v43 — Keepsake: the editor showing synced links with view counts.
+if (want('keepsake-sync')) {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await upload('dashboard');
+  await applyState({ ...HERO.state, canvas: { width: 1440, height: 900 }, padding: 84 });
+  await page.evaluate(async () => {
+    const { render } = await window.__shotImport('/src/render/render.js');
+    render();
+    window.__updateUIFromState && window.__updateUIFromState();
+    document.querySelector('.rail-btn[data-group="export"]')?.click();
+    const shareSec = document.getElementById('share-section');
+    if (shareSec) {
+      shareSec.classList.remove('collapsed');
+      const on = document.getElementById('share-links-on');
+      const off = document.getElementById('share-links-off');
+      if (on) on.hidden = false;
+      if (off) off.hidden = true;
+      const refreshBtn = document.getElementById('share-refresh-btn');
+      if (refreshBtn) refreshBtn.hidden = false;
+      const list = document.getElementById('share-list');
+      if (list) {
+        const rows = [
+          { title: 'Lumen dashboard hero', meta: 'Design, Nov 22 · 42 views' },
+          { title: 'Onboarding walkthrough', meta: 'Tour, Nov 21 · 18 views' },
+          { title: 'Light and dark release', meta: 'Before / after, Nov 19 · 9 views' },
+        ];
+        list.replaceChildren(...rows.map((r) => {
+          const row = document.createElement('div');
+          row.className = 'share-row';
+          const thumb = document.createElement('div');
+          thumb.className = 'share-row-thumb';
+          thumb.style.background = 'linear-gradient(135deg, #2d261c, #17171a)';
+          const text = document.createElement('div');
+          text.className = 'share-row-text';
+          const t = document.createElement('div');
+          t.className = 'share-row-title';
+          t.textContent = r.title;
+          const m = document.createElement('div');
+          m.className = 'share-row-meta';
+          m.textContent = r.meta;
+          text.append(t, m);
+          const actions = document.createElement('div');
+          actions.className = 'share-row-actions';
+          ['Copy', 'Open', 'Delete'].forEach((label) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'share-row-btn';
+            b.textContent = label;
+            actions.append(b);
+          });
+          row.append(thumb, text, actions);
+          return row;
+        }));
+      }
+      shareSec.scrollIntoView({ block: 'end' });
+    }
+    const chip = document.getElementById('ai-credits');
+    if (chip) { chip.style.display = ''; chip.textContent = '482 AI credits'; }
+    const mm = document.getElementById('minimap');
+    if (mm && getComputedStyle(mm).display !== 'none') document.getElementById('minimap-hide')?.click();
+    document.getElementById('zoom-fit')?.click();
+    document.getElementById('notification')?.classList.remove('show');
+  });
+  await page.waitForTimeout(500);
+  const png = await page.screenshot();
+  const b64 = await page.evaluate(async ({ src, q }) => {
+    const img = new Image(); img.src = 'data:image/png;base64,' + src; await img.decode();
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    c.getContext('2d').drawImage(img, 0, 0);
+    return c.toDataURL('image/webp', q).split(',')[1];
+  }, { src: png.toString('base64'), q: QUALITY });
+  save('keepsake-sync', b64);
 }
 
 await browser.close();

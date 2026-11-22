@@ -28,9 +28,11 @@ import { onHistoryChange } from '../state/history.js';
 import { makeThumb, uid } from './document.js';
 import { serializeDocument, applyDocument, onDocumentChange, pageCount } from './pages.js';
 import { idbAvailable, idbGet, idbUpdate, idbReset } from '../state/project-db.js';
+import { pruneTombstones } from '../state/sync-core.js';
 
 const STORE_KEY = 'glint_projects_v12';
 const ACTIVE_KEY = 'glint_active_project';
+const TOMBSTONES_KEY = 'glint_project_tombstones';
 const AUTOSAVE_DELAY = 1500;            // ms after the last edit before we save
 const AUTO_VERSION_INTERVAL = 3 * 60_000; // min spacing between auto-snapshots
 const MAX_AUTO_VERSIONS = 15;           // named versions are never pruned
@@ -102,13 +104,41 @@ function loadStore() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
   catch (e) { return {}; }
 }
+const projectListeners = [];
+export function onProjectChange(fn) { projectListeners.push(fn); }
+function emitProjectChange(meta = { fromSync: false }) {
+  projectListeners.forEach((fn) => { try { fn(meta); } catch (e) { console.error(e); } });
+}
+
+function readTombstones() {
+  try { return pruneTombstones(JSON.parse(localStorage.getItem(TOMBSTONES_KEY) || '{}')); }
+  catch (e) { return {}; }
+}
+function writeTombstones(map) {
+  try {
+    const clean = pruneTombstones(map);
+    if (Object.keys(clean).length) localStorage.setItem(TOMBSTONES_KEY, JSON.stringify(clean));
+    else localStorage.removeItem(TOMBSTONES_KEY);
+  } catch (e) { /* private mode */ }
+}
+function recordTombstone(id, at = Date.now()) {
+  const map = readTombstones();
+  map[id] = Math.max(Number(map[id]) || 0, Number(at) || Date.now());
+  writeTombstones(map);
+}
+export function clearLocalTombstone(id) {
+  const map = readTombstones();
+  if (id in map) { delete map[id]; writeTombstones(map); }
+}
+
 // IndexedDB backend: returns a promise that resolves true once the write has
 // committed, false if it failed (also kept in `lastWrite`). localStorage
 // backend: returns true/false synchronously, as before v34.
-function writeStore(store) {
+function writeStore(store, { fromSync = false } = {}) {
   if (backend === 'idb') {
     cache = store;
     lastWrite = persistIdb();
+    if (!fromSync) lastWrite.then((ok) => { if (ok) emitProjectChange({ fromSync: false }); });
     return lastWrite;
   }
   // localStorage fallback: the write is synchronous; lastWrite/lastFailure are
@@ -124,6 +154,7 @@ function writeStore(store) {
   }
   lastFailure = ok ? null : 'quota';
   lastWrite = Promise.resolve(ok);
+  if (ok && !fromSync) lastWrite.then(() => emitProjectChange({ fromSync: false }));
   return ok;
 }
 
@@ -421,6 +452,7 @@ function newProject(name) {
     versions: []
   };
   markDirty(id);
+  clearLocalTombstone(id);
   activeId = id;
   setActiveKey(id);
   writeStore(store);
@@ -562,6 +594,7 @@ function forkVersion(versionId) {
     createdAt: now, updatedAt: now, versions: []
   };
   markDirty(id);
+  clearLocalTombstone(id);
   activeId = id;
   setActiveKey(id);
   writeStore(store);
@@ -612,10 +645,71 @@ async function deleteProject(id) {
   delete store[id];
   deletedIds.add(id);   // so the merge in persistIdb does not bring it back from IndexedDB
   dirtyIds.delete(id);
+  recordTombstone(id, Date.now());
   writeStore(store);
   if (activeId === id) { activeId = null; setActiveKey(null); }
   renderPanel();
   showNotification('Project deleted.', 'success');
+}
+
+// ── v43 Cloud sync helpers ───────────────────────────────────────────────────
+export async function getProjectsForSync() {
+  await readyP;
+  return {
+    projects: cloneDoc(loadStore()),
+    deleted: readTombstones(),
+  };
+}
+
+export async function applyRemoteProject(remoteProj) {
+  if (!remoteProj || !remoteProj.id) return false;
+  await readyP;
+  const store = loadStore();
+  const prev = store[remoteProj.id];
+  if (prev && (Number(prev.updatedAt) || 0) >= (Number(remoteProj.updatedAt) || 0)) {
+    return false;
+  }
+  const hadUnsavedLocal = Boolean(saveTimer || dirtyIds.has(remoteProj.id));
+  clearLocalTombstone(remoteProj.id);
+  deletedIds.delete(remoteProj.id);
+  store[remoteProj.id] = {
+    id: remoteProj.id,
+    name: remoteProj.name || 'Untitled',
+    payload: cloneDoc(remoteProj.payload),
+    thumbnail: remoteProj.thumbnail || null,
+    createdAt: Number(remoteProj.createdAt) || Number(remoteProj.updatedAt) || Date.now(),
+    updatedAt: Number(remoteProj.updatedAt) || Date.now(),
+    versions: prev && Array.isArray(prev.versions) ? prev.versions : [],
+  };
+  markDirty(remoteProj.id);
+  await writeStore(store, { fromSync: true });
+  renderPanel();
+  if (remoteProj.id === activeId && !hadUnsavedLocal) {
+    applyDocument(cloneDoc(remoteProj.payload));
+    setSavedStatus(store[remoteProj.id].updatedAt);
+  }
+  return true;
+}
+
+export async function applyRemoteDelete(id, deletedAt) {
+  if (!id) return false;
+  await readyP;
+  const store = loadStore();
+  const cur = store[id];
+  if (cur && (Number(cur.updatedAt) || 0) > (Number(deletedAt) || 0)) return false;
+  recordTombstone(id, deletedAt);
+  if (!cur) return false;
+  delete store[id];
+  deletedIds.add(id);
+  dirtyIds.delete(id);
+  await writeStore(store, { fromSync: true });
+  if (activeId === id) {
+    activeId = null;
+    setActiveKey(null);
+    setStatusText('');
+  }
+  renderPanel();
+  return true;
 }
 
 // ── UI: sidebar panel ────────────────────────────────────────────────────────

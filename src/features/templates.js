@@ -14,7 +14,10 @@ function loadAll() {
   catch (e) { return {}; }
 }
 function saveAll(obj) {
-  try { localStorage.setItem(KEY, JSON.stringify(obj)); }
+  try {
+    localStorage.setItem(KEY, JSON.stringify(obj));
+    window.__onLibraryChange?.('templates');
+  }
   catch (e) {}
 }
 
@@ -74,6 +77,7 @@ export function clearTemplates() {
   const saved = loadAll();
   if (!Object.keys(saved).length) { showNotification('No saved templates to clear.', 'info'); return; }
   localStorage.removeItem(KEY);
+  window.__onLibraryChange?.('templates');
   updateTemplateList();
   showNotification('All templates cleared.', 'success', { action: { label: 'Undo', run: () => {
     saveAll({ ...saved, ...loadAll() });   // keep any template saved since

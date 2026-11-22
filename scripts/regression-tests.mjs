@@ -35,6 +35,12 @@ import { generateKeyPairSync, createSign } from 'node:crypto';
 import aiTextRoute from '../api/ai-text.js';
 import imageGenerateRoute from '../api/image-generate.js';
 import { join as waitlistJoin, exportList as waitlistExport, cleanEmail, WAITLIST_PREFIX } from '../api/_waitlist.js';
+import shareViewRoute, { resetViewCooldown } from '../api/_share-view.js';
+import {
+  SYNC_LIMITS, isValidProjectId, isLibraryKind, isSafeThumbUrl,
+  projectSyncRecord, planProjectSync, mergeLooks, mergeKeyedLibrary,
+  pruneTombstones, mergeShareLists,
+} from '../src/state/sync-core.js';
 import { LIMITS, newShareId, isShareId, isAssetName, shareKey, verifyKey, base64url, normalizeManifest, manifestAssets, describeShare, planUploads, isExpired, EXPIRY } from '../src/share/share-core.js';
 
 function mockRes() {
@@ -1596,6 +1602,274 @@ async function testBillingRoutes() {
   }
 }
 
+// v43 Keepsake: DOM-free project/library/share reconciliation helpers.
+function testSyncCoreReconciliation() {
+  assert.equal(isValidProjectId('proj_abc-123'), true);
+  assert.equal(isValidProjectId('../evil'), false);
+  assert.equal(isLibraryKind('looks'), true);
+  assert.equal(isLibraryKind('secrets'), false);
+
+  assert.equal(isSafeThumbUrl('data:image/jpeg;base64,AA=='), true);
+  assert.equal(isSafeThumbUrl('https://abc.public.blob.vercel-storage.com/shares/id/poster.webp'), true);
+  assert.equal(isSafeThumbUrl('data:image/svg+xml;base64,AA=='), false);
+  assert.equal(isSafeThumbUrl('https://evil.example/x.png'), false);
+  assert.equal(isSafeThumbUrl(null), false);
+
+  const rec = projectSyncRecord({
+    id: 'p1', name: 'Hero', thumbnail: 'javascript:alert(1)', payload: { a: 1 },
+    versions: [{ id: 'v1' }], createdAt: 100, updatedAt: 200,
+  });
+  assert.equal(rec.thumbnail, null);
+  assert.equal(rec.versions, undefined, 'local versions are stripped from synced records');
+
+  const localMap = {
+    pushNew: { id: 'pushNew', updatedAt: 100, payload: { x: 1 } },
+    tooBig: { id: 'tooBig', updatedAt: 100, _bytes: SYNC_LIMITS.maxProjectBytes + 1 },
+    pullUpdate: { id: 'pullUpdate', updatedAt: 100, payload: { x: 1 } },
+    pushUpdate: { id: 'pushUpdate', updatedAt: 300, payload: { x: 2 } },
+    delLocal: { id: 'delLocal', updatedAt: 100, payload: { x: 1 } },
+    resurrectLocal: { id: 'resurrectLocal', updatedAt: 400, payload: { x: 3 } },
+    inSync: { id: 'inSync', updatedAt: 150, payload: { x: 1 } },
+  };
+  const remoteList = [
+    { id: 'pullNew', updatedAt: 200, deleted: false },
+    { id: 'pullUpdate', updatedAt: 250, deleted: false },
+    { id: 'pushUpdate', updatedAt: 200, deleted: false },
+    { id: 'delLocal', updatedAt: 200, deleted: true },
+    { id: 'resurrectLocal', updatedAt: 200, deleted: true },
+    { id: 'delRemote', updatedAt: 200, deleted: false },
+    { id: 'resurrectRemote', updatedAt: 500, deleted: false },
+    { id: 'inSync', updatedAt: 150, deleted: false },
+    { id: 'alreadyDeleted', updatedAt: 100, deleted: true },
+  ];
+  const deletedMap = {
+    delRemote: 250,
+    resurrectRemote: 250,
+  };
+  const plan = planProjectSync(localMap, remoteList, deletedMap);
+  assert.deepEqual(plan.toPull.sort(), ['pullNew', 'pullUpdate', 'resurrectRemote']);
+  assert.deepEqual(plan.toPush.sort(), ['pushNew', 'pushUpdate', 'resurrectLocal']);
+  assert.deepEqual(plan.toDeleteLocal, ['delLocal']);
+  assert.deepEqual(plan.toDeleteRemote, ['delRemote']);
+  assert.deepEqual(plan.tooLarge, ['tooBig']);
+
+  const looks = mergeLooks(
+    [{ id: 'l1', name: 'Old' }, { id: 'l2', name: 'LocalOnly' }],
+    [{ id: 'l1', name: 'New' }, { id: 'l3', name: 'RemoteOnly' }],
+  );
+  assert.deepEqual(looks.map((l) => [l.id, l.name]), [['l1', 'New'], ['l2', 'LocalOnly'], ['l3', 'RemoteOnly']]);
+  assert.deepEqual(mergeKeyedLibrary({ a: 1, b: 2 }, { b: 9, c: 3 }, false), { a: 1, b: 2, c: 3 });
+  assert.deepEqual(mergeKeyedLibrary({ a: 1, b: 2 }, { b: 9, c: 3 }, true), { a: 1, b: 9, c: 3 });
+
+  const now = 1_000_000_000_000;
+  const pruned = pruneTombstones({ fresh: now - 1000, stale: now - SYNC_LIMITS.tombstoneTtlMs - 10, '../bad': now }, now);
+  assert.deepEqual(pruned, { fresh: now - 1000 });
+
+  const shares = mergeShareLists(
+    [{ id: 'A', title: 'Local A', thumb: 'data:image/jpeg;base64,AA', createdAt: '2026-11-01T00:00:00Z' },
+     { id: 'C', title: 'Only Local', createdAt: '2026-11-02T00:00:00Z' }],
+    [{ id: 'A', title: 'Local A', views: 7, createdAt: '2026-11-01T00:00:00Z' },
+     { id: 'B', title: 'Remote B', views: 3, createdAt: '2026-11-03T00:00:00Z' }],
+  );
+  assert.deepEqual(shares.map((s) => [s.id, s.synced, s.views]), [['B', true, 3], ['C', false, undefined], ['A', true, 7]]);
+  assert.equal(shares[2].thumb, 'data:image/jpeg;base64,AA');
+}
+
+// v43 Keepsake: Pro expiry clamping, view counts, hosted "Your links", owner-token deletes.
+async function testShareProPerksAndViews() {
+  const saved = { ...process.env };
+  const KEYS = ['SHARE_STORE', 'SHARE_SIGNING_SECRET', 'ACCOUNT_STORE', 'CLERK_JWT_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_PRICE_ID', 'AI_FREE_CREDITS', 'AI_PRO_CREDITS'];
+  for (const k of KEYS) delete process.env[k];
+  const entries = memoryStoreEntries();
+  const { usage, pro, subs, shares, views } = memoryAccounts();
+  entries.clear(); usage.clear(); pro.clear(); subs.clear(); shares.clear(); views.clear();
+  resetViewCooldown();
+
+  const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const part = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  const sign = (sub) => {
+    const head = part({ alg: 'RS256', typ: 'JWT', kid: 'ins_test', cat: 'cl_B7d4PD111AAA' });
+    const body = part({ sid: 'sess_1', iss: 'https://clerk.glint.test', iat: now, nbf: now - 5, exp: now + 300, sub });
+    return `${head}.${body}.${createSign('RSA-SHA256').update(`${head}.${body}`).sign(privateKey).toString('base64url')}`;
+  };
+  const FREE = 'user_free1', PRO = 'user_pro1';
+  const freeToken = sign(FREE), proToken = sign(PRO);
+  pro.add(PRO);
+
+  async function publish(token, expiresIn) {
+    const c = await callRoute(shareCreateRoute, shareReq('POST', { kind: 'image', files: [{ type: 'image/png', size: 10 }] }));
+    assert.equal(c.statusCode, 200);
+    const { id, key } = c.body;
+    await shareStore().put(`shares/${id}/0.png`, Buffer.from('png'), { contentType: 'image/png' });
+    const headers = token ? { authorization: `Bearer ${token}` } : {};
+    const out = await callRoute(shareCommitRoute, shareReq('POST', {
+      id, key, expiresIn,
+      manifest: { kind: 'image', title: 'Shot', image: { src: '0.png', w: 10, h: 10 } },
+    }, { headers }));
+    return { id, key, out };
+  }
+
+  try {
+    process.env.SHARE_STORE = 'memory';
+    process.env.SHARE_SIGNING_SECRET = 'test-secret';
+    process.env.ACCOUNT_STORE = 'memory';
+    process.env.CLERK_JWT_KEY = publicKey.export({ type: 'spki', format: 'pem' });
+
+    // Billing off: freeMaxExpiry stays 'never'.
+    assert.equal((await callRoute(shareStatusRoute, shareReq('GET'))).body.freeMaxExpiry, 'never');
+
+    // Billing on: freeMaxExpiry becomes '30d'.
+    process.env.STRIPE_SECRET_KEY = 'sk_test_abc';
+    process.env.STRIPE_PRICE_ID = 'price_123abc';
+    assert.equal((await callRoute(shareStatusRoute, shareReq('GET'))).body.freeMaxExpiry, '30d');
+
+    // Free user asking for 'never' gets clamped to 30d; Pro user keeps unlimited expiry.
+    const freeShare = await publish(freeToken, 'never');
+    assert.equal(freeShare.out.statusCode, 201);
+    assert.equal(freeShare.out.body.clampedExpiry, true);
+    assert.ok(freeShare.out.body.expiresAt);
+
+    const proShare = await publish(proToken, 'never');
+    assert.equal(proShare.out.statusCode, 201);
+    assert.equal(proShare.out.body.clampedExpiry, undefined);
+    assert.equal(proShare.out.body.expiresAt, null);
+
+    // View counter: counts distinct human visitors, skips rapid repeats, bots, and unknown IDs.
+    const vReq = (id, ip, ua = 'Mozilla/5.0') => shareReq('POST', { id }, {
+      query: { op: 'view' },
+      headers: { 'x-forwarded-for': ip, 'user-agent': ua },
+    });
+    assert.equal((await callRoute(shareRouter, vReq(proShare.id, '1.2.3.4'))).statusCode, 204);
+    assert.equal((await callRoute(shareRouter, vReq(proShare.id, '1.2.3.4'))).statusCode, 204);
+    assert.equal((await callRoute(shareRouter, vReq(proShare.id, '1.2.3.5', 'Slackbot-LinkExpanding 1.0'))).statusCode, 204);
+    assert.equal((await callRoute(shareRouter, vReq(proShare.id, '1.2.3.6'))).statusCode, 204);
+    assert.equal((await callRoute(shareViewRoute, shareReq('POST', { id: 'NoSuchShare1' }, { headers: { 'x-forwarded-for': '1.2.3.7' } }))).statusCode, 204);
+    assert.equal(views.get(proShare.id).views, 2);
+    assert.equal(views.has('NoSuchShare1'), false);
+
+    // Hosted "Your links": Free -> 403 pro_required; Pro -> returns links with views & key.
+    const freeList = await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'shares' }, headers: { authorization: `Bearer ${freeToken}` } }));
+    assert.deepEqual([freeList.statusCode, freeList.body.code], [403, 'pro_required']);
+
+    const proList = await callRoute(accountRouter, shareReq('GET', null, { query: { op: 'shares' }, headers: { authorization: `Bearer ${proToken}` } }));
+    assert.equal(proList.statusCode, 200);
+    assert.equal(proList.body.shares.length, 1);
+    assert.equal(proList.body.shares[0].id, proShare.id);
+    assert.equal(proList.body.shares[0].views, 2);
+    assert.equal(proList.body.shares[0].key, proShare.key);
+
+    // Claiming local links: anonymous link with valid key is claimed, bad key ignored, other user's link never stolen.
+    const anonShare = await publish(null, '7d');
+    const claimRes = await callRoute(accountRouter, shareReq('POST', {
+      claim: [
+        { id: anonShare.id, key: anonShare.key, kind: 'image', title: 'Claimed' },
+        { id: freeShare.id, key: freeShare.key, kind: 'image', title: 'Stolen?' },
+        { id: proShare.id, key: 'wrong-key', kind: 'image' },
+      ],
+    }, { query: { op: 'shares' }, headers: { authorization: `Bearer ${proToken}` } }));
+    assert.equal(claimRes.statusCode, 200);
+    assert.equal(claimRes.body.claimed, 1);
+
+    // Delete with Clerk Bearer token only (no body.key): stranger refused, owner succeeds & cleans DB.
+    const badDel = await callRoute(shareDeleteRoute, shareReq('POST', { id: proShare.id }, { headers: { authorization: `Bearer ${freeToken}` } }));
+    assert.equal(badDel.statusCode, 403);
+    const okDel = await callRoute(shareDeleteRoute, shareReq('POST', { id: proShare.id }, { headers: { authorization: `Bearer ${proToken}` } }));
+    assert.equal(okDel.statusCode, 204);
+    assert.equal(shares.has(proShare.id), false);
+    assert.equal(views.has(proShare.id), false);
+  } finally {
+    entries.clear(); usage.clear(); pro.clear(); subs.clear(); shares.clear(); views.clear();
+    resetViewCooldown();
+    for (const k of KEYS) { if (k in saved) process.env[k] = saved[k]; else delete process.env[k]; }
+  }
+}
+
+// v43 Keepsake: Pro cloud sync routes for projects and libraries.
+async function testCloudSyncRoutes() {
+  const saved = { ...process.env };
+  const KEYS = ['ACCOUNT_STORE', 'CLERK_JWT_KEY', 'CLERK_SECRET_KEY'];
+  for (const k of KEYS) delete process.env[k];
+  const { usage, pro, subs, projects, libraries } = memoryAccounts();
+  usage.clear(); pro.clear(); subs.clear(); projects.clear(); libraries.clear();
+
+  const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const part = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  const sign = (sub) => {
+    const head = part({ alg: 'RS256', typ: 'JWT', kid: 'ins_test', cat: 'cl_B7d4PD111AAA' });
+    const body = part({ sid: 'sess_1', iss: 'https://clerk.glint.test', iat: now, nbf: now - 5, exp: now + 300, sub });
+    return `${head}.${body}.${createSign('RSA-SHA256').update(`${head}.${body}`).sign(privateKey).toString('base64url')}`;
+  };
+  const FREE = 'user_sync_free', PRO = 'user_sync_pro', OTHER = 'user_sync_other';
+  const freeTok = sign(FREE), proTok = sign(PRO), otherTok = sign(OTHER);
+  pro.add(PRO);
+  pro.add(OTHER);
+
+  const call = (method, op, body, token, query = {}) => callRoute(
+    accountRouter,
+    shareReq(method, body, { query: { op, ...query }, headers: token ? { authorization: `Bearer ${token}` } : {} }),
+  );
+
+  try {
+    process.env.ACCOUNT_STORE = 'memory';
+    process.env.CLERK_JWT_KEY = publicKey.export({ type: 'spki', format: 'pem' });
+
+    assert.equal((await call('GET', 'sync-list', null, null)).statusCode, 401);
+    assert.deepEqual([(await call('GET', 'sync-list', null, freeTok)).statusCode, (await call('GET', 'sync-list', null, freeTok)).body.code], [403, 'pro_required']);
+
+    // Project create, list, fetch, conflict, size cap, delete tombstone, and tenant isolation.
+    const up = await call('POST', 'sync-project', {
+      id: 'proj_1', name: 'Deck', thumbnail: 'data:image/jpeg;base64,AA==',
+      payload: { schemaVersion: 26, design: { padding: 80 } }, createdAt: 900, updatedAt: 1000,
+    }, proTok);
+    assert.equal(up.statusCode, 200);
+
+    const list = await call('GET', 'sync-list', null, proTok);
+    assert.equal(list.statusCode, 200);
+    assert.equal(list.body.projects.length, 1);
+    assert.equal(list.body.projects[0].payload, undefined, 'sync-list returns metadata only');
+
+    const fetched = await call('GET', 'sync-project', null, proTok, { id: 'proj_1' });
+    assert.equal(fetched.statusCode, 200);
+    assert.equal(fetched.body.project.payload.design.padding, 80);
+
+    const conflict = await call('POST', 'sync-project', {
+      id: 'proj_1', name: 'Stale', payload: { a: 1 }, updatedAt: 900,
+    }, proTok);
+    assert.deepEqual([conflict.statusCode, conflict.body.code, conflict.body.serverUpdatedAt], [409, 'conflict', 1000]);
+
+    const huge = await call('POST', 'sync-project', {
+      id: 'proj_huge', name: 'Big', payload: { blob: 'x'.repeat(SYNC_LIMITS.maxProjectBytes + 100) }, updatedAt: 1000,
+    }, proTok);
+    assert.deepEqual([huge.statusCode, huge.body.code], [413, 'too_large']);
+
+    // Tenant isolation: another Pro user cannot see or read PRO's project.
+    assert.equal((await call('GET', 'sync-list', null, otherTok)).body.projects.length, 0);
+    assert.equal((await call('GET', 'sync-project', null, otherTok, { id: 'proj_1' })).statusCode, 404);
+
+    const del = await call('DELETE', 'sync-project', null, proTok, { id: 'proj_1', updatedAt: '1200' });
+    assert.equal(del.statusCode, 200);
+    assert.equal(del.body.deleted, true);
+    const listAfter = await call('GET', 'sync-list', null, proTok);
+    assert.equal(listAfter.body.projects[0].deleted, true);
+
+    // Library sync: looks, brandkits, templates + conflict + validation.
+    const saveLooks = await call('POST', 'sync-library', {
+      kind: 'looks', data: [{ id: 'look_1', name: 'Warm' }], updatedAt: 2000,
+    }, proTok);
+    assert.equal(saveLooks.statusCode, 200);
+    const gotLooks = await call('GET', 'sync-library', null, proTok, { kind: 'looks' });
+    assert.deepEqual(gotLooks.body.data, [{ id: 'look_1', name: 'Warm' }]);
+    assert.equal((await call('POST', 'sync-library', { kind: 'looks', data: [], updatedAt: 1500 }, proTok)).statusCode, 409);
+    assert.equal((await call('POST', 'sync-library', { kind: 'looks', data: { not: 'array' }, updatedAt: 3000 }, proTok)).statusCode, 400);
+    assert.equal((await call('GET', 'sync-library', null, proTok, { kind: 'bad' })).statusCode, 400);
+  } finally {
+    usage.clear(); pro.clear(); subs.clear(); projects.clear(); libraries.clear();
+    for (const k of KEYS) { if (k in saved) process.env[k] = saved[k]; else delete process.env[k]; }
+  }
+}
+
 const tests = [
   testFetchUrlRejectsPrivateHostsBeforeFetch,
   testFetchUrlUsesManualRedirects,
@@ -1631,7 +1905,10 @@ const tests = [
   testShareRoutesRoundTrip,
   testWaitlistRoutes,
   testHostedAiIsMetered,
-  testBillingRoutes
+  testBillingRoutes,
+  testSyncCoreReconciliation,
+  testShareProPerksAndViews,
+  testCloudSyncRoutes
 ];
 
 for (const test of tests) {

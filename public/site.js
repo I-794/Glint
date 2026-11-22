@@ -57,6 +57,28 @@
     });
   });
 
+  // 0b) Switch the pricing page's Pro card from waitlist to live upgrade once
+  // billing is turned on in the deployment.
+  const proCard = document.getElementById('pro');
+  if (proCard) {
+    fetch('/api/account?op=me', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data || !data.enabled || !data.billing) return;
+        const soon = proCard.querySelector('.pro-soon');
+        const wl = proCard.querySelector('form[data-waitlist]');
+        const live = proCard.querySelector('.pro-live-cta');
+        const price = proCard.querySelector('.pro-live-price');
+        if (soon) soon.hidden = true;
+        if (wl) wl.hidden = true;
+        if (price) price.textContent = (typeof data.priceLabel === 'string' && data.priceLabel) || '$8 a month';
+        if (live) live.hidden = false;
+        document.querySelectorAll('[data-pro-soon]').forEach((el) => { el.hidden = true; });
+        document.querySelectorAll('[data-pro-live]').forEach((el) => { el.hidden = false; });
+      })
+      .catch(() => { /* keep waitlist visible */ });
+  }
+
   // 1) Nav border once the page scrolls past a 1px sentinel.
   const nav = document.getElementById('nav');
   if (nav) {

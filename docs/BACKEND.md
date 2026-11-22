@@ -25,13 +25,18 @@ the Vite frontend.
 | `POST /api/ai-enhance` | Suggests CSS filter values. Returns `{ filters }`. |
 | `POST /api/image-generate` | Generates a PNG. Returns `{ b64 }`. |
 | `POST /api/image-edit` | Inpaints/outpaints a PNG. Returns `{ b64 }`. |
-| `GET /api/account?op=me` | Accounts. With a Clerk session token: `{ plan, used, limit, resets }` for this month's hosted AI credits. `{ enabled: false }` when metering is not set up. |
-| `GET /api/share-status` | v41 share links. Returns `{ enabled }`. |
+| `GET /api/account?op=me` | Accounts. With a Clerk session token: `{ plan, used, limit, resets }` for this month's hosted AI credits and `billing` / `sync` flags. `{ enabled: false }` when metering is not set up. |
+| `GET / POST /api/account?op=shares` | v43 Keepsake (Glint Pro). Lists synced share links with aggregate view counts, or claims local browser links into the signed-in account. |
+| `GET /api/account?op=sync-list` | v43 Keepsake (Glint Pro). Lists metadata (`updatedAt`, `deleted`, `sizeBytes`) for synced projects and libraries (`looks`, `brandkits`, `templates`). |
+| `GET / POST / DELETE /api/account?op=sync-project` | v43 Keepsake (Glint Pro). Reads, upserts (with conflict check and 3.6 MB/project, 40-project, 50 MB total caps), or tombstones one synced project. |
+| `GET / POST /api/account?op=sync-library` | v43 Keepsake (Glint Pro). Reads or updates a synced library (`looks`, `brandkits`, `templates`; 2 MB cap) with conflict checking. |
+| `GET /api/share-status` | v41 share links. Returns `{ enabled, freeMaxExpiry }`. |
 | `POST /api/share-create` | Reserves a share id; returns the owner key and the planned file paths. |
 | `POST /api/share-upload` | The Blob client's upload handshake: a presigned PUT for one planned file. |
-| `POST /api/share-commit` | Checks the manifest and uploads, then publishes `manifest.json`. |
+| `POST /api/share-commit` | Checks the manifest and uploads, then publishes `manifest.json` (and attaches ownership when signed in). |
 | `GET /api/share-manifest?id=` | The published manifest plus the folder URL its images live in. |
-| `POST /api/share-delete` | Deletes a share. Needs the owner key. |
+| `POST /api/share-delete` | Deletes a share. Needs the owner key or the link owner's Clerk token. |
+| `POST /api/share-view` | v43 Keepsake. Records one aggregate view per visitor session on `/s/<id>` (bots and rapid repeats skipped; no cookies or IPs stored). |
 | `GET /s/<id>` | Serves the share viewer with link-preview tags (rewritten to `/api/share?op=page`). |
 | `GET /api/share-sweep` | Daily cron. Removes uploads that were never published. |
 | `POST /api/waitlist` | Glint Pro waitlist. Stores `{ email, at, source }` encrypted under `waitlist/` in the share Blob store. Always answers `{ ok: true }` for a valid email. |
@@ -77,7 +82,7 @@ call, 5 per image. A call that fails gets its credits back. Without a token the
 route answers `401 { code: 'sign_in' }`, over the limit `402 { code:
 'no_credits' }`, and the editor falls back to the visitor's own API key. The
 schema (`api/_account-schema.js`) installs itself the first time the database
-is used. To give an account Pro by hand, insert a row into `subscriptions` with
+is used. On Glint Pro, `user_shares`, `share_views`, `user_projects`, and `user_libraries` in the same Neon database store cross-device share links, aggregate view counts, and private workspace sync (never stored in the public Blob store). To give an account Pro by hand, insert a row into `subscriptions` with
 its Clerk user id (`user_...`). Remove the Clerk or database variables to turn
 metering off again.
 

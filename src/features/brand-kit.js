@@ -29,7 +29,11 @@ function loadAll() {
   catch (e) { return {}; }
 }
 function saveAll(obj) {
-  try { localStorage.setItem(KEY, JSON.stringify(obj)); return true; }
+  try {
+    localStorage.setItem(KEY, JSON.stringify(obj));
+    window.__onLibraryChange?.('brandkits');
+    return true;
+  }
   catch (e) { showNotification('Could not save brand kit (storage full).', 'error'); return false; }
 }
 
@@ -300,5 +304,6 @@ export function bindBrandKit() {
     render();
   });
 
+  window.__refreshBrandKitList = () => refreshList($('brand-list')?.value || '');
   refreshList('');
 }

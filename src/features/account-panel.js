@@ -87,17 +87,43 @@ function leavingButton(label, waiting, className, go) {
   return b;
 }
 
+function syncBox() {
+  const box = node('div', 'account-box');
+  const info = typeof window.__cloudSyncStatus === 'function' ? window.__cloudSyncStatus() : null;
+  const status = info ? info.status : 'idle';
+  const line = status === 'syncing'
+    ? 'Syncing projects, libraries and links…'
+    : status === 'offline'
+      ? 'Offline. Edits stay safe in this browser and sync when you reconnect.'
+      : status === 'error'
+        ? (info && info.message) || 'Sync paused. Try again in a moment.'
+        : status === 'synced' && info && info.lastSyncedAt
+          ? `Last synced at ${new Date(info.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${info.tooLargeCount ? ` (${info.tooLargeCount} project over 3.6 MB stays local)` : ''}.`
+          : 'Projects, looks, brand kits, templates and links sync across your browsers.';
+  const row = node('div', 'account-sync-row');
+  const text = node('div');
+  text.append(node('h4', '', 'Cloud sync'), node('p', 'account-note', line));
+  const btn = button(status === 'syncing' ? 'Syncing…' : 'Sync now', 'btn-secondary', () => window.__cloudSyncNow?.({ quiet: false }));
+  btn.disabled = status === 'syncing';
+  row.append(text, btn);
+  box.append(row);
+  return box;
+}
+
 function proBox(usage, offer, signedIn) {
   const box = node('div', 'account-box');
   const billing = Boolean(offer && offer.billing);
   if (usage && usage.plan === 'pro') {
     if (welcome) {
       const list = node('ul', 'account-perks');
-      [
-        `${usage.limit} hosted AI credits every month, starting now`,
-        'They refill on the first of each month',
+      const items = [];
+      if (usage.hosted) items.push(`${usage.limit} hosted AI credits every month, starting now`);
+      items.push(
+        'Share links that stay up, with view counts',
+        'Projects, looks, brand kits and links synced across devices',
         'Cancel or change your card any time from this panel',
-      ].forEach((line) => list.append(node('li', '', line)));
+      );
+      items.forEach((line) => list.append(node('li', '', line)));
       box.append(node('h4', '', 'Welcome to Glint Pro'), node('p', 'account-note', 'Thank you for backing Glint. Here is what you have now:'), list);
     } else {
       box.append(node('h4', '', 'You are on Glint Pro'), node('p', 'account-note', 'Thank you for backing Glint.'));
@@ -116,7 +142,7 @@ function proBox(usage, offer, signedIn) {
     const price = offer.priceLabel ? ` for ${offer.priceLabel}` : '';
     box.append(
       node('h4', '', 'Glint Pro'),
-      node('p', 'account-note', `${credits}${price}. Cancel any time. The studio itself stays free.`),
+      node('p', 'account-note', `${credits}${price}, share links that stay up with view counts, and cross-device sync. Cancel any time. The studio itself stays free.`),
     );
     if (signedIn) {
       box.append(
@@ -130,7 +156,7 @@ function proBox(usage, offer, signedIn) {
   }
   box.append(
     node('h4', '', 'Glint Pro is coming'),
-    node('p', 'account-note', `${credits} and share links that last. The studio itself stays free.`),
+    node('p', 'account-note', `${credits}, share links that stay up with view counts, and cross-device sync. The studio itself stays free.`),
   );
   const link = node('a', 'btn btn-primary', 'Join the waitlist');
   link.href = '/pricing/#pro';
@@ -166,19 +192,20 @@ function render() {
     who.append(text, node('span', `account-plan${isPro ? ' is-pro' : ''}`, isPro ? 'Glint Pro' : 'Free'));
     parts.push(who);
 
-    if (usage) {
+    if (usage && usage.hosted) {
       parts.push(creditsBox(usage, offer));
     } else {
       const box = node('div', 'account-box');
       if (loadFailed) {
-        box.append(node('p', 'account-note', 'Your credits could not be loaded. Check your connection and try again.'), button('Try again', 'btn-secondary', () => refreshAccount()));
+        box.append(node('p', 'account-note', 'Your account details could not be loaded. Check your connection and try again.'), button('Try again', 'btn-secondary', () => refreshAccount()));
       } else if (offer && !offer.hosted) {
         box.append(node('p', 'account-note', 'Hosted AI is off on this copy of Glint, so there are no credits to count. AI features use your own API key.'));
-      } else {
+      } else if (!usage) {
         box.append(node('p', 'account-note', 'Loading your credits...'));
       }
-      parts.push(box);
+      if (box.childNodes.length) parts.push(box);
     }
+    if (isPro) parts.push(syncBox());
     parts.push(proBox(usage, offer, true));
 
     const actions = node('div', 'account-actions');
@@ -218,6 +245,10 @@ function handleCheckoutReturn() {
     const rest = fromQuery.toString();
     window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : ''));
   }
+  if (result === 'upgrade') {
+    requestAnimationFrame(() => openAccountPanel());
+    return;
+  }
   const saved = pendingCheckout();
   if (result === 'cancel') { forgetCheckout(); return; }
   if (!saved) return;
@@ -249,6 +280,7 @@ function handleCheckoutReturn() {
 export function bindAccountPanel() {
   const chip = document.getElementById('ai-credits');
   if (chip) chip.addEventListener('click', openAccountPanel);
+  window.__refreshAccountPanel = render;
   onAccountChange(render);
   onAuthChange(render);
   handleCheckoutReturn();

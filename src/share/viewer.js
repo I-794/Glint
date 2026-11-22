@@ -266,6 +266,20 @@ function inlineData() {
   try { return JSON.parse(raw); } catch (_) { return null; }
 }
 
+let counted = false;
+function reportView(id) {
+  if (counted || ownerKey) return;
+  counted = true;
+  try {
+    const payload = JSON.stringify({ id });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/share-view', new Blob([payload], { type: 'application/json' }));
+    } else {
+      fetch('/api/share-view', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(() => {});
+    }
+  } catch (_) { /* never block viewing */ }
+}
+
 function accept(data, id) {
   try {
     const manifest = normalizeManifest(data.manifest, { id });
@@ -273,6 +287,7 @@ function accept(data, id) {
     const base = checkedBase(data.base, id);
     if (!base) throw new Error('bad base');
     render(manifest, base, typeof data.report === 'string' && data.report.includes('@') ? data.report : null);
+    reportView(id);
     bindOwner(id);
   } catch (e) {
     console.error('[share] bad manifest', e);

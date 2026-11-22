@@ -24,7 +24,11 @@ function loadAll() {
   } catch (e) { return []; }
 }
 function persist(list) {
-  try { localStorage.setItem(KEY, JSON.stringify(list)); return true; }
+  try {
+    localStorage.setItem(KEY, JSON.stringify(list));
+    window.__onLibraryChange?.('looks');
+    return true;
+  }
   catch (e) { showNotification('Could not save the look (storage full).', 'error'); return false; }
 }
 function genId() { return 'look_' + Date.now().toString(36) + '_' + (seq++); }
@@ -256,5 +260,6 @@ export function bindLooks() {
   });
   // A new screenshot repaints the chips (render() calls this after each frame).
   window.__looksImageCheck = () => { if ((state.image || null) !== (thumbSource ? thumbSource.image : null)) paintThumbs(); };
+  window.__refreshLooksList = renderList;
   renderList();
 }

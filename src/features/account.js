@@ -34,12 +34,25 @@ function renderChip() {
   const chip = document.getElementById('ai-credits');
   if (!chip) return;
   if (!usage) { chip.style.display = 'none'; return; }
-  const left = Math.max(0, usage.limit - usage.used);
-  chip.style.display = '';
-  chip.textContent = `${left} AI credit${left === 1 ? '' : 's'}`;
-  const day = usage.resets ? resetDay(usage.resets) : '';
-  chip.title = `${left} of ${usage.limit} hosted AI credits left this month${usage.plan === 'pro' ? ' (Glint Pro)' : ''}.${day ? ` They start over on ${day}.` : ''} Click for your account.`;
+  if (usage.hosted) {
+    const left = Math.max(0, usage.limit - usage.used);
+    chip.style.display = '';
+    chip.textContent = `${left} AI credit${left === 1 ? '' : 's'}`;
+    const day = usage.resets ? resetDay(usage.resets) : '';
+    chip.title = `${left} of ${usage.limit} hosted AI credits left this month${usage.plan === 'pro' ? ' (Glint Pro)' : ''}.${day ? ` They start over on ${day}.` : ''} Click for your account.`;
+    return;
+  }
+  if (usage.plan === 'pro') {
+    chip.style.display = '';
+    chip.textContent = 'Glint Pro';
+    chip.title = 'You are on Glint Pro. Click for your account and sync status.';
+    return;
+  }
+  chip.style.display = 'none';
 }
+
+export const isPro = () => Boolean(usage && usage.plan === 'pro');
+export const isBillingEnabled = () => Boolean(offer && offer.billing);
 
 function setUsage(next) {
   usage = next;
@@ -60,9 +73,29 @@ async function loadAccount() {
     const type = r.headers.get('content-type') || '';
     const data = r.ok && type.includes('json') ? await r.json() : null;
     loadFailed = !data;
-    offer = data && data.enabled ? { costs: data.costs || {}, freeCredits: data.freeCredits, proCredits: data.proCredits, hosted: Boolean(data.hosted), billing: Boolean(data.billing), priceLabel: typeof data.priceLabel === 'string' ? data.priceLabel : '' } : null;
-    if (data && data.enabled && data.hosted && data.signedIn) setUsage({ used: data.used, limit: data.limit, plan: data.plan, resets: data.resets, canManage: Boolean(data.subscription && data.subscription.canManage) });
-    else setUsage(null);
+    offer = data && data.enabled
+      ? {
+        costs: data.costs || {},
+        freeCredits: data.freeCredits,
+        proCredits: data.proCredits,
+        hosted: Boolean(data.hosted),
+        sync: Boolean(data.sync),
+        billing: Boolean(data.billing),
+        priceLabel: typeof data.priceLabel === 'string' ? data.priceLabel : '',
+      }
+      : null;
+    if (data && data.enabled && data.signedIn) {
+      setUsage({
+        used: Number(data.used) || 0,
+        limit: Number(data.limit) || 0,
+        plan: data.plan,
+        resets: data.resets || '',
+        hosted: Boolean(data.hosted),
+        canManage: Boolean(data.subscription && data.subscription.canManage),
+      });
+    } else {
+      setUsage(null);
+    }
   } catch (e) {
     loadFailed = true;
     setUsage(null);
@@ -112,20 +145,30 @@ export async function hostedFetch(path, body, { quiet = false } = {}) {
   return new Response(JSON.stringify({ error: message }), { status: 501, headers: { 'Content-Type': 'application/json' } });
 }
 
-// POST to one of the billing routes as the signed-in person. Resolves to
-// { ok, status, data }; never throws.
-async function billingPost(op, body = {}) {
+// Authenticated call to any /api/account?op=... route. Resolves to
+// { ok, status, data }; throws only on AbortError.
+export async function accountFetch(op, { method = 'GET', query = '', body, signal } = {}) {
   try {
     const t = await token();
-    const r = await fetch(`/api/account?op=${op}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
-      body: JSON.stringify(body),
-    });
+    const q = query ? `&${query.replace(/^&/, '')}` : '';
+    const headers = t ? { Authorization: `Bearer ${t}` } : {};
+    const init = { method, headers, cache: 'no-store', signal };
+    if (body !== undefined && method !== 'GET') {
+      headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(body);
+    }
+    const r = await fetch(`/api/account?op=${encodeURIComponent(op)}${q}`, init);
     return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) };
   } catch (e) {
+    if (e && e.name === 'AbortError') throw e;
     return { ok: false, status: 0, data: {} };
   }
+}
+
+// POST to one of the billing routes as the signed-in person. Resolves to
+// { ok, status, data }; never throws.
+function billingPost(op, body = {}) {
+  return accountFetch(op, { method: 'POST', body });
 }
 
 // The checkout this browser started and has not seen the end of yet.

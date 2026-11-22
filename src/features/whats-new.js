@@ -10,20 +10,20 @@
 // release's highlights — same checklist step as the editor version badge and
 // the changelog page.
 
-const CURRENT_VERSION = '42.0';
+const CURRENT_VERSION = '43.0';
 const LASTSEEN_KEY = 'glint_lastseen_version';
 const WELCOME_KEY  = 'glint_welcome_v1';   // set by welcome.js on dismissal
 
 // Latest release only — the newest version’s highlights, not an accumulation.
 const WHATS_NEW = {
-  heading: "v42 · Junction",
+  heading: "v43 · Keepsake",
   items: [
-    { title: 'Tours that branch',
-      desc: 'In Tour mode, pick where each hotspot goes: the next step or any page. Back retraces the path, and the board shows the jumps as arrows.' },
-    { title: 'Share a Roll or your Pins',
-      desc: 'Both open as a gallery anyone can browse. Links can now last a day, a week or a month.' },
-    { title: 'Print PDF and tilt-shift',
-      desc: 'Export on real paper sizes with bleed and crop marks. Bokeh can keep one band sharp, and Motion Studio can pull the focus.' }
+    { title: 'Links that follow you and view counts',
+      desc: 'Signed-in links tie to your account, show how many people opened them, and stay up until you delete them on Glint Pro.' },
+    { title: 'Projects and libraries in sync',
+      desc: 'Glint Pro syncs your projects, looks, brand kits and templates across browsers while keeping local storage fast and offline-first.' },
+    { title: 'Glint Pro ready',
+      desc: 'Pricing and your account panel adapt automatically when billing is switched on. The studio itself stays free.' }
   ]
 };
 

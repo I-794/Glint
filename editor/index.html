@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <meta name="theme-color" content="#0d0d0f">
-    <title>Glint v42 · Junction</title>
+    <title>Glint v43 · Keepsake</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -26,7 +26,7 @@
                         <circle cx="46.5" cy="17.5" r="3" fill="#141416"/>
                     </svg>
                 </div>
-                <span>Glint <span style="font-size:13px;font-weight:400;color:var(--text-secondary);">v42 · Junction</span></span>
+                <span>Glint <span style="font-size:13px;font-weight:400;color:var(--text-secondary);">v43 · Keepsake</span></span>
             </div>
             <div class="header-actions">
                 <button type="button" id="ai-credits" class="account-pill" style="display:none;"></button>
@@ -1384,6 +1384,7 @@
                     <option value="7d">7 days</option>
                     <option value="30d">30 days</option>
                 </select>
+                <p class="info-text share-pro-note" id="share-pro-note" hidden></p>
                 <button type="button" class="btn btn-primary" style="width:100%;margin-top:10px;" id="share-create-btn">Create link</button>
                 <div class="share-progress" id="share-progress" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" hidden>
                     <div class="share-progress-track"><span id="share-progress-fill"></span></div>
@@ -1412,7 +1413,10 @@
                     </div>
                 </div>
                 <div class="divider"></div>
-                <span class="control-label">Your links</span>
+                <div class="share-list-head">
+                    <span class="control-label">Your links</span>
+                    <button type="button" class="share-refresh-btn" id="share-refresh-btn" title="Refresh links and views" hidden>↻</button>
+                </div>
                 <div class="share-list" id="share-list"></div>
             </div>
         </div>
@@ -1424,6 +1428,7 @@
                 <span class="project-current-name" id="projects-current-name">No project yet</span>
                 <span class="project-current-status" id="projects-status"></span>
             </div>
+            <div class="cloud-sync-bar" id="cloud-sync-bar" hidden></div>
             <div style="display:flex;gap:8px;margin:8px 0;">
                 <button class="btn btn-secondary" style="flex:1;" id="projects-new-btn">＋ New</button>
                 <button class="btn btn-primary" style="flex:1;" id="projects-save-version-btn">💾 Save version</button>

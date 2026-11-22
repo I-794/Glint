@@ -78,8 +78,22 @@ export async function userFromToken(cfg, token) {
 // Tests: the same rules as the Postgres function, in memory.
 const memoryUsage = new Map();
 const memoryPro = new Set();
-const memorySubs = new Map();   // user id -> subscription row, as api/_billing.js writes it
-export function memoryAccounts() { return { usage: memoryUsage, pro: memoryPro, subs: memorySubs }; }
+const memorySubs = new Map();       // user id -> subscription row, as api/_billing.js writes it
+const memoryShares = new Map();     // v43: share_id -> { share_id, user_id, kind, title, poster_url, expires_at, created_at }
+const memoryViews = new Map();      // v43: share_id -> { views, last_viewed_at }
+const memoryProjects = new Map();   // v43: `${user_id}:${project_id}` -> row
+const memoryLibraries = new Map();  // v43: `${user_id}:${kind}` -> { user_id, kind, data, updated_at }
+export function memoryAccounts() {
+  return {
+    usage: memoryUsage,
+    pro: memoryPro,
+    subs: memorySubs,
+    shares: memoryShares,
+    views: memoryViews,
+    projects: memoryProjects,
+    libraries: memoryLibraries,
+  };
+}
 // The same test the Postgres function applies to a subscriptions row.
 function rowIsPro(row) {
   if (!row || row.plan !== 'pro') return false;
@@ -218,7 +232,7 @@ export async function me(req, res) {
     const cfg = accountConfig();
     if (!cfg.enabled) { res.status(200).json({ enabled: false }); return; }
     const billing = billingInfo ? billingInfo() : { billing: false };
-    const base = { enabled: true, hosted: Boolean(serverOpenAIKey()), costs: CREDIT_COSTS, freeCredits: cfg.freeCredits, proCredits: cfg.proCredits, ...billing };
+    const base = { enabled: true, hosted: Boolean(serverOpenAIKey()), sync: true, costs: CREDIT_COSTS, freeCredits: cfg.freeCredits, proCredits: cfg.proCredits, ...billing };
     const user = await userFromToken(cfg, readBearer(req));
     if (!user) { res.status(200).json({ ...base, signedIn: false }); return; }
     const usage = await useCredits(cfg, user.id, 0);

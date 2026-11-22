@@ -63,6 +63,7 @@ import { bindAuth } from './features/auth.js';
 import { bindAccount } from './features/account.js';
 import { bindAccountPanel } from './features/account-panel.js';
 import { bindProjects } from './features/projects.js';
+import { bindCloudSync } from './features/cloud-sync.js';   // v43
 import { bindCampaigns } from './features/campaigns.js';
 import { bindPages } from './features/pages.js';
 import { bindBoard } from './features/board.js';
@@ -186,6 +187,7 @@ function init() {
   bindStaleBuildReload();   // v34 — offer a reload if a new deploy removed a lazy chunk
   bindTours();
   bindProjects();
+  bindCloudSync();   // v43 — Keepsake: Pro cloud sync (projects, libraries, links)
   bindCampaigns();
   bindCrop();
   bindResetButton();

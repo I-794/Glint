@@ -4,8 +4,19 @@
 // confirming a finished checkout, the billing portal and Stripe's webhook.
 import { me } from './_account.js';
 import { checkout, confirm, portal, webhook } from './_billing.js';
+import { shares, syncList, syncProject, syncLibrary } from './_sync.js';
 
-const ROUTES = { me, checkout, confirm, portal, webhook };
+const ROUTES = {
+  me,
+  checkout,
+  confirm,
+  portal,
+  webhook,
+  shares,
+  'sync-list': syncList,
+  'sync-project': syncProject,
+  'sync-library': syncLibrary,
+};
 
 export default async function handler(req, res) {
   const raw = req.query && req.query.op;

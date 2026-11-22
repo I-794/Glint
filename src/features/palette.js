@@ -71,7 +71,7 @@ function groupFor(id) {
       id === 'screen-record' || id === 'auto-zoom-toggle') return 'Motion';
   if (id.startsWith('export') || id === 'copy-clipboard' || id === 'load-url' ||
       id.startsWith('share') || id === 'generate-qr' || id.startsWith('mode-') ||
-      id.startsWith('tour-') || id === 'code-studio' || id.startsWith('merge-') || id.startsWith('roll-') || id === 'compare-export-html') return 'File';
+      id.startsWith('tour-') || id === 'code-studio' || id.startsWith('merge-') || id.startsWith('roll-') || id === 'compare-export-html' || id.startsWith('cloud-')) return 'File';
   if (id === 'undo' || id === 'redo' || id === 'duplicate-selection' || id === 'select-all-objects' ||
       id.startsWith('distribute-') || id.startsWith('match-') || id === 'hide-selection' ||
       id === 'lock-selection' || id === 'unlock-all' || id.startsWith('history-')) return 'Edit';
@@ -254,6 +254,7 @@ export function registerCommands() {
     { id: 'share-link-roll',    label: 'Share: Create a link to the Roll', icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('roll')), when: () => state.mode === 'single' && !!window.__rollCommands?.hasShots() },
     { id: 'share-link-pins',    label: "Share: Create a link to this page's pins", icon: '🔗', run: () => import('./share-links.js').then((m) => m.startShare('pins')), when: () => state.mode === 'single' && !!state.image && Array.isArray(state.versions) && state.versions.length > 0 },
     { id: 'account-open',       label: 'Account: Plan and AI credits', icon: '◎', run: () => import('./account-panel.js').then((m) => m.openAccountPanel()) },
+    { id: 'cloud-sync-now',     label: 'Sync: Sync projects, libraries and links', icon: '↻', run: () => window.__cloudSyncNow?.({ quiet: false }), when: () => Boolean(window.__cloudSyncStatus && window.__cloudSyncStatus().pro) },
     { id: 'share-links-open',   label: 'Share: Your links',  icon: '🔗', run: () => { const s = document.getElementById('share-section'); if (s) { revealSection(s); s.scrollIntoView({ block: 'start', behavior: 'smooth' }); } } },
     { id: 'generate-qr',      label: 'Generate QR Code for the last link', icon: '📱', run: () => document.getElementById('qr-btn')?.click(), when: () => !document.getElementById('share-result')?.hidden },
     { id: 'export-gif',       label: 'Export as GIF',         icon: '🎬', run: () => document.getElementById('gif-export-btn')?.click() },
