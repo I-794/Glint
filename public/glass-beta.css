@@ -1,0 +1,43 @@
+/* Beta spike: the homepage nav as a floating pane of liquid glass.
+   The glass is drawn by liquidGL (MIT, vendored in /vendor/liquidgl/). It is a
+   WebGL approximation of the Apple material, not an official one.
+
+   Every rule is scoped to html.glass-on, which glass-beta.js sets only on wide
+   screens, when transparency is allowed and a GPU context exists. Without it the
+   normal nav in site.css is what people see. html.glass-live is added once the
+   lens has drawn its first frame; until then, and if the library never loads,
+   the pill keeps a plain CSS blur. */
+
+/* The nav becomes a floating pill. Buttons and chips are pills on this site;
+   cards keep --r-card. */
+.glass-on nav {
+    top: 14px; height: 60px; width: min(1120px, calc(100% - 32px)); margin-inline: auto;
+    border-radius: var(--r-pill); border: 0;
+}
+.glass-on nav,
+.glass-on nav.scrolled,
+.glass-on nav:has(.nav-item.open) { background: rgba(13, 13, 15, 0.66); }
+.glass-live nav,
+.glass-live nav.scrolled,
+.glass-live nav:has(.nav-item.open) { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+/* The lens. liquidGL draws into a canvas it adds to the nav; this element only
+   gives it a box and a radius. The rim is a plain inset line on the nav, so the
+   pill still has an edge where the page behind it is flat graphite. */
+.glass-on .nav-glass { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+.glass-on nav::after {
+    content: ''; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.glass-on nav .nav-inner { position: relative; z-index: 3; padding-inline: 22px 9px; }
+.glass-on nav .nav-link { color: var(--ink); }
+
+/* Flyouts hang under the pill as one card instead of a full-width sheet. The
+   ::before bridges the gap so the pointer can cross it without closing the menu. */
+.glass-on .flyout {
+    top: calc(100% + 10px); border: 1px solid var(--glass-line); border-radius: var(--r-card);
+    background: rgba(18, 18, 20, 0.96);
+}
+.glass-on .flyout::before { content: ''; position: absolute; left: 0; right: 0; top: -11px; height: 11px; }
+.glass-on .fly-grid { padding-inline: 32px; }
+.glass-on .nav-scrim { inset: 0; }

@@ -232,7 +232,9 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/s\//, /^\/api\//],
         manifestTransforms: [async (entries) => ({
           // v41 — the share viewer is opened from links, never offline; keep it out.
-          manifest: entries.filter((e) => e.url !== 's/index.html' && !/^assets\/(share|vendor-blob)-/.test(e.url) && !(/^assets\/.*\.js$/.test(e.url) && !/^assets\/editor-/.test(e.url) && e.size > 100 * 1024)),
+          // Beta spike: vendor/ (liquidGL, about 300 KB) loads only on the homepage on
+          // wide screens, so it stays out of the precache too.
+          manifest: entries.filter((e) => e.url !== 's/index.html' && !/^vendor\//.test(e.url) && !/^assets\/(share|vendor-blob)-/.test(e.url) && !(/^assets\/.*\.js$/.test(e.url) && !/^assets\/editor-/.test(e.url) && e.size > 100 * 1024)),
           warnings: []
         })],
         // v23 — share-target POST handler layered onto the generated SW, so
