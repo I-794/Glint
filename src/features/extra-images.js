@@ -116,8 +116,8 @@ export function addExtraImageFromSrc(src) {
     imageRegistry[id] = img;
     const maxSize = Math.min(el.previewCanvas.width, el.previewCanvas.height) * 0.4;
     const scaleFrac = Math.min(1.0, maxSize / Math.max(img.width, img.height));
-    state.extraImages.push({ id, xFrac: 0.5, yFrac: 0.5, scaleFrac });
     saveStateToHistory();
+    state.extraImages.push({ id, xFrac: 0.5, yFrac: 0.5, scaleFrac });
     render();
     updateExtraImagesList();
     showNotification('Image added!', 'success');

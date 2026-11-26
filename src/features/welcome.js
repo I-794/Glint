@@ -30,7 +30,7 @@ const SLIDES = [
     grad: 'linear-gradient(135deg,#f2a93b,#34d399)',
     icon: '<path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5a3.5 3.5 0 0 1 .5 8.5z"/><path d="M12 11v5M10 14l2 2 2-2"/>',
     title: 'Your work is always saved',
-    tip: 'Projects autosave as you edit, with full version history you can roll back to. Sign in to sync across devices. Nothing gets lost.'
+    tip: 'Projects autosave as you edit, with full version history you can roll back to. Everything stays in this browser. Nothing gets lost.'
   }
 ];
 
